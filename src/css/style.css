@@ -1,0 +1,58 @@
+body {
+    margin: 0px ;
+}
+/*6263FF
+*/
+#navbar {
+    background-color: #9898FF ;
+    color:white;
+    display: flex;
+    width: 100%;
+    font-size : 20px;
+}
+
+#navbar-explorer {
+    margin: auto 20px;
+    text-decoration: none;
+    color:white;
+}
+
+#navbar-dots {
+    margin: auto;
+    margin-right: 10px;
+    text-decoration: none;
+    color:white;
+}
+
+.navbar-commands {
+    display:flex;   
+}
+
+.command-icons {
+    margin: auto 10px;
+    text-decoration: none;
+    color:white;
+}
+
+#title-page{
+    text-align: center;
+    margin: auto;
+    color:white;
+}
+
+.div-parent-editor{
+    display:flex;
+    
+}
+
+.editor{
+    width:50%;
+}
+
+.text-editor-txt{
+    text-align: center;
+    background-color: #272822;
+    color: white;
+    margin: 0;
+    
+}
