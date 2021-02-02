@@ -1,0 +1,56 @@
+* {
+    
+}
+body {
+    background-color: #9898FF ;
+}
+
+h1 {
+    color: white;
+    text-align: center;
+}
+
+.how-to ul li{
+    text-decoration: none;
+    list-style: none;
+    display: inline-flex;
+    flex-direction: column;
+    width: 45%;
+    margin: 10px;
+    text-align: center;
+}
+
+.how-to p {
+    font-size: large;
+}
+
+.how-to i {
+    color: white;
+    
+}
+
+.h3 {
+    float: left;
+}
+
+.is-head  {
+    font-size: 20px;
+    color: white;
+    font-weight: bold;
+    display: block;
+    text-align: center;
+}
+
+.instruction-set ul li{
+    text-decoration: none;
+    list-style: none;
+    display: inline-flex;
+    flex-direction: column;
+    width: 45%;
+    margin: 10px;
+    text-align: center;
+}
+
+.instruction-set p {
+
+}

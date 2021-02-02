@@ -24,6 +24,14 @@ body {
     color:white;
 }
 
+#navbar-guide {
+    margin: auto;
+    margin-right: 10px;
+    text-decoration: none;
+    color:white;
+}
+
+
 .navbar-commands {
     display:flex;   
 }
@@ -49,10 +57,10 @@ body {
     width:50%;
 }
 
-.text-editor-txt{
+.text-editor-txt { 
     text-align: center;
     background-color: #272822;
     color: white;
     margin: 0;
-    
 }
+
