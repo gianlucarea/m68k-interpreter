@@ -64,3 +64,11 @@ body {
     margin: 0;
 }
 
+#registers-section {
+    width: 50%;
+}
+
+#registers-section h1 {
+    color:rgb(39,40,34);
+    text-align: center;
+}

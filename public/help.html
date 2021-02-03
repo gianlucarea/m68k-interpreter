@@ -35,198 +35,292 @@
         </div>
         <div class="instruction-set">
             <h1>Instruction set</h1>
-            <a class="is-head"> Arithmetic</a>
+            <div class="is-head-container">
+            <h2 class="is-head"> Arithmetic</h2>
             <ul>
                 
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">ADD</a>
+                    <p>Add the source operand to the destination operand and store the
+                        result in the destination location.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">ADDA</a>
+                    <p>Add the source operand to the destination address register and
+                        store the result in the destination address register. The source is
+                        sign-extended before it is added to the destination</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">ADDI</a>
+                    <p>Add immediate data to the destination operand. Store the result
+                        in the destination operand.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">SUB</a>
+                    <p>Subtract the source operand from the destination operand and
+                        store the result in the destination location.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">SUBA</a>
+                    <p>Subtract the source operand from the destination operand and
+                        store the result in the destination address register. Word
+                        operations are sign-extended to 32 bits prior to subtraction.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">SUBI</a>
+                    <p>Subtract the immediate data from the destination operand. Store
+                        the result in the destination operand.</p>
                 </li>
             </ul>
-            <a class="is-head">Logic</a>
+        </div>
+        <div class="is-head-container">
+            <h2 class="is-head">Logic</h2>
             <ul>
                 
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">AND</a>
+                    <p>AND the source operand to the destination operand and store
+                        the result in the destination location.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">ANDI</a>
+                    <p>AND the immediate data to the destination operand. </p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">EOR</a>
+                    <p>EOR (exclusive or) the source operand with the destination
+                        operand and store the result in the destination location</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">EORI</a>
+                    <p>EOR the immediate data with the contents of the destination
+                        operand. Store the result in the destination operand.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">NOT</a>
+                    <p>Calculate the logical complement of the destination and store the
+                        result in the destination. The difference between NOT and NEG is
+                        that NOT performs a bit-by-bit logical complementation, while a
+                        NEG performs a twos complement arithmetic subtraction</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">OR</a>
+                    <p>OR the source operand to the destination operand, and store the
+                        result in the destination location.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">ORI</a>
+                    <p>OR the immediate data with the destination operand. Store the
+                        result in the destination operand.</p>
                 </li>
             </ul>
-            <a class="is-head">Basic Instruction</a>
+        </div>
+            <div class="is-head-container">
+            <h2 class="is-head">Basic Instruction</h2>
             <ul>
                 
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">CLR</a>
+                    <p>The destination is cleared  loaded with all zeros. The CLR instruction can't be used to clear an address register.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">EXG</a>
+                    <p>Exchange the contents of two registers. The size of the instruction
+                        is a longword because the entire 32-bit contents of two registers
+                        are exchanged. The instruction permits the exchange of address
+                        registers, data registers, and address and data registers.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">EXT</a>
+                    <p>Extend the least-significant byte in a data register to a word, or
+                        extend the least-significant word in a data register to a longword.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">MOVE</a>
+                    <p>Move the contents of the source to the destination location. The
+                        data is examined as it is moved and the condition codes set
+                        accordingly. Note that this is actually a copy command because
+                        the source is not affected by the move</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">MOVEA</a>
+                    <p>Move the contents of the source to the destination location. The
+                        destination is an address register. The source must be a word or
+                        longword. If it is a word, it is sign-extended to a longword. The
+                        condition codes are not affected.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">NEG</a>
+                    <p>Subtract the destination operand from 0 and store the result in
+                        the destination location. The difference between NOT and NEG
+                        instructions is that NOT performs a bit-by-bit logical complementation, while a NEG performs a twos complement arithmetic subtraction</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">SWAP</a>
+                    <p>Exchange the upper and lower 16-bit words of a data register.</p>
                 </li>
-            </ul>
-            <a class="is-head">Shifts</a>
+            </ul> 
+        </div>
+        <div class="is-head-container">
+            <h2 class="is-head">Shifts</h2>
             <ul>
                 
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">ASL</a>
+                    <p>Arithmetically shift the bits of the operand in the specified direction (left). The shift count may be specified in one of
+                        three ways. The count may be a literal, the contents of a data
+                        register, or the value 1</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">ASR</a>
+                    <p>Arithmetically shift the bits of the operand in the specified direction (right). The shift count may be specified in one of
+                        three ways. The count may be a literal, the contents of a data
+                        register, or the value 1</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">LSL</a>
+                    <p>Logically shift the bits of the operand in the specified direction
+                        (left). A zero is shifted into the input position and the
+                        bit shifted out is copied into both the C- and the X-bit of the CCR.The shift count may be specified in one of three ways. The count
+                        may be a literal, the contents of a data register, or the value 1. </p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">LSR</a>
+                    <p>Logically shift the bits of the operand in the specified direction
+                        (right). A zero is shifted into the input position and the
+                        bit shifted out is copied into both the C- and the X-bit of the CCR.The shift count may be specified in one of three ways. The count
+                        may be a literal, the contents of a data register, or the value 1.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">ROL</a>
+                    <p>Rotate the bits of the operand in the direction indicated (left). The
+                        extend bit, X, is not included in the operation. A rotate operation
+                        is circular in the sense that the bit shifted out at one end is shifted
+                        into the other end. That is, no bit is lost or destroyed by a rotate operation.The shift count may be specified in
+                        one of three ways: the count may be a literal, the contents of a
+                        data register, or the value 1.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">ROR</a>
+                    <p>Rotate the bits of the operand in the direction indicated (left). The
+                        extend bit, X, is not included in the operation. A rotate operation
+                        is circular in the sense that the bit shifted out at one end is shifted
+                        into the other end. That is, no bit is lost or destroyed by a rotate operation.The shift count may be specified in
+                        one of three ways: the count may be a literal, the contents of a
+                        data register, or the value 1.</p>
                 </li>
             </ul>
-            <a class="is-head">Conditional</a>
+            </div>
+            <div class="is-head-container">
+            <h2 class="is-head">Conditional</h2>
             <ul>
                 
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">CMP</a>
+                    <p>Subtract the source operand from the destination operand and
+                        set the condition codes accordingly. The destination must be a
+                        data register. The destination is not modified by this instruction.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">CMPA</a>
+                    <p>Subtract the source operand from the destination address register
+                        and set the condition codes accordingly. The address register is
+                        not modified. The size of the operation may be specified as word
+                        or longword</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">CMPI</a>
+                    <p>Subtract the immediate data from the destination operand and
+                        set the condition codes accordingly  the destination is not
+                        modified</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">TST</a>
+                    <p>The operand is compared with zero. No result is saved, but the
+                        contents of the CCR are set according to the result.</p>
                 </li>
             </ul>
-            <a class="is-head">Jumps </a>
+            </div>
+            <div class="is-head-container">
+            <h2 class="is-head">Jumps </h2>
             <ul>
                
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">JMP</a>
+                    <p>Program execution continues at the effective address specified by
+                        the instruction.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">JSR</a>
+                    <p>JSR pushes the longword address of the instruction immediately
+                        following the JSR onto the system stack. Program execution then
+                        continues at the address specified in the instruction.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">RTS</a>
+                    <p>The program counter is pulled from the stack and the previous
+                        value of the PC is lost. RTS is used to terminate a subroutine.</p>
                 </li>
             </ul>
-            <a class="is-head">Branches</a>
+            </div>
+            <div class="is-head-container">
+            <h2 class="is-head">Branches</h2>
             <ul>
                 
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">BRA</a>
+                    <p>Branch always , program execution continues at location [PC] + d. The displacement, d, is a twos complement value (8 bits for a short branch
+                        and 16 bits for a long branch). The value in the PC corresponds
+                        to the current location plus two</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">BSR</a>
+                    <p>Branch to subroutine, the longword address of the instruction immediately following
+                        the BSR instruction is pushed onto the system stack pointed at by
+                        A7. Program execution then continues at location [PC] +
+                        displacement. The displacement is an 8-bit twos complement
+                        value for a short branch, or a 16-bit twos complement value for
+                        a long branch. The value in the PC corresponds to the current
+                        location plus two</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">BEQ</a>
+                    <p>If the specified logical condition (branch on equal) is met, program execution
+                        continues at location [PC] + displacement, d. The displacement is
+                        a two's complement value.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">BNE</a>
+                    <p>If the specified logical condition (branch on not equal) is met, program execution
+                        continues at location [PC] + displacement, d. The displacement is
+                        a two's complement value.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">BGE</a>
+                    <p>If the specified logical condition (branch on greater than or equal) is met, program execution
+                        continues at location [PC] + displacement, d. The displacement is
+                        a two's complement value.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">BGT</a>
+                    <p>If the specified logical condition (branch on greater than) is met, program execution
+                        continues at location [PC] + displacement, d. The displacement is
+                        a two's complement value.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">BLE</a>
+                    <p>If the specified logical condition (branch on less than or equal) is met, program execution
+                        continues at location [PC] + displacement, d. The displacement is
+                        a two's complement value.</p>
                 </li>
                 <li>
-                    <a>add</a>
-                    <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque rem rerum delectus praesentium esse necessitatibus officia laudantium harum explicabo quasi, nesciunt saepe, sunt quo. Aliquam quam placeat provident necessitatibus vero?</p>
+                    <a class="is-head-command">BLT</a>
+                    <p>If the specified logical condition (branch on less than) is met, program execution
+                        continues at location [PC] + displacement, d. The displacement is
+                        a two's complement value.</p>
                 </li>
             </ul>
+            </div>
         </div>
         <div class="other-set">
             <h1>Helpfull things</h1>

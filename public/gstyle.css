@@ -46,11 +46,21 @@ h1 {
     list-style: none;
     display: inline-flex;
     flex-direction: column;
-    width: 45%;
+    width: 48%;
     margin: 10px;
     text-align: center;
 }
 
-.instruction-set p {
+.is-head-container{
+    border:5px solid white;
+    margin: 5px 0px;
+}
 
+.is-head-command {
+    color:black;
+    font-size:large;
+    font-weight: bold;
+    border: 1px solid white;
+    background-color: white;
+    
 }
