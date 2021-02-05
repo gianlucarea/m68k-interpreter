@@ -1,12 +1,10 @@
-* {
-    
-}
+
 body {
-    background-color: #9898FF ;
+    background-color: rgb(255, 242, 232) ;
 }
 
 h1 {
-    color: white;
+    color: rgb(250,125,25);
     text-align: center;
 }
 
@@ -25,7 +23,7 @@ h1 {
 }
 
 .how-to i {
-    color: white;
+    color: rgb(250,125,25);
     
 }
 
@@ -34,33 +32,36 @@ h1 {
 }
 
 .is-head  {
-    font-size: 20px;
-    color: white;
+    color: rgb(250,125,25);
     font-weight: bold;
-    display: block;
-    text-align: center;
-}
-
-.instruction-set ul li{
-    text-decoration: none;
-    list-style: none;
-    display: inline-flex;
-    flex-direction: column;
-    width: 48%;
-    margin: 10px;
     text-align: center;
 }
 
 .is-head-container{
     border:5px solid white;
-    margin: 5px 0px;
+    margin: 10px 0px;
 }
+
+.is-head-container ul {
+    text-decoration: none;
+    list-style: none;   
+}
+
+.is-head-container ul li{
+    display: inline-flex;
+    flex-direction: column;
+    width: 33%;
+    margin: auto;
+    text-align: center;
+}
+
+
 
 .is-head-command {
     color:black;
     font-size:large;
     font-weight: bold;
-    border: 1px solid white;
-    background-color: white;
+    border: 1px solid rgb(250,125,25);
+    background-color: rgb(250,125,25);
     
 }

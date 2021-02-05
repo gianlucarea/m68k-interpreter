@@ -13,7 +13,7 @@ class Command extends Component {
             <a href="#" className="command-icons"><FontAwesomeIcon icon={faPlay} /></a> 
             <a href="#" className="command-icons"><FontAwesomeIcon icon={faUndo} /></a> 
             <a href="#" className="command-icons"><FontAwesomeIcon icon={faRedo} /></a> 
-            <a href="#" className="command-icons"><FontAwesomeIcon icon={faTimes}/></a> 
+            <a href="#" className="command-icons"><FontAwesomeIcon icon={faTimes} /></a> 
             </div>
         )
 }

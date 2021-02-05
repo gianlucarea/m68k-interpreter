@@ -14,15 +14,19 @@ class Editor extends Component{
         return(
             
                 <div className="editor">
-                    <p className="text-editor-txt">Text Editor</p>
+                    <h3 className="text-editor-txt">Text Editor</h3>
                     <AceEditor
                             mode="m68k"
                             theme="monokai"
+                            
                         // onChange={onChange}
                             width="100%"
+                            height="94%"
                             name="UNIQUE_ID_OF_DIV"
                             editorProps={{ $blockScrolling: true }}
-                            fontSize="14pt"
+                            fontSize="12pt"
+                            defaultValue="Org $1000 
+                             * your code goes here *  END"
                         />, 
                 </div>
             

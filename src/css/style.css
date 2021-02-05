@@ -4,7 +4,7 @@ body {
 /*6263FF
 */
 #navbar {
-    background-color: #9898FF ;
+    background-color: rgb(250,125,25);
     color:white;
     display: flex;
     width: 100%;
@@ -34,10 +34,12 @@ body {
 
 .navbar-commands {
     display:flex;   
+    margin-right: 0px;
 }
 
 .command-icons {
     margin: auto 10px;
+    padding: auto 10px;
     text-decoration: none;
     color:white;
 }
@@ -55,20 +57,57 @@ body {
 
 .editor{
     width:50%;
+    background-color: rgb(255, 242, 232);
 }
 
 .text-editor-txt { 
     text-align: center;
-    background-color: #272822;
-    color: white;
-    margin: 0;
+    background-color: rgb(255, 242, 232);
+    color: rgb(39,40,34);
+    text-align: center;
+    margin: 5px;
 }
 
 #registers-section {
     width: 50%;
+    background-color: rgb(255, 242, 232);
+
 }
 
-#registers-section h1 {
+#registers-section h3 {
     color:rgb(39,40,34);
     text-align: center;
+    margin: 5px;
+}
+
+#registers,
+#memory {
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+#registers td,
+#memory td {
+    vertical-align: middle;
+    text-align: center;
+    font-weight: bold;
+    padding: 3px;
+}
+#registers input.init-value {
+    height: 1.0em;
+    color: #777;
+    width: 80%;
+}
+#registers-head th{
+    width: 10%;
+    text-align: center;
+    border: 2px solid rgb(47,49,41);
+}
+
+#PC {
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: 16px;
+    text-align: center;
+    size: 33%;
 }
