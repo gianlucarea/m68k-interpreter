@@ -114,8 +114,6 @@ class Register extends Component {
                             <td>0</td>
                         </tbody>
                     </table>
-
-
             </div>
             
         )

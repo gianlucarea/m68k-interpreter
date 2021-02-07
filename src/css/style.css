@@ -1,6 +1,6 @@
 body {
     margin: 0px ;
-    background-color: rgb(255, 242, 232);
+    background-color: #d8d8d8;
 }
 
 #navbar {
@@ -9,6 +9,7 @@ body {
     display: flex;
     width: 100%;
     font-size : 20px;
+    height: 5%;
 }
 
 #navbar-explorer {
@@ -18,9 +19,7 @@ body {
 }
 
 #navbar-dots {
-    margin: auto;
-    padding: auto;
-    margin-right: 0px;
+    margin: auto 0;
     text-decoration: none;
     color:white;
 }
@@ -53,7 +52,7 @@ body {
 
 #title-page{
     text-align: center;
-    margin: 0 auto;
+    margin: auto;
     color:white;
 }
 
@@ -65,12 +64,15 @@ body {
 
 .editor{
     width:50%;
-    background-color: rgb(255, 242, 232);
+    border-radius: 25px;
+    border: solid black 1px;
+    background-color: white;
 }
 
 .text-editor-txt { 
     text-align: center;
-    background-color: rgb(255, 242, 232);
+    background-color: white;
+    border-radius: 25px;
     color: rgb(39,40,34);
     text-align: center;
     margin: 5px;
@@ -78,7 +80,10 @@ body {
 
 #registers-section {
     width: 50%;
-    background-color: rgb(255, 242, 232);
+    background-color: white;
+    margin-left: 1%;
+    border-radius: 25px;
+    border: solid black 1px;
 }
 
 #registers-section h3 {
@@ -116,6 +121,8 @@ body {
     text-align: center;
     font-weight: bold;
     size: 33%;
+    border-radius: 25px;
+    border: solid black 1px;
 }
 
 #text-try {

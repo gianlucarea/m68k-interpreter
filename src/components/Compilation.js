@@ -9,7 +9,6 @@ class Compilation extends Component {
                     <a id="registerDownload" ></a>
                     <button id="register-download" class="btn btn-primary btn-lg" onClick={window.registersDownload}>Download Registers!</button>
                 </div>
-   
         </div>
     )
 }

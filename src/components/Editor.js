@@ -19,7 +19,7 @@ class Editor extends Component{
                             mode="m68k"
                             theme="monokai"
                             width="100%"
-                            height="98%"
+                            height="93%"
                             id="editor"
                             onChange={this.onChange}
                             name="editor"
