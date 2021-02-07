@@ -2,6 +2,7 @@ import React , {Component} from "react"
 import Navbar from "./Navbar"
 import Editor from "./Editor"
 import Register from "./Register"
+import Compilation from "./Compilation"
 
 class App extends Component {
     render(){
@@ -12,6 +13,7 @@ class App extends Component {
                 <Editor />
                 <Register />
                 </div>
+                <Compilation/>
             </div>
         )
     }

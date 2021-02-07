@@ -1,10 +1,10 @@
 body {
     margin: 0px ;
+    background-color: rgb(255, 242, 232);
 }
-/*6263FF
-*/
+
 #navbar {
-    background-color: rgb(250,125,25);
+    background-color: rgba(11, 103, 241, 0.897);
     color:white;
     display: flex;
     width: 100%;
@@ -19,40 +19,48 @@ body {
 
 #navbar-dots {
     margin: auto;
-    margin-right: 10px;
+    padding: auto;
+    margin-right: 0px;
     text-decoration: none;
     color:white;
 }
 
-#navbar-guide {
+#navbar-dots a {
     margin: auto;
     margin-right: 10px;
     text-decoration: none;
     color:white;
 }
 
+#register-table{
+    height: 80vh;
+}
 
 .navbar-commands {
     display:flex;   
-    margin-right: 0px;
+    margin: 0px 10px;
 }
 
 .command-icons {
     margin: auto 10px;
-    padding: auto 10px;
     text-decoration: none;
     color:white;
 }
 
+.command-icons:hover{
+    color:green;
+}
+
 #title-page{
     text-align: center;
-    margin: auto;
+    margin: 0 auto;
     color:white;
 }
 
 .div-parent-editor{
+    height: 80vh;
     display:flex;
-    
+    margin: 5px;
 }
 
 .editor{
@@ -71,7 +79,6 @@ body {
 #registers-section {
     width: 50%;
     background-color: rgb(255, 242, 232);
-
 }
 
 #registers-section h3 {
@@ -92,7 +99,6 @@ body {
     vertical-align: middle;
     text-align: center;
     font-weight: bold;
-    padding: 3px;
 }
 #registers input.init-value {
     height: 1.0em;
@@ -107,7 +113,53 @@ body {
 
 #PC {
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-    font-size: 16px;
     text-align: center;
+    font-weight: bold;
     size: 33%;
 }
+
+#text-try {
+    color:white;
+    width: 100%;
+    margin-top: 40px;
+    display: inline-flex;
+}
+
+#last_instruction{
+    width: 50%;
+    background-color: rgba(211, 211, 211, 0.733);
+    border-radius: 25px;
+    text-align: center;
+    color: #000;
+    margin: 20px 10px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#last_instruction p {
+    background-color: rgba(211, 211, 211, 0.733);
+    border-radius: 25px;
+    text-align: center;
+    color: #000;
+    margin: 20px 10px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#register-download-bt{
+    margin: auto;
+}
+
+#register-download-bt button{
+    margin: 0 auto;
+    border-radius: 25px;
+    font-size: 20px;
+    background-color: rgba(11, 103, 241, 0.897);
+    color: white;
+    border: solid rgba(11, 103, 241, 0.897);
+}
+
+#registerDownload {
+    display: none;
+}
+

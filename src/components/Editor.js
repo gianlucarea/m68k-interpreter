@@ -6,28 +6,28 @@ import "ace-builds/src-noconflict/theme-monokai";
 
 class Editor extends Component{
 
-    onChange() {
-        console.log("change");
+    onChange(newValue) {
+       window.editor= newValue;
       }
 
     render(){
         return(
             
-                <div className="editor">
+                <div className="editor" >
                     <h3 className="text-editor-txt">Text Editor</h3>
-                    <AceEditor
+                   <AceEditor 
                             mode="m68k"
                             theme="monokai"
-                            
-                        // onChange={onChange}
                             width="100%"
-                            height="94%"
-                            name="UNIQUE_ID_OF_DIV"
+                            height="98%"
+                            id="editor"
+                            onChange={this.onChange}
+                            name="editor"
                             editorProps={{ $blockScrolling: true }}
                             fontSize="12pt"
-                            defaultValue="Org $1000 
-                             * your code goes here *  END"
-                        />, 
+                            defaultValue="Org $1000 \n
+                             * your code goes here * \n END"
+                        /> 
                 </div>
             
         )
