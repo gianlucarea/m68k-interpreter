@@ -31,8 +31,17 @@ body {
     color:white;
 }
 
+#navbar-dots button {
+    margin-right: 10px;
+    font-size: large;
+    text-decoration: none;
+    color:white;
+    border: 0px solid black;
+    background-color: inherit;
+}
+
 #register-table{
-    height: 80vh;
+    height: 75vh;
 }
 
 .navbar-commands {
@@ -89,7 +98,8 @@ body {
 #registers-section h3 {
     color:rgb(39,40,34);
     text-align: center;
-    margin: 5px;
+    width: 25%;
+    margin: 10px 100px;
 }
 
 #registers,
@@ -101,12 +111,12 @@ body {
 
 #registers td,
 #memory td {
-    vertical-align: middle;
+    vertical-align:middle;
     text-align: center;
     font-weight: bold;
+    
 }
 #registers input.init-value {
-    height: 1.0em;
     color: #777;
     width: 80%;
 }
@@ -128,14 +138,16 @@ body {
 #text-try {
     color:white;
     width: 100%;
-    margin-top: 40px;
+    margin-top: 5px;
     display: inline-flex;
 }
 
 #last_instruction{
-    width: 50%;
-    background-color: rgba(211, 211, 211, 0.733);
+    margin: 0 auto;
+    width: 48%;
+    background-color: white;
     border-radius: 25px;
+    border:solid black 1px;
     text-align: center;
     color: #000;
     margin: 20px 10px;
@@ -143,30 +155,31 @@ body {
     font-weight: bold;
 }
 
-#last_instruction p {
-    background-color: rgba(211, 211, 211, 0.733);
-    border-radius: 25px;
-    text-align: center;
-    color: #000;
-    margin: 20px 10px;
-    font-size: 20px;
-    font-weight: bold;
-}
 
 #register-download-bt{
     margin: auto;
 }
 
 #register-download-bt button{
-    margin: 0 auto;
+    margin: auto;
     border-radius: 25px;
-    font-size: 20px;
+    font-size: 15px;
     background-color: rgba(11, 103, 241, 0.897);
     color: white;
     border: solid rgba(11, 103, 241, 0.897);
+    display: inline-flex;
 }
 
-#registerDownload {
-    display: none;
+#register-download-bt p {
+    margin: 0px 10px 0px 0px;
 }
 
+
+
+#PLACEHOLDER {
+    color:blue;
+}
+
+#registers-header{
+    display: inline-flex;
+}

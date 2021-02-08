@@ -1,4 +1,7 @@
 import React , {Component} from "react"
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faFileDownload } from '@fortawesome/free-solid-svg-icons'
+
 
 class Register extends Component {
 
@@ -17,7 +20,13 @@ class Register extends Component {
     render(){
         return(
             <div id="registers-section">
-                <h3>Register Set</h3>
+                <div id="registers-header">
+                    <h3>Register Set</h3>
+                    <div id="register-download-bt">
+                        <a id="registerDownload" ></a>
+                        <button id="register-download" class="btn btn-primary btn-lg" onClick={window.registersDownload}> <p>Download</p> <FontAwesomeIcon icon={faFileDownload} /> </button>
+                    </div>
+                </div>
                 <table className="table table-hover table-condensed registers-table" id="register-table">
                         <thead id="registers-head">
                             <tr>
@@ -108,11 +117,11 @@ class Register extends Component {
                                 <td>0</td>
                             </tr>
                         </tbody>
-                        <tbody id="PC">
+                        <tr id="PC">
                             <td>0</td>
                             <td>PC</td>
                             <td>0</td>
-                        </tbody>
+                        </tr>
                     </table>
             </div>
             

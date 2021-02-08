@@ -3,6 +3,7 @@ import Navbar from "./Navbar"
 import Editor from "./Editor"
 import Register from "./Register"
 import Compilation from "./Compilation"
+import Memory from "./Memory"
 
 class App extends Component {
     render(){
@@ -14,6 +15,7 @@ class App extends Component {
                 <Register />
                 </div>
                 <Compilation/>
+                <Memory/>
             </div>
         )
     }
