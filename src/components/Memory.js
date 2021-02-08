@@ -3,8 +3,8 @@ import React , {Component} from "react"
 class Memory extends Component {
     render(){
         return ( 
-            <div  id="navbar-dots">
-                <h1 id="PLACEHOLDER">Memory</h1>
+            <div id="memory-area">
+               
             </div>
        )  
         }
