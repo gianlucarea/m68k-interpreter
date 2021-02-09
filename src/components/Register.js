@@ -21,7 +21,7 @@ class Register extends Component {
         return(
             <div id="registers-section">
                 <div id="registers-header">
-                    <h3>Register Set</h3>
+                <h3>Register Set</h3>
                     <div id="register-download-bt">
                         <a id="registerDownload" ></a>
                         <button id="register-download" class="btn btn-primary btn-lg" onClick={window.registersDownload}> <p>Download</p> <FontAwesomeIcon icon={faFileDownload} /> </button>

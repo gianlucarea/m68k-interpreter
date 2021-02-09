@@ -95,11 +95,18 @@ body {
     border: solid black 1px;
 }
 
-#registers-section h3 {
+#registers-header {
+    width: 100%;
+}
+
+#registers-header h3 {
     color:rgb(39,40,34);
     text-align: center;
-    width: 25%;
-    margin: 10px 100px;
+    margin: 5 auto;
+}
+
+#register-download{
+    margin: auto 0;
 }
 
 #registers,
@@ -150,7 +157,7 @@ body {
     border:solid black 1px;
     text-align: center;
     color: #000;
-    margin: 20px 10px;
+    margin: 20px auto;
     font-size: 20px;
     font-weight: bold;
 }
@@ -174,12 +181,100 @@ body {
     margin: 0px 10px 0px 0px;
 }
 
-
-
-#PLACEHOLDER {
-    color:blue;
-}
-
 #registers-header{
     display: inline-flex;
 }
+
+
+#delayHelp{
+    display: inline-flex;
+    width: 48%;
+    background-color: white;
+    border-radius: 25px;
+    border:solid black 1px;
+    text-align: center;
+    color: #000;
+    margin: 20px auto;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#delayHelp a{
+    margin: auto auto auto 5px;
+}
+
+#delay{
+    width: 40%;
+    margin: auto 10%;
+    border-radius: 25px;
+    border: black 0px solid;
+    color: black;
+    font-size: large;
+    font-weight: bold;
+    text-align: center;
+}
+
+#memory-area {
+    width: 95%;
+    margin: 5px auto ;
+    border-radius: 25px;
+    border: solid black 1px;
+    background-color: white;
+}
+
+#memory-area-header{
+    display: inline-flex;
+    margin: 10px 10px;
+    width: 100%;
+}
+
+#memory-address-head{
+    margin: 0 auto;
+    color: rgb(39,40,34);
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#memory-address-head input {
+    margin: 0 10px;
+}
+
+.memory-btn{
+    margin: auto 5px;
+    background-color: rgba(11, 103, 241, 0.897);
+    border-radius: 25px;
+    border: 0px;
+    font-size: 15px;
+    color: white;
+    padding: auto;
+}
+
+#memory-btn-section{
+    margin: 0 auto;
+}
+
+#memory-table {
+    width: 100%;
+    margin: 5px auto;
+}
+
+#memory-head{ 
+    width: 80%;
+    margin: 5px auto;
+}
+
+#memory-head th{ 
+    width: 80%;
+    margin: 5px auto;
+    width: 10%;
+    text-align: center;
+    border: 2px solid rgb(47,49,41);
+}
+
+
+#memory-table-f{
+    width: 80%;
+    margin: 0 auto;
+}
+
+
