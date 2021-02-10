@@ -7,7 +7,7 @@ class DotsMenu extends Component {
     render(){
         return ( 
             <div  id="navbar-dots">
-            <a href="#"><FontAwesomeIcon icon={faMemory} /></a>
+            <a id="showmemory" onClick={window.showmemory}><FontAwesomeIcon icon={faMemory}/></a>
             <a href="/help.html" ><FontAwesomeIcon icon={faQuestionCircle} /></a>
             </div>
        )  

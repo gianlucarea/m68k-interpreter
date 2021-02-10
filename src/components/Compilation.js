@@ -8,7 +8,7 @@ class Compilation extends Component {
         <div id="text-try">
                 <div id="last_instruction" className="last_instruction" >L'istruzione più recente verrà mostrata qui!</div> 
                 <div id="delayHelp">
-                <input type="number" id="delay" defaultvalue="0" placeholder="0"></input>
+                <input type="number" id="delay" defaultValue="0" placeholder="0"></input>
                 Delay Time
                 <a><FontAwesomeIcon icon={faClock} /></a>
                 </div>   

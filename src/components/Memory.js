@@ -3,12 +3,13 @@ import React , {Component} from "react"
 class Memory extends Component {
     render(){
         return ( 
-                    <div id="memory-area">
+                    <div id="memory-area-container" style={{display:"none"}}>
+                        <div id="memory-area">
                         <div>
                             <div id="memory-area-header">
                                 <div id="memory-address-head">
-                                    <label for="memory-address">Memory Address</label>
-                                    <input type="text" id="memory-address" className="form-control" placeholder="0x00000000" defaultvalue="0x00000000"></input>
+                                    <label>Memory Address</label>
+                                    <input type="text" id="memory-address" className="form-control" placeholder="0x00000000" defaultValue="0x00000000"></input>
                                 </div>
                                 <div id="memory-btn-section">
                                 <button id="memory-go" className="memory-btn"  onClick={window.moveMemory}>Go</button>
@@ -18,7 +19,7 @@ class Memory extends Component {
                                 <button id="memory-download" className="memory-btn" onClick={window.memoryDownload}>Download</button>
                                 </div>
                             </div>
-                            <div id="memory-table" class="table-responsive">
+                            <div id="memory-table" className="table-responsive">
                                 <table id="memory-table-f">
                                     <thead id="memory-head">
                                         <tr>
@@ -104,7 +105,8 @@ class Memory extends Component {
                                 </table>
                             </div>
                         </div>
-                    </div>)  
+                        </div>
+                        </div>)  
         }
     }
 

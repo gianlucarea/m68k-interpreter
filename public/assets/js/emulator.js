@@ -1449,7 +1449,7 @@ class Emulator {
                 break;
 
             case Emulator.TOKEN_OFFSET_ADDR.toString() + Emulator.TOKEN_REG_DATA.toString() :
-                var address = parseInt(this.registers[op1.value], 10) + parseInt(op.offset);
+                var address = parseInt(this.registers[op1.value], 10) + parseInt(op1.offset);
                 if(!this.memory.isValidAddress(address)) {
                     this.errors.push(Strings.INVALID_ADDRESS + Strings.AT_LINE + this.line);
                     return undefined;
@@ -1561,7 +1561,7 @@ class Emulator {
 
             case Emulator.TOKEN_OFFSET_ADDR.toString() + Emulator.TOKEN_REG_DATA.toString() :
 
-                var address = parseInt(this.registers[op1.value], 10) + parseInt(op.offset);
+                var address = parseInt(this.registers[op1.value], 10) + parseInt(op1.offset);
                 if(!this.memory.isValidAddress(address)) {
                     this.errors.push(Strings.INVALID_ADDRESS + Strings.AT_LINE + this.line);
                     return undefined;
@@ -2346,7 +2346,7 @@ class Emulator {
         var res = braOP(size, op, this.pc);
         if(res[1]) {
             console.log("Offset too long for bra");
-            this.errors.push(Strings.BRA_OFFSET_TOO_LONG + String.AT_LINE + this.line);
+            this.errors.push(Strings.BRA_OFFSET_TOO_LONG + Strings.AT_LINE + this.line);
             return;
         }
         this.pc = res[0];
@@ -2375,7 +2375,7 @@ class Emulator {
         op = parseInt(op);
         var res = beqOP(size, op, this.pc, this.ccr);
         if(res[1]) {
-            this.errors.push(Strings.BEQ_OFFSET_TOO_LONG + String.AT_LINE + this.line);
+            this.errors.push(Strings.BEQ_OFFSET_TOO_LONG + Strings.AT_LINE + this.line);
             return;
         }
         this.pc = res[0];
@@ -2386,7 +2386,7 @@ class Emulator {
         op = parseInt(op);
         var res = bneOP(size, op, this.pc, this.ccr);
         if(res[1]) {
-            this.errors.push(Strings.BNE_OFFSET_TOO_LONG + String.AT_LINE + this.line);
+            this.errors.push(Strings.BNE_OFFSET_TOO_LONG + Strings.AT_LINE + this.line);
             return;
         }
         this.pc = res[0];
@@ -2397,7 +2397,7 @@ class Emulator {
         op = parseInt(op);
         var res = bgeOP(size, op, this.pc, this.ccr);
         if(res[1]) {
-            this.errors.push(Strings.BGE_OFFSET_TOO_LONG + String.AT_LINE + this.line);
+            this.errors.push(Strings.BGE_OFFSET_TOO_LONG + Strings.AT_LINE + this.line);
             return;
         }
         this.pc = res[0];
@@ -2408,7 +2408,7 @@ class Emulator {
         op = parseInt(op);
         var res = bgtOP(size, op, this.pc, this.ccr);
         if(res[1]) {
-            this.errors.push(Strings.BGT_OFFSET_TOO_LONG + String.AT_LINE + this.line);
+            this.errors.push(Strings.BGT_OFFSET_TOO_LONG + Strings.AT_LINE + this.line);
             return;
         }
         this.pc = res[0];
@@ -2419,7 +2419,7 @@ class Emulator {
         op = parseInt(op);
         var res = bleOP(size, op, this.pc, this.ccr);
         if(res[1]) {
-            this.errors.push(Strings.BLE_OFFSET_TOO_LONG + String.AT_LINE + this.line);
+            this.errors.push(Strings.BLE_OFFSET_TOO_LONG + Strings.AT_LINE + this.line);
             return;
         }
         this.pc = res[0];
@@ -2430,7 +2430,7 @@ class Emulator {
         op = parseInt(op);
         var res = bltOP(size, op, this.pc, this.ccr);
         if(res[1]) {
-            this.errors.push(Strings.BLT_OFFSET_TOO_LONG + String.AT_LINE + this.line);
+            this.errors.push(Strings.BLT_OFFSET_TOO_LONG + Strings.AT_LINE + this.line);
             return;
         }
         this.pc = res[0];

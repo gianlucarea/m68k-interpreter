@@ -1,6 +1,6 @@
 body {
     margin: 0px ;
-    background-color: #d8d8d8;
+    background-color: rgb(255, 242, 232);
 }
 
 #navbar {
@@ -56,7 +56,7 @@ body {
 }
 
 .command-icons:hover{
-    color:green;
+    color:rgb(247, 182, 133);
 }
 
 #title-page{
@@ -221,6 +221,10 @@ body {
     border: solid black 1px;
     background-color: white;
 }
+#navbar-dots a:hover{
+    color:rgb(247, 182, 133);
+}
+
 
 #memory-area-header{
     display: inline-flex;

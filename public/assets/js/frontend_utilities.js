@@ -108,3 +108,12 @@ function displayErrors(errors) {
     }
     document.getElementById('last_instruction').innerHTML = html;
 }
+
+function showmemory() {
+    var x = document.getElementById("memory-area-container");
+    if (x.style.display == "none") {
+        x.style.display = "flex";
+    } else {
+        x.style.display = "none";
+    }
+  }

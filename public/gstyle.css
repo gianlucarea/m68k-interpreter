@@ -4,7 +4,7 @@ body {
 }
 
 h1 {
-    color: rgb(250,125,25);
+    color: rgba(11, 103, 241, 0.897);
     text-align: center;
 }
 
@@ -23,7 +23,7 @@ h1 {
 }
 
 .how-to i {
-    color: rgb(250,125,25);
+    color: rgba(11, 103, 241, 0.897);
     
 }
 
@@ -32,7 +32,7 @@ h1 {
 }
 
 .is-head  {
-    color: rgb(250,125,25);
+    color: rgba(11, 103, 241, 0.897);
     font-weight: bold;
     text-align: center;
 }
@@ -56,12 +56,11 @@ h1 {
 }
 
 
-
 .is-head-command {
-    color:black;
+    color:white;
     font-size:large;
     font-weight: bold;
-    border: 1px solid rgb(250,125,25);
-    background-color: rgb(250,125,25);
+    border: 1px solid rgba(11, 103, 241, 0.897);
+    background-color: rgba(11, 103, 241, 0.897);
     
 }
