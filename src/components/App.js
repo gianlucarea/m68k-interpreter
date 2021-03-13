@@ -4,6 +4,8 @@ import Editor from "./Editor"
 import Register from "./Register"
 import Compilation from "./Compilation"
 import Memory from "./Memory"
+import MMIO from "./MMIO"
+
 
 class App extends Component {
     render(){
@@ -16,6 +18,7 @@ class App extends Component {
                 </div>
                 <Compilation/>
                 <Memory/>
+                <MMIO/>               
             </div>
         )
     }

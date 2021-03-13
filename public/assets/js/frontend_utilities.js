@@ -117,3 +117,12 @@ function showmemory() {
         x.style.display = "none";
     }
   }
+
+function showMMIO() {
+    var x = document.getElementById("mmio-area-container");
+    if (x.style.display == "none") {
+        x.style.display = "flex";
+    } else {
+        x.style.display = "none";
+    }
+}

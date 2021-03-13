@@ -281,4 +281,81 @@ body {
     margin: 0 auto;
 }
 
+#mmio-area {
+    width: 95%;
+    margin: 5px auto ;
+    border-radius: 25px;
+    border: solid black 1px;
+    background-color: white;
+}
+
+#mmio-area-head{
+    display: inline-flex;
+    width: 100%;
+}
+
+#display-txt {
+    margin : 0 auto;
+}
+
+#display-txt h1 {
+    text-align: center;
+}
+
+#display-txt p {
+    text-align: center;
+}
+
+#keyboard-txt {
+    margin : 0 auto;
+}
+
+#keyboard-txt h1 {
+    text-align: center;
+}
+
+#keyboard-txt p {
+    text-align: center;
+}
+
+#mmio-area-body{
+    display: inline-flex;
+    width: 100%;
+    height: 20vh;
+}
+
+#display-output{
+    margin: 0 auto;
+    width: 100%;
+    margin: 0px 20px;
+}
+
+#keyboard-input{
+    margin: 0 auto;
+    padding: 0 auto;
+    margin: 0px 20px;
+    width: 100%;
+}
+
+#display {
+    width: 100%;
+    height: 19vh;
+    border-end-end-radius: 25px;
+    border-end-start-radius: 25px;
+    margin: 0 auto;
+    resize: none;
+}
+
+#keyboard {
+    width: 100%;
+    height: 19vh;
+    border-end-end-radius: 25px;
+    border-end-start-radius: 25px;
+    resize: none;
+}
+
+
+
+
+
 
