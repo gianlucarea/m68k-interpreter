@@ -10,6 +10,13 @@ class Editor extends Component{
        window.editor= newValue;
       }
 
+    /**
+     * @returns Default editor text at application start
+     */
+      setDefaultValue(){
+        return "Org $1000 \n" + "* your code goes here * \n"+ "END"; 
+    }
+
     render(){
         return(
             
@@ -25,13 +32,16 @@ class Editor extends Component{
                             name="editor"
                             editorProps={{ $blockScrolling: true }}
                             fontSize="12pt"
-                            defaultValue="Org $1000 \n
-                             * your code goes here * \n END"
+                            defaultValue={this.setDefaultValue()}
                         /> 
                 </div>
             
         )
     }
+
+
 }
+
+
 
 export default Editor 
