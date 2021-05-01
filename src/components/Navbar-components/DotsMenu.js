@@ -8,9 +8,9 @@ class DotsMenu extends Component {
     render(){
         return ( 
             <div  id="navbar-dots">
-            <button id="showMMIO" className="tools-icons" onClick={window.showMMIO}><FontAwesomeIcon icon={faKeyboard}/></button>
-            <button id="showmemory" className="tools-icons" onClick={window.showmemory}><FontAwesomeIcon icon={faMemory}/></button>
-            <a href="/help.html"  className="tools-icons"><FontAwesomeIcon icon={faQuestionCircle} /></a>
+            <a id="showMMIO" onClick={window.showMMIO}><FontAwesomeIcon icon={faKeyboard}/></a>
+            <a id="showmemory" onClick={window.showmemory}><FontAwesomeIcon icon={faMemory}/></a>
+            <a href="/help.html" ><FontAwesomeIcon icon={faQuestionCircle} /></a>
             </div>
        )  
         }

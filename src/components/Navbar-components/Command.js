@@ -10,10 +10,10 @@ class Command extends Component {
     render (){
          return(
             <div className="navbar-commands">
-            <button id="run" className="command-icons" onClick={window.go}><FontAwesomeIcon icon={faPlay} /></button> 
-            <button id="undo" className="command-icons" onClick={window.undo}><FontAwesomeIcon icon={faUndo} /></button> 
-            <button id="step" className="command-icons" onClick={window.step}><FontAwesomeIcon icon={faRedo} /></button> 
-            <button id="reset" className="command-icons" onClick={window.reset}><FontAwesomeIcon icon={faTimes} /></button> 
+            <a id="run" className="command-icons" onClick={window.go}><FontAwesomeIcon icon={faPlay} /></a> 
+            <a id="undo" className="command-icons" onClick={window.undo}><FontAwesomeIcon icon={faUndo} /></a> 
+            <a id="step" className="command-icons" onClick={window.step}><FontAwesomeIcon icon={faRedo} /></a> 
+            <a id="reset" className="command-icons" onClick={window.reset}><FontAwesomeIcon icon={faTimes} /></a> 
             </div>
         )
 }

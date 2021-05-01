@@ -31,17 +31,13 @@ body {
     color:white;
 }
 
-.tools-icons{
+#navbar-dots button {
     margin-right: 10px;
     font-size: large;
     text-decoration: none;
     color:white;
     border: 0px solid black;
     background-color: inherit;
-}
-
-.tools-icons:hover{
-    color:#26e241;
 }
 
 #register-table{
@@ -54,10 +50,7 @@ body {
 }
 
 .command-icons {
-    background-color: #822627; 
-    border: none;
     margin: auto 10px;
-    font-size:large;
     text-decoration: none;
     color:white;
 }
@@ -220,11 +213,6 @@ body {
     font-weight: bold;
     text-align: center;
 }
-
-#clock-icon {
-    margin: auto 10px;
-}
-
 
 #memory-area {
     width: 95%;
