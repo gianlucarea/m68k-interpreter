@@ -1,10 +1,10 @@
 
 body {
-    background-color: rgb(255, 242, 232) ;
+    background-color: #fff ;
 }
 
 h1 {
-    color: rgba(11, 103, 241, 0.897);
+    color: #822627;
     text-align: center;
 }
 
@@ -23,7 +23,7 @@ h1 {
 }
 
 .how-to i {
-    color: rgba(11, 103, 241, 0.897);
+    color: #822627;
     
 }
 
@@ -32,14 +32,14 @@ h1 {
 }
 
 .is-head  {
-    color: rgba(11, 103, 241, 0.897);
+    color: #822627;
     font-weight: bold;
     text-align: center;
 }
 
 .is-head-container{
-    border:5px solid white;
-    margin: 10px 0px;
+    border:5px solid #822627;
+    margin: 10px;
 }
 
 .is-head-container ul {
@@ -51,7 +51,7 @@ h1 {
     display: inline-flex;
     flex-direction: column;
     width: 33%;
-    margin: auto;
+    margin: 0 auto ;
     text-align: center;
 }
 
@@ -60,7 +60,9 @@ h1 {
     color:white;
     font-size:large;
     font-weight: bold;
-    border: 1px solid rgba(11, 103, 241, 0.897);
-    background-color: rgba(11, 103, 241, 0.897);
-    
+    border: 1px solid #822627;
+    background-color: #822627;
+    margin: 0 auto ;
+    width: 90%;
+
 }

@@ -4,7 +4,7 @@ body {
 }
 
 #navbar {
-    background-color: rgba(11, 103, 241, 0.897);
+    background-color: #822627;
     color:white;
     display: flex;
     width: 100%;
@@ -56,7 +56,7 @@ body {
 }
 
 .command-icons:hover{
-    color:rgb(247, 182, 133);
+    color:#26e241;
 }
 
 #title-page{
@@ -171,9 +171,9 @@ body {
     margin: auto;
     border-radius: 25px;
     font-size: 15px;
-    background-color: rgba(11, 103, 241, 0.897);
+    background-color: #822627;
     color: white;
-    border: solid rgba(11, 103, 241, 0.897);
+    border: solid #822627;
     display: inline-flex;
 }
 
@@ -221,8 +221,9 @@ body {
     border: solid black 1px;
     background-color: white;
 }
+
 #navbar-dots a:hover{
-    color:rgb(247, 182, 133);
+    color:#26e241;
 }
 
 
@@ -245,7 +246,7 @@ body {
 
 .memory-btn{
     margin: auto 5px;
-    background-color: rgba(11, 103, 241, 0.897);
+    background-color: #822627;
     border-radius: 25px;
     border: 0px;
     font-size: 15px;
