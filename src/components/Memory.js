@@ -15,7 +15,7 @@ class Memory extends Component {
                                 <button id="memory-go" className="memory-btn"  onClick={window.moveMemory}>Go</button>
                                 <button id="memory-next" className="memory-btn" onClick={window.memoryPrevious}>&lt;</button>
                                 <button id="memory-previous" className="memory-btn"  onClick={window.memoryNext}>&gt;</button>
-                                <a id="memoryDownload" ></a>
+                                <a href="/null" id="memoryDownload" ></a>
                                 <button id="memory-download" className="memory-btn" onClick={window.memoryDownload}>Download</button>
                                 </div>
                             </div>

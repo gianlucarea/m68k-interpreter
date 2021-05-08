@@ -14,7 +14,7 @@ class Editor extends Component{
      * @returns Default editor text at application start
      */
       setDefaultValue(){
-        return "Org $1000 \n" + "* your code goes here * \n"+ "END"; 
+        return "Org $1000 \n * your code goes here * \nEND"; 
     }
 
     render(){

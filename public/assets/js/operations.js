@@ -553,7 +553,7 @@ function bneOP(size, op, pc, ccr) {
 function bgeOP(size, op, pc, ccr) {
     var VFlag = ccr & 0x02;                                // Extracting the V flag from ccr
     var NFlag = ccr & 0x08;                                // Extracting the N flag from ccr
-    if( (VFlag && NFlag) || (!Vflag && !NFlag) )          // If both the flags are set, or if both the flags are clear, we branch
+    if( (VFlag && NFlag) || (!VFlag && !NFlag) )          // If both the flags are set, or if both the flags are clear, we branch
         return braOP(size, op, pc);
     else return [pc, false];                               // Else we just return the pc
 }
@@ -562,7 +562,7 @@ function bgtOP(size, op, pc, ccr) {
     var ZFlag = ccr & 0x04;                                // Extracting the Z flag from ccr
     var VFlag = ccr & 0x02;                                // Extracting the V flag from ccr
     var NFlag = ccr & 0x08;                                // Extracting the N flag from ccr
-    if( !ZFlag && ((VFlag && NFlag) || (!Vflag && !NFlag)) )          // If Z flag is clear and both the flags are set, or if both the flags are clear, we branch
+    if( !ZFlag && ((VFlag && NFlag) || (!VFlag && !NFlag)) )          // If Z flag is clear and both the flags are set, or if both the flags are clear, we branch
         return braOP(size, op, pc);
     else return [pc, false];                               // Else we just return the pc
 }
@@ -579,7 +579,7 @@ function bleOP(size, op, pc, ccr) {
 function bltOP(size, op, pc, ccr) {
     var VFlag = ccr & 0x02;                                // Extracting the V flag from ccr
     var NFlag = ccr & 0x08;                                // Extracting the N flag from ccr
-    if( (!VFlag && NFlag) || (Vflag && !NFlag) )  
+    if( (!VFlag && NFlag) || (VFlag && !NFlag) )  
         return braOP(size, op, pc);
     else return [pc, false];                               // Else we just return the pc
 }

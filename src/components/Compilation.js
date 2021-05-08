@@ -10,7 +10,7 @@ class Compilation extends Component {
                 <div id="delayHelp">
                 <input type="number" id="delay" defaultValue="0" placeholder="0"></input>
                 Delay Time
-                <a><FontAwesomeIcon icon={faClock} /></a>
+                <FontAwesomeIcon icon={faClock} size="xl" id="clock-icon"/>
                 </div>   
     </div>
     )

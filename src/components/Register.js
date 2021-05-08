@@ -22,8 +22,8 @@ class Register extends Component {
                 <div id="registers-header">
                 <h3>Register Set</h3>
                     <div id="register-download-bt">
-                        <a id="registerDownload" ></a>
-                        <button id="register-download" className="btn btn-primary btn-lg" onClick={window.registersDownload}> <p>Download</p> <FontAwesomeIcon icon={faFileDownload} /> </button>
+                        <a href="/null" id="registerDownload" >  </a>
+                        <button id="registerDownload" className="btn btn-primary btn-lg" onClick={window.registersDownload}> <p>Download</p> <FontAwesomeIcon icon={faFileDownload} /> </button>
                     </div>
                 </div>
                 <table className="table table-hover table-condensed registers-table" id="register-table">
