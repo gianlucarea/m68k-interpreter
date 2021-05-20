@@ -32,6 +32,9 @@ function UIUpdate(worker, memory_starting_point) {
     document.getElementById('last_instruction').innerHTML = worker.getLastInstruction();
     // Setting the text for the program counter
     document.getElementById('PC').innerHTML = sprintf("<td>%d</td><td>PC</td><td>0x%08x</td>", worker.getPC(), worker.getPC());
+    
+    //Flags
+    document.getElementById('flags-value').innerHTML = sprintf("<td class='flag-value'> %d</td><td class='flag-value'>%d</td><td class='flag-value'>%d</td><td class='flag-value'>%d</td><td class='flag-value' >%d</td>", worker.getXFlag(), worker.getNFlag(), worker.getZFlag(), worker.getVFlag(),worker.getCFlag() ); 
 }
 
 function UIReset() {
@@ -60,6 +63,8 @@ function UIReset() {
     document.getElementById('last_instruction').innerHTML = Strings.LAST_INSTRUCTION_DEFAULT_TEXT;
 
     document.getElementById('PC').innerHTML = "<td>0</td><td>PC</td><td>0</td>";
+     //Flags
+     document.getElementById('flags-value').innerHTML = "<td class='flag-value'> 0</td><td class='flag-value'>0</td><td class='flag-value'>0</td><td class='flag-value'>0</td><td class='flag-value' >0</td>"; 
 }
 
 function initializeRegisters() {

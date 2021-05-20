@@ -115,6 +115,26 @@ class Emulator {
         return this.errors;
     }
 
+    getZFlag() {
+        return (this.ccr & 0x04) >>> 2;
+    } 
+
+    getVFlag() {
+        return (this.ccr & 0x02) >>> 1;
+    } 
+
+    getNFlag() {
+        return (this.ccr & 0x08) >>> 3;
+    } 
+
+    getCFlag() {
+        return (this.ccr & 0x01) >>> 0;
+    } 
+
+    getXFlag() {
+        return (this.ccr & 0x10) >>> 4;
+    } 
+
     undoFromStack() {
         let frame = this.undo.pop();
         if(frame === undefined) 

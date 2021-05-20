@@ -17,12 +17,12 @@ class Flag extends Component {
                                 </tr>
                             </thead>
                             <tbody id="flag">
-                                <tr>
-                                    <td id="extended-flag" className="flag-value">0</td>
-                                    <td id="negative-flag" className="flag-value">0</td>
-                                    <td id="zero-flag" className="flag-value">0</td>
-                                    <td id="overflow-flag" className="flag-value">0</td>
-                                    <td id="carry-flag" className="flag-value">0</td>
+                                <tr id="flags-value">
+                                    <td className="flag-value">0</td>
+                                    <td className="flag-value">0</td>
+                                    <td className="flag-value">0</td>
+                                    <td className="flag-value">0</td>
+                                    <td className="flag-value">0</td>
                                 </tr>
                             </tbody>
                         </table>
