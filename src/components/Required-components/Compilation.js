@@ -11,7 +11,7 @@ class Compilation extends Component {
                 <input type="number" id="delay" defaultValue="0" placeholder="0"></input>
                 Delay Time
                 <FontAwesomeIcon icon={faClock} size="xl" id="clock-icon"/>
-                </div>   
+                </div> 
     </div>
     )
 }

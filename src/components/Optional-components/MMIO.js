@@ -9,22 +9,22 @@ class MMIO extends Component {
                     <div id="mmio-area-head">
                         <div id="display-txt">
                             <h1>Display</h1>
-                            <p>Bla bla bla </p>
+                            <p>Under Development </p>
                         </div>
                         <div id="keyboard-txt">
                             <h1>Keyboard</h1>
-                            <p>Bla bla bla</p>
+                            <p>Under Development</p>
                         </div>
                     </div>
                     <div id="mmio-area-body">
                         <div id="display-output">
-                            <textarea id="display">
-                                CAOéPSJ
+                            <textarea id="display" defaultValue="Under Dev">
+                                
                             </textarea>
                         </div>
                         <div id="keyboard-input">
-                            <textarea id="keyboard">
-                                CIAO
+                            <textarea id="keyboard" defaultValue="Under Dev">
+                                
                             </textarea>
                         </div>
                     </div>

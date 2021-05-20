@@ -2,6 +2,9 @@ body {
     margin: 0px ;
     background-color: rgb(255, 242, 232);
 }
+/**
+Navbar
+**/
 
 #navbar {
     background-color: #822627;
@@ -31,6 +34,9 @@ body {
     color:white;
 }
 
+#navbar-dots a:hover{
+    color:#26e241;
+}
 
 
 .tools-icons {
@@ -73,7 +79,9 @@ body {
     margin: auto;
     color:white;
 }
-
+/**
+Editor
+**/
 .div-parent-editor{
     height: 80vh;
     display:flex;
@@ -95,6 +103,10 @@ body {
     text-align: center;
     margin: 5px;
 }
+
+/***
+Register
+**/
 
 #registers-section {
     width: 50%;
@@ -158,18 +170,7 @@ body {
     display: inline-flex;
 }
 
-#last_instruction{
-    margin: 0 auto;
-    width: 48%;
-    background-color: white;
-    border-radius: 25px;
-    border:solid black 1px;
-    text-align: center;
-    color: #000;
-    margin: 20px auto;
-    font-size: 20px;
-    font-weight: bold;
-}
+
 
 
 #register-download-bt{
@@ -194,6 +195,21 @@ body {
     display: inline-flex;
 }
 
+/**
+Compilation 
+*/
+#last_instruction{
+    margin: 0 auto;
+    width: 48%;
+    background-color: white;
+    border-radius: 25px;
+    border:solid black 1px;
+    text-align: center;
+    color: #000;
+    margin: 20px auto;
+    font-size: 20px;
+    font-weight: bold;
+}
 
 #delayHelp{
     display: inline-flex;
@@ -226,6 +242,48 @@ body {
 #clock-icon {
     margin: auto 10px;
 }
+/**
+FLAG 
+*/
+
+#flag-area {
+    width: 95%;
+    margin: 5px auto ;
+    border-radius: 25px;
+    border: solid black 1px;
+    background-color: white;
+}
+
+#flag-table {
+    width: 100%;
+    margin: 5px auto;
+}
+
+#flag-head{ 
+    width: 80%;
+    margin: 5px auto;
+}
+
+#flag-head th{ 
+    width: 80%;
+    margin: 5px auto;
+    width: 10%;
+    text-align: center;
+    border: 2px solid rgb(47,49,41);
+}
+
+#flag-table-f{
+    width: 80%;
+    margin: 0 auto;
+}
+
+.flag-value {
+    text-align: center;
+   }
+
+/**
+MEMORY 
+*/
 
 #memory-area {
     width: 95%;
@@ -234,11 +292,6 @@ body {
     border: solid black 1px;
     background-color: white;
 }
-
-#navbar-dots a:hover{
-    color:#26e241;
-}
-
 
 #memory-area-header{
     display: inline-flex;
@@ -294,6 +347,10 @@ body {
     width: 80%;
     margin: 0 auto;
 }
+
+/**
+MMIO 
+*/
 
 #mmio-area {
     width: 95%;

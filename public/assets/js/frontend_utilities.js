@@ -126,3 +126,12 @@ function showMMIO() {
         x.style.display = "none";
     }
 }
+
+function showFlag() {
+    var x = document.getElementById("flag-area-container");
+    if (x.style.display == "none") {
+        x.style.display = "flex";
+    } else {
+        x.style.display = "none";
+    }
+}
