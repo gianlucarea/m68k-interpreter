@@ -1,10 +1,10 @@
 
 body {
-    background-color: #fff ;
+    background-color: #f2f6ff ;
 }
 
 h1 {
-    color: #822627;
+    color: #120e38;
     text-align: center;
 }
 
@@ -23,7 +23,7 @@ h1 {
 }
 
 .how-to i {
-    color: #822627;
+    color: #120e38;
     
 }
 
@@ -32,13 +32,13 @@ h1 {
 }
 
 .is-head  {
-    color: #822627;
+    color: #120e38;
     font-weight: bold;
     text-align: center;
 }
 
 .is-head-container{
-    border:5px solid #822627;
+    border:5px solid #120e38;
     margin: 10px;
 }
 
@@ -60,8 +60,8 @@ h1 {
     color:white;
     font-size:large;
     font-weight: bold;
-    border: 1px solid #822627;
-    background-color: #822627;
+    border: 1px solid #120e38;
+    background-color: #120e38;
     margin: 0 auto ;
     width: 90%;
 

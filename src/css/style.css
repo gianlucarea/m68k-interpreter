@@ -1,18 +1,18 @@
 body {
     margin: 0px ;
-    background-color: rgb(255, 242, 232);
+    background-color: #f2f6ff;
 }
 /**
 Navbar
 **/
 
 #navbar {
-    background-color: #822627;
+    background-color: #120e38;
     color:white;
     display: flex;
     width: 100%;
     font-size : 20px;
-    height: 5%;
+    height: 6.5%;
 }
 
 #navbar-explorer {
@@ -62,7 +62,7 @@ Navbar
 }
 
 .command-icons {
-    background-color: #822627; 
+    background-color: #120e38; 
     border: none;
     margin: auto 10px;
     font-size:large;
@@ -181,9 +181,9 @@ Register
     margin: auto;
     border-radius: 25px;
     font-size: 15px;
-    background-color: #822627;
+    background-color: #120e38;
     color: white;
-    border: solid #822627;
+    border: solid #120e38;
     display: inline-flex;
 }
 
@@ -312,7 +312,7 @@ MEMORY
 
 .memory-btn{
     margin: auto 5px;
-    background-color: #822627;
+    background-color: #120e38;
     border-radius: 25px;
     border: 0px;
     font-size: 15px;
