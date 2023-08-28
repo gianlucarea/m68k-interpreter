@@ -1,0 +1,68 @@
+
+body {
+    background-color: #f2f6ff ;
+}
+
+h1 {
+    color: #120e38;
+    text-align: center;
+}
+
+.how-to ul li{
+    text-decoration: none;
+    list-style: none;
+    display: inline-flex;
+    flex-direction: column;
+    width: 45%;
+    margin: 10px;
+    text-align: center;
+}
+
+.how-to p {
+    font-size: large;
+}
+
+.how-to i {
+    color: #120e38;
+    
+}
+
+.h3 {
+    float: left;
+}
+
+.is-head  {
+    color: #120e38;
+    font-weight: bold;
+    text-align: center;
+}
+
+.is-head-container{
+    border:5px solid #120e38;
+    margin: 10px;
+}
+
+.is-head-container ul {
+    text-decoration: none;
+    list-style: none;   
+}
+
+.is-head-container ul li{
+    display: inline-flex;
+    flex-direction: column;
+    width: 33%;
+    margin: 0 auto ;
+    text-align: center;
+}
+
+
+.is-head-command {
+    color:white;
+    font-size:large;
+    font-weight: bold;
+    border: 1px solid #120e38;
+    background-color: #120e38;
+    margin: 0 auto ;
+    width: 90%;
+
+}
