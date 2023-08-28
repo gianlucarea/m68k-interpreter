@@ -13,7 +13,7 @@ class DotsMenu extends Component {
             <button id="showFlag" className="tools-icons" onClick={window.showFlag}><FontAwesomeIcon icon={faFlag}/></button>
             <button id="showMMIO" className="tools-icons" onClick={window.showMMIO}><FontAwesomeIcon icon={faKeyboard}/></button>
             <button id="showmemory" className="tools-icons" onClick={window.showmemory}><FontAwesomeIcon icon={faMemory}/></button>
-            <a href="/help"  className="tools-icons"><FontAwesomeIcon icon={faQuestionCircle} /></a>
+            <a href="https://gianlucarea.github.io/m68k-interpreter/help" target="_blank" className="tools-icons"><FontAwesomeIcon icon={faQuestionCircle} /></a>
             </div>
        )  
         }
