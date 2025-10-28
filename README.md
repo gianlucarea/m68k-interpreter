@@ -1,70 +1,114 @@
-# Getting Started with Create React App
+# 🧠 M68K Interpreter
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+[![Built with React](https://img.shields.io/badge/Built%20with-React-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)  
+[![JavaScript](https://img.shields.io/badge/Language-JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)  
 
-## Available Scripts
+> 💻 A web-based **Motorola 68000 (m68k) assembly emulator** built with **React + JavaScript**.  
+> Write, run, and debug m68k assembly **right in your browser** — no installation needed.
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## 🌐 Live Demo 
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+🎯 **Try it now:** [https://gianlucarea.github.io/m68k-interpreter/](https://gianlucarea.github.io/m68k-interpreter/)
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+---
 
-### `npm test`
+## 🚀 Features
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+✅ **Interactive Editor** – Write and edit m68k assembly code in a modern browser interface  
+✅ **Real-Time Execution** – Run and step through code instantly  
+✅ **Undo & Reset** – Revert or restart execution at any time  
+✅ **Instruction Set Coverage** – Supports arithmetic, logic, shift, conditional, and branch operations  
+✅ **Educational Focus** – Perfect for learning and teaching CPU architecture  
+✅ **Zero Setup** – Entirely browser-based — no installation required  
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🧭 How to Use
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+| Action | Description |
+|:--------|:-------------|
+| ▶️ **Execute** | Runs the code in the emulator |
+| 🔁 **Reset** | Clears registers and resets the emulator |
+| ⏭️ **Step** | Executes the next instruction (step-by-step mode) |
+| ↩️ **Undo** | Reverts the previous instruction |
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+## ⚙️ Instruction Set Overview
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### 🧮 Arithmetic
+`ADD`, `ADDA`, `ADDI`, `SUB`, `SUBA`, `SUBI`
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 🔣 Logic
+`AND`, `ANDI`, `EOR`, `EORI`, `NOT`, `NEG`, `OR`, `ORI`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### 🧱 Basic
+`CLR`, `EXG`, `EXT`, `MOVE`, `MOVEA`, `SWAP`
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### 🔄 Shifts & Rotates
+`ASL`, `ASR`, `LSL`, `LSR`, `ROL`, `ROR`
 
-## Learn More
+### ⚖️ Conditional & Compare
+`CMP`, `CMPA`, `CMPI`, `TST`
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### 🧭 Control Flow
+`JMP`, `JSR`, `RTS`, `BRA`, `BSR`, `BEQ`, `BNE`, `BGE`, `BGT`, `BLE`, `BLT`
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
 
-### Code Splitting
+## 🧰 Helpful Tools
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- ⏱️ **Time Delay** – Simulate timing behavior  
+- 🧮 **Toggle Advanced Registers** – View additional CPU registers and flags  
 
-### Analyzing the Bundle Size
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## 🧪 Getting Started
 
-### Making a Progressive Web App
+```bash
+1️⃣ Clone the repository
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+git clone https://github.com/yourusername/m68k-web-emulator.git
+cd m68k-web-emulator
 
-### Advanced Configuration
+2️⃣ Install dependencies
+bash
+Copy code
+npm install
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+3️⃣ Run the development server
+bash
+Copy code
+npm start
+Then open your browser and visit http://localhost:3000
+```
 
-### Deployment
+## 🤝 Contributing
+Contributions are welcome!
+If you’d like to help improve the emulator or add new features:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+1. Fork this repository
 
-### `npm run build` fails to minify
+2. Create a new branch (feature/add-new-instruction)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+3. Commit your changes
+
+4. Submit a Pull Request 🚀
+
+# ❤️ Acknowledgments
+Inspired by the Easy68K simulator
+
+Built for students, educators, and retro-computing enthusiasts
+
+Made with ❤️ using React and JavaScript
+
+# ⭐ Support the Project
+If you find this project helpful:
+
+🌟 Star this repository
+
+🐞 Report issues or suggest new features
+
+🔗 Share it with others learning assembly!
