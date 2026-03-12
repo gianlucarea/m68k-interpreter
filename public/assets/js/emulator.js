@@ -47,8 +47,34 @@ class Emulator {
         this.exception = undefined;
         this.errors = [];
 
-        // If instructions is undefined then the instructions are empty
-        this.instructions = program || ""; 
+        // Perform some defensive normalization on the incoming program.  The
+        // emulator used to assume the caller always passed a string and called
+        // `split` immediately; when React handed it something else the runtime
+        // blew up with "this.instructions.split is not a function".  We now
+        // coerce anything into a plain string early and log a warning so that
+        // callers can be debugged if they continue to pass weird values.
+        let prog = program;
+
+        if (prog == null) {
+            prog = "";
+        } else if (typeof prog !== 'string') {
+            console.warn('Emulator: expected program to be a string, got', prog);
+            try {
+                prog = String(prog);
+            } catch (e) {
+                // Fallback to empty string if conversion throws for some reason
+                prog = "";
+            }
+        }
+
+        // ensure we actually have a string before calling split; avoid future
+        // regressions where somebody passes an object with a custom `split`
+        // property that is not a function.
+        if (typeof prog.split !== 'function') {
+            prog = String(prog);
+        }
+
+        this.instructions = prog || "";
 
         // Splitting the program code into lines and removing whitespaces
         this.instructions = this.instructions.split('\n').map(function(instruction) {

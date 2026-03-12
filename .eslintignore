@@ -1,0 +1,6 @@
+dist
+build
+node_modules
+.backup
+public/assets
+public/index.html

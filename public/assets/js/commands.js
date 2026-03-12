@@ -1,5 +1,20 @@
         
-        var editor = window.editor;
+        // helper to retrieve latest code string from React editor
+        function getCode() {
+            var code = window.editor;
+            if (typeof code !== 'string') {
+                if (code == null) {
+                    return "";
+                }
+                // arrays might contain lines so join them, otherwise coerce
+                if (Array.isArray(code)) {
+                    return code.join('\n');
+                }
+                return String(code);
+            }
+            return code;
+        }
+
         var ended = false;
         var started = false;
         var stopped = false;
@@ -18,7 +33,7 @@
                 document.getElementById('step').setAttribute("disabled","disabled");
 
                 // Retrieving the code
-                var code = editor;
+                var code = getCode();
                 // Retriving the user desired delay in seconds -> milliseconds
                 var delay = parseInt(document.getElementById('delay').value) * 1000;
                 console.log("Starting emulation with delay of " + delay + "ms");
@@ -62,7 +77,7 @@
                 
             if(!started) {
                 // Retrieving the code
-                var code = editor;
+                var code = getCode();
 
                 worker = new Emulator(code);
                 // Managing pre processing exceptions
@@ -123,6 +138,7 @@
         }
 
         function undo() {
-            worker.undoFromStack();
+            if (!worker) { console.warn("undo invoked with no worker instance"); return; }
+            if (typeof worker.undoFromStack === "function") { try { worker.undoFromStack(); } catch(e){ console.error("error during undoFromStack", e);} } else { console.warn("worker has no undoFromStack method"); }
             UIUpdate(worker, memory_starting_point);
         }

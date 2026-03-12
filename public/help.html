@@ -1,334 +1,613 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="gstyle.css" type="text/css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <title>Guide</title>
-</head>
-<body>
-        <div class="how-to">
-            <h1>How to use</h1>
-            <ul>
-                <li>
-                    <i class="fa fa-play"></i>
-                    <h3>Execute</h3>
-                    <p>This button will start the execution of the code inside the emulator</p>
-                </li>
-                <li>
-                <i class="fa fa-times"></i>
-                    <h3>Reset</h3>
-                    <p>This button will reset the registers and the status of the emulator</p>
-                </li>   
-                <li>
-                    <i class="fa fa-repeat"></i>
-                    <h3>Step</h3>
-                    <p>This button will execute the next line of code of the emulation</p>
-                </li>   
-                <li>
-                    <i class="fa fa-undo"></i>
-                    <h3>Undo</h3>
-                    <p>This button will undo the previous line of code of the emulation</p>
-                </li>   
-            </ul>
-        </div>
-        <div class="instruction-set">
-            <h1>Instruction set</h1>
-            <div class="is-head-container">
-            <h2 class="is-head"> Arithmetic</h2>
-            <ul>
-                
-                <li>
-                    <a class="is-head-command">ADD</a>
-                    <p>Add the source operand to the destination operand and store the
-                        result in the destination location.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">ADDA</a>
-                    <p>Add the source operand to the destination address register and
-                        store the result in the destination address register. The source is
-                        sign-extended before it is added to the destination</p>
-                </li>
-                <li>
-                    <a class="is-head-command">ADDI</a>
-                    <p>Add immediate data to the destination operand. Store the result
-                        in the destination operand.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">SUB</a>
-                    <p>Subtract the source operand from the destination operand and
-                        store the result in the destination location.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">SUBA</a>
-                    <p>Subtract the source operand from the destination operand and
-                        store the result in the destination address register. Word
-                        operations are sign-extended to 32 bits prior to subtraction.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">SUBI</a>
-                    <p>Subtract the immediate data from the destination operand. Store
-                        the result in the destination operand.</p>
-                </li>
-            </ul>
-        </div>
-        <div class="is-head-container">
-            <h2 class="is-head">Logic</h2>
-            <ul>
-                
-                <li>
-                    <a class="is-head-command">AND</a>
-                    <p>AND the source operand to the destination operand and store
-                        the result in the destination location.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">ANDI</a>
-                    <p>AND the immediate data to the destination operand. </p>
-                </li>
-                <li>
-                    <a class="is-head-command">EOR</a>
-                    <p>EOR (exclusive or) the source operand with the destination
-                        operand and store the result in the destination location</p>
-                </li>
-                <li>
-                    <a class="is-head-command">EORI</a>
-                    <p>EOR the immediate data with the contents of the destination
-                        operand. Store the result in the destination operand.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">NOT</a>
-                    <p>Calculate the logical complement of the destination and store the
-                        result in the destination. The difference between NOT and NEG is
-                        that NOT performs a bit-by-bit logical complementation, while a
-                        NEG performs a twos complement arithmetic subtraction</p>
-                </li>
-                <li>
-                    <a class="is-head-command">OR</a>
-                    <p>OR the source operand to the destination operand, and store the
-                        result in the destination location.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">ORI</a>
-                    <p>OR the immediate data with the destination operand. Store the
-                        result in the destination operand.</p>
-                </li>
-            </ul>
-        </div>
-            <div class="is-head-container">
-            <h2 class="is-head">Basic Instruction</h2>
-            <ul>
-                
-                <li>
-                    <a class="is-head-command">CLR</a>
-                    <p>The destination is cleared  loaded with all zeros. The CLR instruction can't be used to clear an address register.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">EXG</a>
-                    <p>Exchange the contents of two registers. The size of the instruction
-                        is a longword because the entire 32-bit contents of two registers
-                        are exchanged. The instruction permits the exchange of address
-                        registers, data registers, and address and data registers.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">EXT</a>
-                    <p>Extend the least-significant byte in a data register to a word, or
-                        extend the least-significant word in a data register to a longword.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">MOVE</a>
-                    <p>Move the contents of the source to the destination location. The
-                        data is examined as it is moved and the condition codes set
-                        accordingly. Note that this is actually a copy command because
-                        the source is not affected by the move</p>
-                </li>
-                <li>
-                    <a class="is-head-command">MOVEA</a>
-                    <p>Move the contents of the source to the destination location. The
-                        destination is an address register. The source must be a word or
-                        longword. If it is a word, it is sign-extended to a longword. The
-                        condition codes are not affected.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">NEG</a>
-                    <p>Subtract the destination operand from 0 and store the result in
-                        the destination location. The difference between NOT and NEG
-                        instructions is that NOT performs a bit-by-bit logical complementation, while a NEG performs a twos complement arithmetic subtraction</p>
-                </li>
-                <li>
-                    <a class="is-head-command">SWAP</a>
-                    <p>Exchange the upper and lower 16-bit words of a data register.</p>
-                </li>
-            </ul> 
-        </div>
-        <div class="is-head-container">
-            <h2 class="is-head">Shifts</h2>
-            <ul>
-                
-                <li>
-                    <a class="is-head-command">ASL</a>
-                    <p>Arithmetically shift the bits of the operand in the specified direction (left). The shift count may be specified in one of
-                        three ways. The count may be a literal, the contents of a data
-                        register, or the value 1</p>
-                </li>
-                <li>
-                    <a class="is-head-command">ASR</a>
-                    <p>Arithmetically shift the bits of the operand in the specified direction (right). The shift count may be specified in one of
-                        three ways. The count may be a literal, the contents of a data
-                        register, or the value 1</p>
-                </li>
-                <li>
-                    <a class="is-head-command">LSL</a>
-                    <p>Logically shift the bits of the operand in the specified direction
-                        (left). A zero is shifted into the input position and the
-                        bit shifted out is copied into both the C- and the X-bit of the CCR.The shift count may be specified in one of three ways. The count
-                        may be a literal, the contents of a data register, or the value 1. </p>
-                </li>
-                <li>
-                    <a class="is-head-command">LSR</a>
-                    <p>Logically shift the bits of the operand in the specified direction
-                        (right). A zero is shifted into the input position and the
-                        bit shifted out is copied into both the C- and the X-bit of the CCR.The shift count may be specified in one of three ways. The count
-                        may be a literal, the contents of a data register, or the value 1.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">ROL</a>
-                    <p>Rotate the bits of the operand in the direction indicated (left). The
-                        extend bit, X, is not included in the operation. A rotate operation
-                        is circular in the sense that the bit shifted out at one end is shifted
-                        into the other end. That is, no bit is lost or destroyed by a rotate operation.The shift count may be specified in
-                        one of three ways: the count may be a literal, the contents of a
-                        data register, or the value 1.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">ROR</a>
-                    <p>Rotate the bits of the operand in the direction indicated (left). The
-                        extend bit, X, is not included in the operation. A rotate operation
-                        is circular in the sense that the bit shifted out at one end is shifted
-                        into the other end. That is, no bit is lost or destroyed by a rotate operation.The shift count may be specified in
-                        one of three ways: the count may be a literal, the contents of a
-                        data register, or the value 1.</p>
-                </li>
-            </ul>
-            </div>
-            <div class="is-head-container">
-            <h2 class="is-head">Conditional</h2>
-            <ul>
-                
-                <li>
-                    <a class="is-head-command">CMP</a>
-                    <p>Subtract the source operand from the destination operand and
-                        set the condition codes accordingly. The destination must be a
-                        data register. The destination is not modified by this instruction.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">CMPA</a>
-                    <p>Subtract the source operand from the destination address register
-                        and set the condition codes accordingly. The address register is
-                        not modified. The size of the operation may be specified as word
-                        or longword</p>
-                </li>
-                <li>
-                    <a class="is-head-command">CMPI</a>
-                    <p>Subtract the immediate data from the destination operand and
-                        set the condition codes accordingly  the destination is not
-                        modified</p>
-                </li>
-                <li>
-                    <a class="is-head-command">TST</a>
-                    <p>The operand is compared with zero. No result is saved, but the
-                        contents of the CCR are set according to the result.</p>
-                </li>
-            </ul>
-            </div>
-            <div class="is-head-container">
-            <h2 class="is-head">Jumps </h2>
-            <ul>
-               
-                <li>
-                    <a class="is-head-command">JMP</a>
-                    <p>Program execution continues at the effective address specified by
-                        the instruction.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">JSR</a>
-                    <p>JSR pushes the longword address of the instruction immediately
-                        following the JSR onto the system stack. Program execution then
-                        continues at the address specified in the instruction.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">RTS</a>
-                    <p>The program counter is pulled from the stack and the previous
-                        value of the PC is lost. RTS is used to terminate a subroutine.</p>
-                </li>
-            </ul>
-            </div>
-            <div class="is-head-container">
-            <h2 class="is-head">Branches</h2>
-            <ul>
-                
-                <li>
-                    <a class="is-head-command">BRA</a>
-                    <p>Branch always , program execution continues at location [PC] + d. The displacement, d, is a twos complement value (8 bits for a short branch
-                        and 16 bits for a long branch). The value in the PC corresponds
-                        to the current location plus two</p>
-                </li>
-                <li>
-                    <a class="is-head-command">BSR</a>
-                    <p>Branch to subroutine, the longword address of the instruction immediately following
-                        the BSR instruction is pushed onto the system stack pointed at by
-                        A7. Program execution then continues at location [PC] +
-                        displacement. The displacement is an 8-bit twos complement
-                        value for a short branch, or a 16-bit twos complement value for
-                        a long branch. The value in the PC corresponds to the current
-                        location plus two</p>
-                </li>
-                <li>
-                    <a class="is-head-command">BEQ</a>
-                    <p>If the specified logical condition (branch on equal) is met, program execution
-                        continues at location [PC] + displacement, d. The displacement is
-                        a two's complement value.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">BNE</a>
-                    <p>If the specified logical condition (branch on not equal) is met, program execution
-                        continues at location [PC] + displacement, d. The displacement is
-                        a two's complement value.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">BGE</a>
-                    <p>If the specified logical condition (branch on greater than or equal) is met, program execution
-                        continues at location [PC] + displacement, d. The displacement is
-                        a two's complement value.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">BGT</a>
-                    <p>If the specified logical condition (branch on greater than) is met, program execution
-                        continues at location [PC] + displacement, d. The displacement is
-                        a two's complement value.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">BLE</a>
-                    <p>If the specified logical condition (branch on less than or equal) is met, program execution
-                        continues at location [PC] + displacement, d. The displacement is
-                        a two's complement value.</p>
-                </li>
-                <li>
-                    <a class="is-head-command">BLT</a>
-                    <p>If the specified logical condition (branch on less than) is met, program execution
-                        continues at location [PC] + displacement, d. The displacement is
-                        a two's complement value.</p>
-                </li>
-            </ul>
-            </div>
-        </div>
-        <div class="other-set">
-            <h1>Helpfull things</h1>
-            <h3>Time delay</h3>
-            <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Corrupti, vitae iusto dolorum cumque fugiat autem voluptatibus quis dolores quibusdam sunt molestiae voluptates nesciunt, accusamus libero exercitationem repellat laudantium a nisi.</p>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="M68K Interpreter Help" />
+    <title>Help - M68K Interpreter</title>
+    <link rel="stylesheet" href="../src/styles/main.css" type="text/css" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
 
-            <h3>Toggle Advanced Registers</h3>
-            <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Corrupti, vitae iusto dolorum cumque fugiat autem voluptatibus quis dolores quibusdam sunt molestiae voluptates nesciunt, accusamus libero exercitationem repellat laudantium a nisi.</p>
+      body {
+        background: linear-gradient(135deg, var(--background-color) 0%, var(--surface-color) 100%);
+        padding: 0;
+        margin: 0;
+      }
+
+      .help-wrapper {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .main-content {
+        padding: var(--spacing-xl);
+      }
+
+      .header-section {
+        text-align: center;
+        margin-bottom: var(--spacing-xl);
+        padding-bottom: var(--spacing-xl);
+        border-bottom: 2px solid var(--border-color);
+      }
+
+      .help-title {
+        font-size: 48px;
+        font-weight: 800;
+        color: var(--primary-color);
+        margin: 0 0 var(--spacing-md) 0;
+      }
+
+      .help-subtitle {
+        font-size: 18px;
+        color: var(--text-secondary);
+        margin: 0;
+      }
+
+      .section {
+        margin-bottom: var(--spacing-xl);
+        scroll-margin-top: 100px;
+      }
+
+      .section-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: var(--spacing-lg);
+        padding-bottom: var(--spacing-md);
+        border-bottom: 3px solid var(--primary-color);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+      }
+
+      .section-icon {
+        font-size: 32px;
+      }
+
+      .quick-action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-xl);
+      }
+
+      .action-card {
+        background: var(--surface-color);
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        text-align: center;
+        transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .action-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(var(--primary-color-rgb), 0.05);
+        transition: left 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .action-card:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 8px 24px rgba(var(--primary-color-rgb), 0.15);
+        transform: translateY(-4px);
+      }
+
+      .action-card:hover::before {
+        left: 100%;
+      }
+
+      .action-card-icon {
+        font-size: 40px;
+        margin-bottom: var(--spacing-md);
+        display: block;
+      }
+
+      .action-card h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0 0 var(--spacing-sm) 0;
+      }
+
+      .action-card p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.6;
+      }
+
+      .instruction-section {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+      }
+
+      .instruction-card {
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 300ms ease;
+      }
+
+      .instruction-card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        border-color: var(--primary-color);
+      }
+
+      .instruction-header {
+        background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+        color: #ffffff;
+        padding: var(--spacing-lg);
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        margin: 0;
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+      }
+
+      .instruction-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .instruction-item {
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+        transition: background-color 200ms ease;
+      }
+
+      .instruction-item:last-child {
+        border-bottom: none;
+      }
+
+      .instruction-item:hover {
+        background-color: rgba(var(--primary-color-rgb), 0.02);
+      }
+
+      .instruction-name {
+        display: block;
+        font-weight: 700;
+        color: var(--primary-color);
+        font-size: 15px;
+        margin-bottom: var(--spacing-sm);
+        font-family: var(--font-monospace);
+        letter-spacing: 0.5px;
+      }
+
+      .instruction-desc {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin: 0;
+      }
+
+      .tips-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: var(--spacing-md);
+      }
+
+      .tip-card {
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 300ms ease;
+        border-left: 4px solid var(--primary-color);
+      }
+
+      .tip-card:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+      }
+
+      .tip-card h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0 0 var(--spacing-md) 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+      }
+
+      .tip-card p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin: 0;
+      }
+
+      .back-to-top {
+        position: fixed;
+        bottom: var(--spacing-lg);
+        right: var(--spacing-lg);
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 300ms ease;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .back-to-top.visible {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .back-to-top:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      @media (max-width: 768px) {
+        .main-content {
+          padding: var(--spacing-md);
+        }
+
+        .help-title {
+          font-size: 36px;
+        }
+
+        .section-title {
+          font-size: 22px;
+        }
+
+        .quick-action-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .instruction-header {
+          font-size: 18px;
+          padding: var(--spacing-md);
+        }
+
+        .instruction-item {
+          padding: var(--spacing-md);
+        }
+
+        .tips-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .main-content {
+          padding: var(--spacing-sm);
+        }
+
+        .help-title {
+          font-size: 28px;
+        }
+
+        .quick-action-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .action-card {
+          padding: var(--spacing-md);
+        }
+
+        .action-card-icon {
+          font-size: 32px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="help-wrapper">
+      <main class="main-content">
+        <div class="header-section">
+          <h1 class="help-title">M68K Interpreter</h1>
+          <p class="help-subtitle">Complete guide to using the M68K assembly language emulator</p>
         </div>
-</body>
+
+        <section class="section" id="quick-start">
+          <h2 class="section-title"><span class="section-icon">⚡</span>Quick Start</h2>
+          <div class="quick-action-grid">
+            <div class="action-card">
+              <span class="action-card-icon">▶</span>
+              <h3>Execute</h3>
+              <p>Run the entire program from the current position</p>
+            </div>
+            <div class="action-card">
+              <span class="action-card-icon">⏹</span>
+              <h3>Reset</h3>
+              <p>Clear all registers and reset emulator state</p>
+            </div>
+            <div class="action-card">
+              <span class="action-card-icon">⇢</span>
+              <h3>Step</h3>
+              <p>Execute one instruction at a time</p>
+            </div>
+            <div class="action-card">
+              <span class="action-card-icon">↶</span>
+              <h3>Undo</h3>
+              <p>Reverse the last executed instruction</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="instructions">
+          <h2 class="section-title"><span class="section-icon">📚</span>Instruction Set Reference</h2>
+
+          <div class="instruction-section" id="arithmetic">
+            <div class="instruction-card">
+              <div class="instruction-header">Arithmetic Operations</div>
+              <ul class="instruction-list">
+                <li class="instruction-item">
+                  <span class="instruction-name">ADD</span>
+                  <p class="instruction-desc">Add the source operand to the destination operand and store the result in the destination location.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">ADDA</span>
+                  <p class="instruction-desc">Add the source operand to the destination address register and store the result. The source is sign-extended before adding.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">ADDI</span>
+                  <p class="instruction-desc">Add immediate data to the destination operand. Store the result in the destination operand.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">SUB</span>
+                  <p class="instruction-desc">Subtract the source operand from the destination operand and store the result in the destination location.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">SUBA</span>
+                  <p class="instruction-desc">Subtract the source operand from the destination address register. Word operations are sign-extended to 32 bits prior to subtraction.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">SUBI</span>
+                  <p class="instruction-desc">Subtract the immediate data from the destination operand. Store the result in the destination operand.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="instruction-section" id="logic">
+            <div class="instruction-card">
+              <div class="instruction-header">Logic Operations</div>
+              <ul class="instruction-list">
+                <li class="instruction-item">
+                  <span class="instruction-name">AND</span>
+                  <p class="instruction-desc">AND the source operand to the destination operand and store the result in the destination location.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">ANDI</span>
+                  <p class="instruction-desc">AND the immediate data to the destination operand.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">EOR</span>
+                  <p class="instruction-desc">EOR (exclusive or) the source operand with the destination operand and store the result in the destination location.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">EORI</span>
+                  <p class="instruction-desc">EOR the immediate data with the contents of the destination operand. Store the result in the destination operand.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">NOT</span>
+                  <p class="instruction-desc">Calculate the logical complement of the destination and store the result. NOT performs bit-by-bit logical complementation.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">OR</span>
+                  <p class="instruction-desc">OR the source operand to the destination operand, and store the result in the destination location.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">ORI</span>
+                  <p class="instruction-desc">OR the immediate data with the destination operand. Store the result in the destination operand.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="instruction-section" id="basic">
+            <div class="instruction-card">
+              <div class="instruction-header">Basic Instructions</div>
+              <ul class="instruction-list">
+                <li class="instruction-item">
+                  <span class="instruction-name">CLR</span>
+                  <p class="instruction-desc">The destination is cleared and loaded with all zeros. Cannot be used to clear an address register.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">EXG</span>
+                  <p class="instruction-desc">Exchange the contents of two registers. The entire 32-bit contents are exchanged. Supports data, address, and mixed exchanges.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">EXT</span>
+                  <p class="instruction-desc">Extend the least-significant byte in a data register to a word, or the least-significant word to a longword.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">MOVE</span>
+                  <p class="instruction-desc">Move the contents of the source to the destination location. This is a copy operation; the source is not affected.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">MOVEA</span>
+                  <p class="instruction-desc">Move the contents of the source to the destination address register. If a word, it is sign-extended to a longword.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">NEG</span>
+                  <p class="instruction-desc">Subtract the destination operand from 0 and store the result in the destination location. Performs twos complement arithmetic subtraction.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">SWAP</span>
+                  <p class="instruction-desc">Exchange the upper and lower 16-bit words of a data register.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="instruction-section" id="shifts">
+            <div class="instruction-card">
+              <div class="instruction-header">Shift & Rotate Operations</div>
+              <ul class="instruction-list">
+                <li class="instruction-item">
+                  <span class="instruction-name">ASL</span>
+                  <p class="instruction-desc">Arithmetically shift the bits left. The shift count may be specified as a literal, register contents, or the value 1.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">ASR</span>
+                  <p class="instruction-desc">Arithmetically shift the bits right. The shift count may be specified as a literal, register contents, or the value 1.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">LSL</span>
+                  <p class="instruction-desc">Logically shift the bits left. A zero is shifted into the input position. The shifted-out bit is copied into the C and X bits of the CCR.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">LSR</span>
+                  <p class="instruction-desc">Logically shift the bits right. A zero is shifted into the input position. The shifted-out bit is copied into the C and X bits of the CCR.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">ROL</span>
+                  <p class="instruction-desc">Rotate the bits left. The extend bit X is not included in the operation. Bits shifted out at one end are shifted into the other end.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">ROR</span>
+                  <p class="instruction-desc">Rotate the bits right. The extend bit X is not included in the operation. Bits shifted out at one end are shifted into the other end.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="instruction-section" id="conditional">
+            <div class="instruction-card">
+              <div class="instruction-header">Conditional Operations</div>
+              <ul class="instruction-list">
+                <li class="instruction-item">
+                  <span class="instruction-name">CMP</span>
+                  <p class="instruction-desc">Subtract the source operand from the destination operand and set the condition codes accordingly. The destination is not modified.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">CMPA</span>
+                  <p class="instruction-desc">Subtract the source operand from the destination address register and set the condition codes. Supports word or longword operations.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">CMPI</span>
+                  <p class="instruction-desc">Subtract the immediate data from the destination operand and set the condition codes accordingly. The destination is not modified.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">TST</span>
+                  <p class="instruction-desc">Compare the operand with zero. No result is saved, but the CCR bits are set according to the result.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="instruction-section" id="jumps">
+            <div class="instruction-card">
+              <div class="instruction-header">Jump Instructions</div>
+              <ul class="instruction-list">
+                <li class="instruction-item">
+                  <span class="instruction-name">JMP</span>
+                  <p class="instruction-desc">Program execution continues at the effective address specified by the instruction.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">JSR</span>
+                  <p class="instruction-desc">Jump to subroutine. Pushes the longword address of the next instruction onto the system stack (A7). Execution continues at the specified address.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">RTS</span>
+                  <p class="instruction-desc">Return from subroutine. The program counter is pulled from the stack. Used to terminate a subroutine and return to the calling code.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="instruction-section" id="branches">
+            <div class="instruction-card">
+              <div class="instruction-header">Branch Instructions</div>
+              <ul class="instruction-list">
+                <li class="instruction-item">
+                  <span class="instruction-name">BRA</span>
+                  <p class="instruction-desc">Branch always. Program execution continues at [PC] + displacement. Displacement is a twos complement value (8-bit or 16-bit).</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">BSR</span>
+                  <p class="instruction-desc">Branch to subroutine. Pushes the next instruction address onto the stack (A7). Execution continues at [PC] + displacement.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">BEQ</span>
+                  <p class="instruction-desc">Branch if equal (zero flag set). If condition is met, execution continues at [PC] + displacement.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">BNE</span>
+                  <p class="instruction-desc">Branch if not equal (zero flag clear). If condition is met, execution continues at [PC] + displacement.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">BGE</span>
+                  <p class="instruction-desc">Branch if greater than or equal (no overflow/negative mismatch). If condition is met, execution continues at [PC] + displacement.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">BGT</span>
+                  <p class="instruction-desc">Branch if greater than. If condition is met, execution continues at [PC] + displacement.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">BLE</span>
+                  <p class="instruction-desc">Branch if less than or equal. If condition is met, execution continues at [PC] + displacement.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">BLT</span>
+                  <p class="instruction-desc">Branch if less than. If condition is met, execution continues at [PC] + displacement.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="helpful">
+          <h2 class="section-title"><span class="section-icon">💡</span>Tips & Tricks</h2>
+          <div class="tips-grid">
+            <div class="tip-card">
+              <h3>⏱ Time Delay</h3>
+              <p>You can add delays in your M68K assembly code using simple loops or dedicated delay routines. This is useful for controlling execution timing and creating pauses between operations. Perfect for simulating real-world timing behavior in your emulator testing.</p>
+            </div>
+            <div class="tip-card">
+              <h3>🔧 Toggle Advanced Registers</h3>
+              <p>Enable the advanced register display to view detailed register states beyond standard data and address registers. This includes condition codes, status register flags, and internal emulator state. Essential for debugging complex programs that depend on specific flag conditions.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <button class="back-to-top" id="backToTop" title="Back to top">↑</button>
+
+    <script>
+      const backToTopBtn = document.getElementById('backToTop');
+      window.addEventListener('scroll', () => {
+        if (window.pageYOffset > 300) {
+          backToTopBtn.classList.add('visible');
+        } else {
+          backToTopBtn.classList.remove('visible');
+        }
+      });
+
+      backToTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    </script>
+  </body>
 </html>

@@ -1,114 +1,264 @@
 # 🧠 M68K Interpreter
 
-[![Built with React](https://img.shields.io/badge/Built%20with-React-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)  
-[![JavaScript](https://img.shields.io/badge/Language-JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)  
+[![Built with React](https://img.shields.io/badge/Built%20with-React%2018-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Bundler-Vite%205-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-> 💻 A web-based **Motorola 68000 (m68k) assembly emulator** built with **React + JavaScript**.  
+> 💻 A modern, web-based **Motorola 68000 (m68k) assembly emulator** built with **React 18**, **TypeScript**, and **Vite**.  
 > Write, run, and debug m68k assembly **right in your browser** — no installation needed.
 
----
+## 🚀 What's New (v1.0.0 - Modernized)
 
-## 🌐 Live Demo 
+✨ **Complete Rewrite with Latest Stack:**
+
+- 🎯 **React 18** with hooks & functional components
+- 📘 **TypeScript** for full type safety
+- ⚡ **Vite 5** for lightning-fast builds and dev server
+- 🏪 **Zustand** for lightweight state management
+- 🧪 **Vitest** for fast unit testing
+- 📐 **ESLint + Prettier** for code quality
+- 🎨 **Modern CSS** with responsive design system
+- 📦 **Optimized** with tree-shaking and code-splitting
+
+## 🌐 Live Demo
 
 🎯 **Try it now:** [https://gianlucarea.github.io/m68k-interpreter/](https://gianlucarea.github.io/m68k-interpreter/)
 
----
-
 ## 🚀 Features
 
-✅ **Interactive Editor** – Write and edit m68k assembly code in a modern browser interface  
-✅ **Real-Time Execution** – Run and step through code instantly  
-✅ **Undo & Reset** – Revert or restart execution at any time  
-✅ **Instruction Set Coverage** – Supports arithmetic, logic, shift, conditional, and branch operations  
-✅ **Educational Focus** – Perfect for learning and teaching CPU architecture  
-✅ **Zero Setup** – Entirely browser-based — no installation required  
+✅ **Interactive Code Editor** – Write m68k assembly code  
+✅ **Real-Time Execution** – Run and step-through code instantly  
+✅ **Complete History** – Undo/redo with execution history  
+✅ **Register Viewer** – Monitor all CPU registers  
+✅ **Memory Inspector** – View and analyze memory contents  
+✅ **Error Management** – Detailed error and exception reporting  
+✅ **Data Export** – Download registers and memory data  
+✅ **Responsive UI** – Works perfectly on desktop and tablets  
+✅ **Educational Focus** – Built for learning CPU architecture  
+✅ **Zero Setup** – Runs entirely in the browser
 
----
+## 🏗️ Architecture
+
+### Modern Tech Stack
+
+```
+Frontend
+├── React 18.3 (UI Framework)
+├── TypeScript 5.3 (Type Safety)
+├── Zustand 4.4 (State Management)
+└── FontAwesome 6 (Icons)
+
+Build & Development
+├── Vite 5.0 (Fast Bundler)
+├── ESLint 8.56 (Linting)
+└── Prettier 3.1 (Formatting)
+
+Testing & Quality
+├── Vitest 1.1 (Unit Tests)
+├── React Testing Library
+└── Type Checking
+
+Deployment
+└── GitHub Pages
+```
+
+### Project Structure
+
+```
+src/
+├── components/          # React components
+│   ├── App.tsx         # Root component
+│   ├── Navbar.tsx      # Control panel
+│   ├── Editor.tsx      # Code editor
+│   ├── Registers.tsx   # Register viewer
+│   ├── Memory.tsx      # Memory inspector
+│   └── Output.tsx      # Execution output
+├── core/               # Emulator core logic
+│   └── memory.ts       # Memory management
+├── stores/             # State management
+│   └── emulatorStore.ts # Zustand store
+├── types/              # TypeScript definitions
+│   └── emulator.ts     # Type definitions
+└── styles/             # Styling
+    └── main.css        # Global styles
+```
 
 ## 🧭 How to Use
 
-| Action | Description |
-|:--------|:-------------|
-| ▶️ **Execute** | Runs the code in the emulator |
-| 🔁 **Reset** | Clears registers and resets the emulator |
-| ⏭️ **Step** | Executes the next instruction (step-by-step mode) |
-| ↩️ **Undo** | Reverts the previous instruction |
+| Action | Purpose |
+|--------|---------|
+| ▶️ **Run** | Execute the program |
+| ⟲ **Reset** | Clear all state |
+| ⇢ **Step** | Execute one instruction |
+| ↶ **Undo** | Revert last instruction |
 
----
+## ⚙️ Supported Instructions
 
-## ⚙️ Instruction Set Overview
+### Arithmetic
 
-### 🧮 Arithmetic
-`ADD`, `ADDA`, `ADDI`, `SUB`, `SUBA`, `SUBI`
+`ADD`, `ADDA`, `ADDI`, `ADDQ`, `SUB`, `SUBA`, `SUBI`, `SUBQ`, `MULS`, `DIVS`
 
-### 🔣 Logic
+### Logic
+
 `AND`, `ANDI`, `EOR`, `EORI`, `NOT`, `NEG`, `OR`, `ORI`
 
-### 🧱 Basic
-`CLR`, `EXG`, `EXT`, `MOVE`, `MOVEA`, `SWAP`
+### Basic Operations
 
-### 🔄 Shifts & Rotates
-`ASL`, `ASR`, `LSL`, `LSR`, `ROL`, `ROR`
+`CLR`, `EXG`, `EXT`, `MOVE`, `MOVEA`, `SWAP`, `LEA`
 
-### ⚖️ Conditional & Compare
+### Shifts & Rotates
+
+`ASL`, `ASR`, `LSL`, `LSR`, `ROL`, `ROR`, `ROXL`, `ROXR`
+
+### Comparisons
+
 `CMP`, `CMPA`, `CMPI`, `TST`
 
-### 🧭 Control Flow
+### Control Flow
+
 `JMP`, `JSR`, `RTS`, `BRA`, `BSR`, `BEQ`, `BNE`, `BGE`, `BGT`, `BLE`, `BLT`
-
----
-
-## 🧰 Helpful Tools
-
-- ⏱️ **Time Delay** – Simulate timing behavior  
-- 🧮 **Toggle Advanced Registers** – View additional CPU registers and flags  
-
----
 
 ## 🧪 Getting Started
 
+### Requirements
+
+- **Node.js** 16+ and **npm** 8+
+
+### Installation
+
 ```bash
-1️⃣ Clone the repository
+# Clone repository
+git clone https://github.com/gianlucarea/m68k-interpreter.git
+cd m68k-interpreter
 
-git clone https://github.com/yourusername/m68k-web-emulator.git
-cd m68k-web-emulator
-
-2️⃣ Install dependencies
-bash
-Copy code
+# Install dependencies
 npm install
 
-3️⃣ Run the development server
-bash
-Copy code
-npm start
-Then open your browser and visit http://localhost:3000
+# Start development server
+npm run dev
+# Open http://localhost:3000
 ```
 
+### Available Commands
+
+```bash
+# Development
+npm run dev              # Start dev server with HMR
+npm run build           # Build for production
+npm run preview         # Preview production build
+
+# Code Quality
+npm run lint            # Run ESLint
+npm run lint:fix        # Fix linting issues
+npm run format          # Format with Prettier
+npm run type-check      # Check TypeScript
+
+# Testing
+npm run test            # Run unit tests
+npm run test:ui         # Tests with UI
+npm run test:coverage   # Coverage report
+
+# Deployment
+npm run deploy          # Deploy to GitHub Pages
+```
+
+## 🔧 Configuration
+
+All configuration files are included and pre-configured:
+
+- **`vite.config.ts`** – Bundler configuration
+- **`tsconfig.json`** – TypeScript compiler options
+- **`.eslintrc.json`** – Linting rules (ESLint v8)
+- **`.prettierrc.json`** – Code formatting options
+- **`vitest.config.ts`** – Test runner configuration
+
+## 📚 Development
+
+### Adding Features
+
+1. Create component in `src/components/`
+2. Add types to `src/types/emulator.ts`
+3. Use hooks: `useEmulatorStore()` for state
+4. Add styles to `src/styles/main.css`
+5. Write tests in `*.test.tsx` files
+
+### Code Standards
+
+- ✅ All code must be TypeScript
+- ✅ Use functional components with hooks
+- ✅ Run `npm run lint:fix` before commit
+- ✅ Format with `npm run format`
+- ✅ All functions should have types
+- ✅ Write tests for new features
+
+## 🧪 Testing
+
+The project uses Vitest and React Testing Library:
+
+```bash
+npm run test              # Run all tests
+npm run test -- --watch   # Watch mode
+npm run test:coverage     # Generate coverage
+npm run test:ui           # Web UI for tests
+```
+
+## 📊 Performance
+
+- ✅ Code-splitting for faster loads
+- ✅ Tree-shaking enabled
+- ✅ CSS minification
+- ✅ JavaScript minification
+- ✅ Source maps in dev only
+- ✅ Lazy component loading
+
+## 🌐 Browser Support
+
+- ✅ Chrome/Chromium 90+
+- ✅ Firefox 88+
+- ✅ Safari 14+
+- ✅ Edge 90+
+
 ## 🤝 Contributing
-Contributions are welcome!
-If you’d like to help improve the emulator or add new features:
 
-1. Fork this repository
+Contributions welcome! Please follow these steps:
 
-2. Create a new branch (feature/add-new-instruction)
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit changes: `git commit -m 'Add your feature'`
+4. Push branch: `git push origin feature/your-feature`
+5. Open a Pull Request
 
-3. Commit your changes
+### Before Submitting PR
 
-4. Submit a Pull Request 🚀
+- [ ] Run `npm run lint:fix`
+- [ ] Run `npm run format`
+- [ ] Run `npm run type-check`
+- [ ] Run `npm run test`
+- [ ] Update README if needed
 
-# ❤️ Acknowledgments
-Inspired by the Easy68K simulator
+## 📝 License
 
-Built for students, educators, and retro-computing enthusiasts
+MIT License - see [LICENSE](LICENSE) for details
 
-Made with ❤️ using React and JavaScript
+## ❤️ Acknowledgments
 
-# ⭐ Support the Project
-If you find this project helpful:
+- Inspired by **Easy68K** simulator
+- Built for students, educators, and enthusiasts
+- Made with ❤️ using React, TypeScript, and Vite
 
-🌟 Star this repository
+## ⭐ Show Your Support
 
-🐞 Report issues or suggest new features
+If you find this project useful:
 
-🔗 Share it with others learning assembly!
+- ⭐ Star this repository
+- 🐛 Report bugs or request features
+- 💬 Share feedback and ideas
+- 🔗 Share with others learning assembly
+- 🤝 Contribute improvements
+
+---
+
+**Happy coding! 🚀**
+
+---
