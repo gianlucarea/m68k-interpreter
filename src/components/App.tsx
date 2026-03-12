@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import Navbar from './Navbar';
 import Editor from './Editor';
 import Registers from './Registers';
@@ -32,6 +33,7 @@ const App: React.FC = () => {
           {showFlags ? <Flags /> : showRegisters ? <Registers /> : <Memory />}
         </div>
       </main>
+      <Analytics />
     </div>
   );
 };
