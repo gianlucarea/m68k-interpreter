@@ -17,10 +17,10 @@ jobs:
     
     steps:
       - name: '📋 Checkout code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
 
       - name: '📦 Setup Node.js'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.0.2
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -47,17 +47,12 @@ jobs:
           files: ./coverage/coverage-final.json
         continue-on-error: true
 
-  build:
-    name: '🏗️ Build'
-    runs-on: ubuntu-latest
-    needs: test
-    
     steps:
       - name: '📋 Checkout code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
 
       - name: '📦 Setup Node.js'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.0.2
         with:
           node-version: 18.x
           cache: npm
@@ -75,18 +70,12 @@ jobs:
           path: dist/
           retention-days: 5
 
-  deploy:
-    name: '🌐 Deploy to Vercel'
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
     steps:
       - name: '📋 Checkout code'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
 
       - name: '📦 Setup Node.js'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.0.2
         with:
           node-version: 18.x
           cache: npm
