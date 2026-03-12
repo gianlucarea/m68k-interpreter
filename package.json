@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "description": "A web-based Motorola 68000 (m68k) assembly emulator built with React and TypeScript",
-  "homepage": "https://gianlucarea.github.io/m68k-interpreter",
+  "homepage": "https://gianlucarea.dev/m68k-interpreter",
   "repository": {
     "type": "git",
     "url": "https://github.com/gianlucarea/m68k-interpreter"
