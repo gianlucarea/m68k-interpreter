@@ -1,3 +1,2 @@
-# Third-party library files
-public/assets/ace-builds/**
+# Third-party dependency files
 node_modules/**
