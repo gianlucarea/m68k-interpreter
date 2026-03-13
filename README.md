@@ -119,6 +119,34 @@ src/
 
 `JMP`, `JSR`, `RTS`, `BRA`, `BSR`, `BEQ`, `BNE`, `BGE`, `BGT`, `BLE`, `BLT`
 
+## 🚧 Next Developments
+
+upcoming features in development pipeline:
+
+### Core Features
+- 📥 **File Loading** – Load assembled programs to specified memory addresses
+- 🔍 **Debugger Breakpoints** – Set breakpoints and conditional debugging
+- 🎨 **New Syntax Support** – Support modern m68k assembly syntax variants
+- 🔊 **I/O Operations** – Input/output capabilities for data stream handling
+- 🏷️ **Macro System** – Define and use macros for code reusability
+
+### Data Definition & Memory
+- 📦 **Data Directives** – Support `DC` (define constant), `DS` (define space), `DCB` (define block)
+- 🧠 **Memory Allocation** – Dynamic memory allocation and initialization
+- 📍 **Address Validation** – Validate memory accesses and bounds checking
+
+### Next 10 Functions to Implement
+1. **UNLK** – Unlink stack frame (inverse of LINK)
+2. **LINK** – Create stack frame for procedures
+3. **MOVEM** – Move multiple registers (list-based transfers)
+4. **Bcc (conditional branches)** – BVC, BVS, BCC, BCS, BMI, BPL, BHI, BLS
+5. **DBcc** – Decrement and branch conditionally (loop control)
+6. **Scc** – Set conditionally (conditional set byte)
+7. **TRAP & TRAPV** – Software interrupts and trap handlers
+8. **CHK** – Check register bounds
+9. **TAS** – Test and set (atomic operations)
+10. **NBCD** – Add decimal with extend (BCD arithmetic)
+
 ## 🧪 Getting Started
 
 ### Requirements

@@ -48,6 +48,10 @@ Thumbs.db
 
 # Backups & Temporary files
 .backup/
+
+# Development Documentation (not committed)
+todo.md
+
 *.bak
 *.tmp
 *~
