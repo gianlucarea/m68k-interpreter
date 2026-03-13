@@ -1,0 +1,3 @@
+# Third-party library files
+public/assets/ace-builds/**
+node_modules/**
