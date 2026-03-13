@@ -21,7 +21,7 @@ const Output: React.FC = () => {
               id="delay-input"
               type="number"
               min="0"
-              step="0.1"
+              step="0.5"
               value={delay}
               onChange={(e) => setDelay(parseFloat(e.target.value) || 0)}
               placeholder="0"
