@@ -23,7 +23,7 @@
 
 ## 🌐 Live Demo
 
-🎯 **Try it now:** [https://gianlucarea.github.io/m68k-interpreter/](https://gianlucarea.github.io/m68k-interpreter/)
+🎯 **Try it now:** [https://gianlucarea.dev/m68k-interpreter/](https://gianlucarea.dev/m68k-interpreter/)
 
 ## 🚀 Features
 
