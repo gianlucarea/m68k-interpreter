@@ -3,7 +3,7 @@
 A Motorola 68000 assembly emulator that runs entirely in the browser.  
 Write, step through, and debug m68k assembly — no installation needed.
 
-**[→ Live demo](https://gianlucarea.github.io/m68k-interpreter/)**
+**[→ Live demo](https://gianlucarea.dev/m68k-interpreter/)**
 
 ---
 
