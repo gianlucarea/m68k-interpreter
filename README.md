@@ -1,292 +1,87 @@
-# 🧠 M68K Interpreter
+# m68k-interpreter
 
-[![Built with React](https://img.shields.io/badge/Built%20with-React%2018-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Bundler-Vite%207-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+A Motorola 68000 assembly emulator that runs entirely in the browser.  
+Write, step through, and debug m68k assembly — no installation needed.
 
-> 💻 A modern, web-based **Motorola 68000 (m68k) assembly emulator** built with **React 18**, **TypeScript**, and **Vite**.  
-> Write, run, and debug m68k assembly **right in your browser** — no installation needed.
+**[→ Live demo](https://gianlucarea.github.io/m68k-interpreter/)**
 
-## 🚀 What's New (v1.0.0 - Modernized)
+---
 
-✨ **Complete Rewrite with Latest Stack:**
+## Why this exists
 
-- 🎯 **React 18** with hooks & functional components
-- 📘 **TypeScript** for full type safety
-- ⚡ **Vite 7** for lightning-fast builds and dev server
-- 🏪 **Zustand** for lightweight state management
-- 🧪 **Vitest** for fast unit testing
-- 📐 **ESLint + Prettier** for code quality
-- 🎨 **Modern CSS** with responsive design system
-- 📦 **Optimized** with tree-shaking and code-splitting
+[Easy68K](http://www.easy68k.com/) is the standard tool for learning m68k assembly in university courses. It's Windows-only, requires installation, and hasn't been updated in years. This runs in any browser, on any OS, with zero setup.
 
-## 🌐 Live Demo
+---
 
-🎯 **Try it now:** [https://gianlucarea.dev/m68k-interpreter/](https://gianlucarea.dev/m68k-interpreter/)
+## Features
 
-## 🚀 Features
+- Step-by-step execution with full undo/redo history
+- Live register viewer and memory inspector
+- Detailed error reporting with line context
+- Preloaded examples covering common patterns
+- Export register and memory state to file
 
-✅ **Interactive Code Editor** – Write m68k assembly code  
-✅ **Real-Time Execution** – Run and step-through code instantly  
-✅ **Complete History** – Undo/redo with execution history  
-✅ **Register Viewer** – Monitor all CPU registers  
-✅ **Memory Inspector** – View and analyze memory contents  
-✅ **Error Management** – Detailed error and exception reporting  
-✅ **Data Export** – Download registers and memory data  
-✅ **Responsive UI** – Works perfectly on desktop and tablets  
-✅ **Educational Focus** – Built for learning CPU architecture  
-✅ **Zero Setup** – Runs entirely in the browser
+## Supported instructions
 
-## 🏗️ Architecture
+**Arithmetic** — `ADD` `ADDA` `ADDI` `ADDQ` `SUB` `SUBA` `SUBI` `SUBQ` `MULS` `DIVS`  
+**Logic** — `AND` `ANDI` `EOR` `EORI` `NOT` `NEG` `OR` `ORI`  
+**Data movement** — `CLR` `EXG` `EXT` `MOVE` `MOVEA` `SWAP` `LEA`  
+**Shifts & rotates** — `ASL` `ASR` `LSL` `LSR` `ROL` `ROR` `ROXL` `ROXR`  
+**Comparisons** — `CMP` `CMPA` `CMPI` `TST`  
+**Control flow** — `JMP` `JSR` `RTS` `BRA` `BSR` `BEQ` `BNE` `BGE` `BGT` `BLE` `BLT`
 
-### Modern Tech Stack
+---
+<!-- 
+## Examples
 
-```
-Frontend
-├── React 18.3 (UI Framework)
-├── TypeScript 5.3 (Type Safety)
-├── Zustand 4.4 (State Management)
-└── FontAwesome 6 (Icons)
+The [`examples/`](./examples) folder contains annotated programs to get started:
 
-Build & Development
-├── Vite 7.3 (Fast Bundler)
-├── ESLint 8.57 (Linting)
-└── Prettier 3.1 (Formatting)
+| File | What it demonstrates |
+|---|---|
+| `fibonacci.asm` | Loops, D registers, branching |
+| `factorial.asm` | Recursion via JSR/RTS, stack discipline |
+| `bubble_sort.asm` | Nested loops, memory addressing, CMPI |
+| `stack_ops.asm` | MOVE to/from stack pointer, subroutine conventions |
+| `hello_world.asm` | Basic MOVE and output |
+| `loop_counter.asm` | DBRA countdown loop |
 
-Testing & Quality
-├── Vitest 4.0 (Unit Tests)
-├── React Testing Library
-└── Type Checking
+Each file is commented line by line — useful if you are following a computer architecture course.
+--- 
+-->
 
-Deployment
-└── GitHub Pages
-```
+## Built with
 
-### Project Structure
+React 18 · TypeScript · Vite 5 · Zustand · Vitest
 
-```
-src/
-├── components/          # React components
-│   ├── App.tsx         # Root component
-│   ├── Navbar.tsx      # Control panel
-│   ├── Editor.tsx      # Code editor
-│   ├── Registers.tsx   # Register viewer
-│   ├── Memory.tsx      # Memory inspector
-│   └── Output.tsx      # Execution output
-├── core/               # Emulator core logic
-│   └── memory.ts       # Memory management
-├── stores/             # State management
-│   └── emulatorStore.ts # Zustand store
-├── types/              # TypeScript definitions
-│   └── emulator.ts     # Type definitions
-└── styles/             # Styling
-    └── main.css        # Global styles
-```
+---
 
-## 🧭 How to Use
-
-| Action | Purpose |
-|--------|---------|
-| ▶️ **Run** | Execute the program |
-| ⟲ **Reset** | Clear all state |
-| ⇢ **Step** | Execute one instruction |
-| ↶ **Undo** | Revert last instruction |
-
-## ⚙️ Supported Instructions
-
-### Arithmetic
-
-`ADD`, `ADDA`, `ADDI`, `ADDQ`, `SUB`, `SUBA`, `SUBI`, `SUBQ`, `MULS`, `DIVS`
-
-### Logic
-
-`AND`, `ANDI`, `EOR`, `EORI`, `NOT`, `NEG`, `OR`, `ORI`
-
-### Basic Operations
-
-`CLR`, `EXG`, `EXT`, `MOVE`, `MOVEA`, `SWAP`, `LEA`
-
-### Shifts & Rotates
-
-`ASL`, `ASR`, `LSL`, `LSR`, `ROL`, `ROR`, `ROXL`, `ROXR`
-
-### Comparisons
-
-`CMP`, `CMPA`, `CMPI`, `TST`
-
-### Control Flow
-
-`JMP`, `JSR`, `RTS`, `BRA`, `BSR`, `BEQ`, `BNE`, `BGE`, `BGT`, `BLE`, `BLT`
-
-## 🚧 Next Developments
-
-upcoming features in development pipeline:
-
-### Core Features
-- 📥 **File Loading** – Load assembled programs to specified memory addresses
-- 🔍 **Debugger Breakpoints** – Set breakpoints and conditional debugging
-- 🎨 **New Syntax Support** – Support modern m68k assembly syntax variants
-- 🔊 **I/O Operations** – Input/output capabilities for data stream handling
-- 🏷️ **Macro System** – Define and use macros for code reusability
-
-### Data Definition & Memory
-- 📦 **Data Directives** – Support `DC` (define constant), `DS` (define space), `DCB` (define block)
-- 🧠 **Memory Allocation** – Dynamic memory allocation and initialization
-- 📍 **Address Validation** – Validate memory accesses and bounds checking
-
-### Next 10 Functions to Implement
-1. **UNLK** – Unlink stack frame (inverse of LINK)
-2. **LINK** – Create stack frame for procedures
-3. **MOVEM** – Move multiple registers (list-based transfers)
-4. **Bcc (conditional branches)** – BVC, BVS, BCC, BCS, BMI, BPL, BHI, BLS
-5. **DBcc** – Decrement and branch conditionally (loop control)
-6. **Scc** – Set conditionally (conditional set byte)
-7. **TRAP & TRAPV** – Software interrupts and trap handlers
-8. **CHK** – Check register bounds
-9. **TAS** – Test and set (atomic operations)
-10. **NBCD** – Add decimal with extend (BCD arithmetic)
-
-## 🧪 Getting Started
-
-### Requirements
-
-- **Node.js** 16+ and **npm** 8+
-
-### Installation
+## Run locally
 
 ```bash
-# Clone repository
 git clone https://github.com/gianlucarea/m68k-interpreter.git
 cd m68k-interpreter
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
-# Open http://localhost:3000
 ```
-
-### Available Commands
 
 ```bash
-# Development
-npm run dev              # Start dev server with HMR
-npm run build           # Build for production
-npm run preview         # Preview production build
-
-# Code Quality
-npm run lint            # Run ESLint
-npm run lint:fix        # Fix linting issues
-npm run format          # Format with Prettier
-npm run type-check      # Check TypeScript
-
-# Testing
-npm run test            # Run unit tests
-npm run test:ui         # Tests with UI
-npm run test:coverage   # Coverage report
-
-# Deployment
-npm run deploy          # Deploy to GitHub Pages
+npm run build        # production build
+npm run test         # run tests
+npm run lint:fix     # lint and format
 ```
-
-## 🔧 Configuration
-
-All configuration files are included and pre-configured:
-
-- **`vite.config.ts`** – Bundler configuration
-- **`tsconfig.json`** – TypeScript compiler options
-- **`.eslintrc.json`** – Linting rules (ESLint v8)
-- **`.prettierrc.json`** – Code formatting options
-- **`vitest.config.ts`** – Test runner configuration
-
-## 📚 Development
-
-### Adding Features
-
-1. Create component in `src/components/`
-2. Add types to `src/types/emulator.ts`
-3. Use hooks: `useEmulatorStore()` for state
-4. Add styles to `src/styles/main.css`
-5. Write tests in `*.test.tsx` files
-
-### Code Standards
-
-- ✅ All code must be TypeScript
-- ✅ Use functional components with hooks
-- ✅ Run `npm run lint:fix` before commit
-- ✅ Format with `npm run format`
-- ✅ All functions should have types
-- ✅ Write tests for new features
-
-## 🧪 Testing
-
-The project uses Vitest and React Testing Library:
-
-```bash
-npm run test              # Run all tests
-npm run test -- --watch   # Watch mode
-npm run test:coverage     # Generate coverage
-npm run test:ui           # Web UI for tests
-```
-
-## 📊 Performance
-
-- ✅ Code-splitting for faster loads
-- ✅ Tree-shaking enabled
-- ✅ CSS minification
-- ✅ JavaScript minification
-- ✅ Source maps in dev only
-- ✅ Lazy component loading
-
-## 🌐 Browser Support
-
-- ✅ Chrome/Chromium 90+
-- ✅ Firefox 88+
-- ✅ Safari 14+
-- ✅ Edge 90+
-
-## 🤝 Contributing
-
-Contributions welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Commit changes: `git commit -m 'Add your feature'`
-4. Push branch: `git push origin feature/your-feature`
-5. Open a Pull Request
-
-### Before Submitting PR
-
-- [ ] Run `npm run lint:fix`
-- [ ] Run `npm run format`
-- [ ] Run `npm run type-check`
-- [ ] Run `npm run test`
-- [ ] Update README if needed
-
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE) for details
-
-## ❤️ Acknowledgments
-
-- Inspired by **Easy68K** simulator
-- Built for students, educators, and enthusiasts
-- Made with ❤️ using React, TypeScript, and Vite
-
-## ⭐ Show Your Support
-
-If you find this project useful:
-
-- ⭐ Star this repository
-- 🐛 Report bugs or request features
-- 💬 Share feedback and ideas
-- 🔗 Share with others learning assembly
-- 🤝 Contribute improvements
 
 ---
 
-**Happy coding! 🚀**
+## For educators
+
+If you teach a course that uses Easy68K, this works as a drop-in browser-based alternative — no student setup required. If you use it in your course and want it listed here, open an issue or send an email.
 
 ---
+
+## Contributing
+
+PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+MIT
