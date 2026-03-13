@@ -9,6 +9,7 @@ import {
   faFlag,
   faMemory,
 } from '@fortawesome/free-solid-svg-icons';
+import GitHubButton from 'react-github-btn';
 import { useEmulatorStore } from '@/stores/emulatorStore';
 
 interface NavbarProps {
@@ -58,7 +59,21 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleMemory, showMemory }) => {
         </button>
       </div>
 
-      <h1 className="navbar-title">M68K Interpreter</h1>
+      <h1 className="navbar-title">
+        M68K Interpreter
+        <div className="navbar-github-btn">
+          <GitHubButton
+            href="https://github.com/gianlucarea/m68k-interpreter"
+            data-color-scheme="no-preference: light; light: light; dark: dark;"
+            data-icon="octicon-star"
+            data-size="large"
+            data-show-count="true"
+            aria-label="Star gianlucarea/m68k-interpreter on GitHub"
+          >
+            Star
+          </GitHubButton>
+        </div>
+      </h1>
 
       <div className="navbar-tools">
         <button className="btn-tool" id="showFlag" title="Show flags" onClick={handleShowFlags}>

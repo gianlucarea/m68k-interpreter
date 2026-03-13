@@ -114,6 +114,11 @@ pre {
   font-size: 24px;
   font-weight: 700;
   color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  line-height: 1;
 }
 
 .navbar-commands,
@@ -751,3 +756,10 @@ textarea {
   border: 1px solid var(--border-color);
 }
 
+/* GitHub Star Button in Navbar */
+.navbar-github-btn {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  height: 100%;
+}
