@@ -2,7 +2,7 @@
 
 [![Built with React](https://img.shields.io/badge/Built%20with-React%2018-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Bundler-Vite%205-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Bundler-Vite%207-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 > 💻 A modern, web-based **Motorola 68000 (m68k) assembly emulator** built with **React 18**, **TypeScript**, and **Vite**.  
@@ -14,7 +14,7 @@
 
 - 🎯 **React 18** with hooks & functional components
 - 📘 **TypeScript** for full type safety
-- ⚡ **Vite 5** for lightning-fast builds and dev server
+- ⚡ **Vite 7** for lightning-fast builds and dev server
 - 🏪 **Zustand** for lightweight state management
 - 🧪 **Vitest** for fast unit testing
 - 📐 **ESLint + Prettier** for code quality
@@ -50,12 +50,12 @@ Frontend
 └── FontAwesome 6 (Icons)
 
 Build & Development
-├── Vite 5.0 (Fast Bundler)
-├── ESLint 8.56 (Linting)
+├── Vite 7.3 (Fast Bundler)
+├── ESLint 8.57 (Linting)
 └── Prettier 3.1 (Formatting)
 
 Testing & Quality
-├── Vitest 1.1 (Unit Tests)
+├── Vitest 4.0 (Unit Tests)
 ├── React Testing Library
 └── Type Checking
 
