@@ -5,7 +5,7 @@ import { Emulator } from '@/core/emulator';
 declare global {
   interface Window {
     editorCode: string;
-    emulatorInstance: any;
+    emulatorInstance: Emulator | null;
   }
 }
 
@@ -14,51 +14,50 @@ export const useEmulatorEvents = () => {
   const emulatorRef = useRef<Emulator | null>(null);
   const executionLoopRef = useRef<NodeJS.Timeout | null>(null);
 
-  const updateStoreFromEmulator = (emulator: Emulator): void => {
-    if (!emulator) return;
-
-    const registers = emulator.getRegisters();
-    // Emulator layout: A0-A7 (indices 0-7), D0-D7 (indices 8-15)
-    const addressRegNames = ['a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7'] as const;
-    const dataRegNames = ['d0', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7'] as const;
-
-    // Update address registers (indices 0-7)
-    for (let i = 0; i < 8; i++) {
-      setRegister(addressRegNames[i], registers[i]);
-    }
-
-    // Update data registers (indices 8-15)
-    for (let i = 0; i < 8; i++) {
-      setRegister(dataRegNames[i], registers[i + 8]);
-    }
-
-    // Update program counter
-    setRegister('pc', emulator.getPC());
-
-    // Update memory
-    const memory = emulator.getMemory();
-    setMemory(memory);
-
-    // Update condition flags
-    setFlags({
-      z: emulator.getZFlag(),
-      v: emulator.getVFlag(),
-      n: emulator.getNFlag(),
-      c: emulator.getCFlag(),
-      x: emulator.getXFlag(),
-    });
-
-    // Update last instruction
-    setExecutionState({ lastInstruction: emulator.getLastInstruction() });
-
-    // Handle errors
-    const errors = emulator.getErrors();
-    if (errors.length > 0) {
-      setExecutionState({ errors });
-    }
-  };
-
   useEffect(() => {
+    const updateStoreFromEmulator = (emulator: Emulator): void => {
+      if (!emulator) return;
+
+      const registers = emulator.getRegisters();
+      // Emulator layout: A0-A7 (indices 0-7), D0-D7 (indices 8-15)
+      const addressRegNames = ['a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7'] as const;
+      const dataRegNames = ['d0', 'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7'] as const;
+
+      // Update address registers (indices 0-7)
+      for (let i = 0; i < 8; i++) {
+        setRegister(addressRegNames[i], registers[i]);
+      }
+
+      // Update data registers (indices 8-15)
+      for (let i = 0; i < 8; i++) {
+        setRegister(dataRegNames[i], registers[i + 8]);
+      }
+
+      // Update program counter
+      setRegister('pc', emulator.getPC());
+
+      // Update memory
+      const memory = emulator.getMemory();
+      setMemory(memory);
+
+      // Update condition flags
+      setFlags({
+        z: emulator.getZFlag(),
+        v: emulator.getVFlag(),
+        n: emulator.getNFlag(),
+        c: emulator.getCFlag(),
+        x: emulator.getXFlag(),
+      });
+
+      // Update last instruction
+      setExecutionState({ lastInstruction: emulator.getLastInstruction() });
+
+      // Handle errors
+      const errors = emulator.getErrors();
+      if (errors.length > 0) {
+        setExecutionState({ errors });
+      }
+    };
     const handleRun = (): void => {
       const code = window.editorCode || '';
       if (!code.trim()) {

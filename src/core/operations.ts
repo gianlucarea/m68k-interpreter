@@ -177,7 +177,7 @@ export function moveOP(src: number, dest: number, ccr: number, size: number): [n
   switch (size) {
     case CODE_LONG:
       return [src, moveCCR(src | 0, ccr)];
-    case CODE_WORD:
+    case CODE_WORD: {
       aux = addOP(src, dest & ~WORD_MASK, ccr, size, false)[0]; // New register value
       const aux16 = new Int16Array(1);
       aux16[0] = aux & WORD_MASK; // Force the result to 16 bit signed for CCR
@@ -192,7 +192,8 @@ export function moveOP(src: number, dest: number, ccr: number, size: number): [n
       }
       
       return [aux, moveCCR(aux16[0], ccr)];
-    case CODE_BYTE:
+    }
+    case CODE_BYTE: {
       aux = addOP(src, dest & ~BYTE_MASK, ccr, size, false)[0]; // New register value
       const aux8 = new Int8Array(1);
       aux8[0] = aux & BYTE_MASK; // Force the result to 8 bit signed for CCR
@@ -207,6 +208,7 @@ export function moveOP(src: number, dest: number, ccr: number, size: number): [n
       }
       
       return [aux, moveCCR(aux8[0], ccr)];
+    }
     default:
       throw new Error('Invalid size');
   }
@@ -243,19 +245,22 @@ export function notOP(size: number, op: number, ccr: number): [number, number] {
   let res: number;
 
   switch (size) {
-    case CODE_BYTE:
+    case CODE_BYTE: {
       res = ((op & ~BYTE_MASK) + (~op & BYTE_MASK)) >>> 0;
       const res8 = new Int8Array(1);
       res8[0] = res & BYTE_MASK; // Force the result to 8 bit signed for CCR
       return [res, moveCCR(res8[0], ccr)]; // Same ccr behaviour as move
-    case CODE_WORD:
+    }
+    case CODE_WORD: {
       res = ((op & ~WORD_MASK) + (~op & WORD_MASK)) >>> 0;
       const res16 = new Int16Array(1);
       res16[0] = res & WORD_MASK; // Force the result to 16 bit signed for CCR
       return [res, moveCCR(res16[0], ccr)]; // Same ccr behaviour as move
-    case CODE_LONG:
+    }
+    case CODE_LONG: {
       res = (~op) >>> 0;
       return [res, moveCCR(res | 0, ccr)]; // Same ccr behaviour as move
+    }
     default:
       throw new Error('Invalid size');
   }
@@ -265,18 +270,20 @@ export function andOP(size: number, op1: number, op2: number, ccr: number): [num
   let res: number;
 
   switch (size) {
-    case CODE_BYTE:
+    case CODE_BYTE: {
       res = ((op1 & BYTE_MASK) & (op2 & BYTE_MASK)) >>> 0;
       res = (op1 & ~BYTE_MASK) + res;
       const res8 = new Int8Array(1);
       res8[0] = res & BYTE_MASK;
       return [res, moveCCR(res8[0], ccr)];
-    case CODE_WORD:
+    }
+    case CODE_WORD: {
       res = ((op1 & WORD_MASK) & (op2 & WORD_MASK)) >>> 0;
       res = (op1 & ~WORD_MASK) + res;
       const res16 = new Int16Array(1);
       res16[0] = res & WORD_MASK;
       return [res, moveCCR(res16[0], ccr)];
+    }
     case CODE_LONG:
       res = (op1 & op2) >>> 0;
       return [res, moveCCR(res | 0, ccr)];
@@ -289,18 +296,20 @@ export function orOP(size: number, op1: number, op2: number, ccr: number): [numb
   let res: number;
 
   switch (size) {
-    case CODE_BYTE:
+    case CODE_BYTE: {
       res = ((op1 & BYTE_MASK) | (op2 & BYTE_MASK)) >>> 0;
       res = (op1 & ~BYTE_MASK) + res;
       const res8 = new Int8Array(1);
       res8[0] = res & BYTE_MASK;
       return [res, moveCCR(res8[0], ccr)];
-    case CODE_WORD:
+    }
+    case CODE_WORD: {
       res = ((op1 & WORD_MASK) | (op2 & WORD_MASK)) >>> 0;
       res = (op1 & ~WORD_MASK) + res;
       const res16 = new Int16Array(1);
       res16[0] = res & WORD_MASK;
       return [res, moveCCR(res16[0], ccr)];
+    }
     case CODE_LONG:
       res = (op1 | op2) >>> 0;
       return [res, moveCCR(res | 0, ccr)];
@@ -313,18 +322,20 @@ export function eorOP(size: number, op1: number, op2: number, ccr: number): [num
   let res: number;
 
   switch (size) {
-    case CODE_BYTE:
+    case CODE_BYTE: {
       res = ((op1 & BYTE_MASK) ^ (op2 & BYTE_MASK)) >>> 0;
       res = (op1 & ~BYTE_MASK) + res;
       const res8 = new Int8Array(1);
       res8[0] = res & BYTE_MASK;
       return [res, moveCCR(res8[0], ccr)];
-    case CODE_WORD:
+    }
+    case CODE_WORD: {
       res = ((op1 & WORD_MASK) ^ (op2 & WORD_MASK)) >>> 0;
       res = (op1 & ~WORD_MASK) + res;
       const res16 = new Int16Array(1);
       res16[0] = res & WORD_MASK;
       return [res, moveCCR(res16[0], ccr)];
+    }
     case CODE_LONG:
       res = (op1 ^ op2) >>> 0;
       return [res, moveCCR(res | 0, ccr)];
@@ -341,7 +352,7 @@ export function extOP(size: number, op: number, ccr: number): [number, number] {
   let res: number;
 
   switch (size) {
-    case CODE_WORD:
+    case CODE_WORD: {
       // Extend byte to word
       const res8 = new Int8Array(1);
       res8[0] = op & BYTE_MASK;
@@ -349,12 +360,14 @@ export function extOP(size: number, op: number, ccr: number): [number, number] {
       const res16 = new Int16Array(1);
       res16[0] = res & WORD_MASK;
       return [res, moveCCR(res16[0], ccr)];
-    case CODE_LONG:
+    }
+    case CODE_LONG: {
       // Extend word to long
       const resW = new Int16Array(1);
       resW[0] = op & WORD_MASK;
       res = resW[0]; // Sign-extend word to long
       return [res, moveCCR(res | 0, ccr)];
+    }
     default:
       throw new Error('Invalid size for EXT');
   }
@@ -378,7 +391,7 @@ export function lslOP(
   let carry = 0;
 
   switch (size) {
-    case CODE_BYTE:
+    case CODE_BYTE: {
       const res8 = new Int8Array(1);
       for (let i = 0; i < count; i++) {
         carry = (op & MSB_BYTE_MASK) >>> 7;
@@ -388,7 +401,8 @@ export function lslOP(
       if (carry) ccr = (ccr | 0x01) >>> 0;
       else ccr = (ccr & 0xfe) >>> 0;
       return [res8[0], moveCCR(res8[0], ccr)];
-    case CODE_WORD:
+    }
+    case CODE_WORD: {
       const res16 = new Int16Array(1);
       for (let i = 0; i < count; i++) {
         carry = (op & MSB_WORD_MASK) >> 15;
@@ -398,7 +412,8 @@ export function lslOP(
       if (carry) ccr = (ccr | 0x01) >>> 0;
       else ccr = (ccr & 0xfe) >>> 0;
       return [res16[0], moveCCR(res16[0], ccr)];
-    case CODE_LONG:
+    }
+    case CODE_LONG: {
       for (let i = 0; i < count; i++) {
         carry = (op & MSB_LONG_MASK) >>> 31;
         op = (op << 1) >>> 0;
@@ -406,6 +421,7 @@ export function lslOP(
       if (carry) ccr = (ccr | 0x01) >>> 0;
       else ccr = (ccr & 0xfe) >>> 0;
       return [op, moveCCR(op | 0, ccr)];
+    }
     default:
       throw new Error('Invalid size');
   }
@@ -430,7 +446,7 @@ export function lsrOP(
   let carry = 0;
 
   switch (size) {
-    case CODE_BYTE:
+    case CODE_BYTE: {
       const res8 = new Int8Array(1);
       for (let i = 0; i < count; i++) {
         carry = op & 0x01;
@@ -440,7 +456,8 @@ export function lsrOP(
       if (carry) ccr = (ccr | 0x01) >>> 0;
       else ccr = (ccr & 0xfe) >>> 0;
       return [res8[0], moveCCR(res8[0], ccr)];
-    case CODE_WORD:
+    }
+    case CODE_WORD: {
       const res16 = new Int16Array(1);
       for (let i = 0; i < count; i++) {
         carry = op & 0x01;
@@ -450,6 +467,7 @@ export function lsrOP(
       if (carry) ccr = (ccr | 0x01) >>> 0;
       else ccr = (ccr & 0xfe) >>> 0;
       return [res16[0], moveCCR(res16[0], ccr)];
+    }
     case CODE_LONG:
       for (let i = 0; i < count; i++) {
         carry = op & 0x01;
@@ -473,7 +491,7 @@ export function asrOP(
   let carry = 0;
 
   switch (size) {
-    case CODE_BYTE:
+    case CODE_BYTE: {
       const res8 = new Int8Array(1);
       const signBit8 = (op & MSB_BYTE_MASK) >>> 0;
       for (let i = 0; i < count; i++) {
@@ -484,7 +502,8 @@ export function asrOP(
       if (carry) ccr = (ccr | 0x01) >>> 0;
       else ccr = (ccr & 0xfe) >>> 0;
       return [res8[0], moveCCR(res8[0], ccr)];
-    case CODE_WORD:
+    }
+    case CODE_WORD: {
       const res16 = new Int16Array(1);
       const signBit16 = (op & MSB_WORD_MASK) >>> 0;
       for (let i = 0; i < count; i++) {
@@ -495,7 +514,8 @@ export function asrOP(
       if (carry) ccr = (ccr | 0x01) >>> 0;
       else ccr = (ccr & 0xfe) >>> 0;
       return [res16[0], moveCCR(res16[0], ccr)];
-    case CODE_LONG:
+    }
+    case CODE_LONG: {
       const signBit32 = (op & MSB_LONG_MASK) >>> 0;
       for (let i = 0; i < count; i++) {
         carry = op & 0x01;
@@ -503,8 +523,7 @@ export function asrOP(
       }
       if (carry) ccr = (ccr | 0x01) >>> 0;
       else ccr = (ccr & 0xfe) >>> 0;
-      return [op, moveCCR(op | 0, ccr)];
-    default:
+      return [op, moveCCR(op | 0, ccr)];    }    default:
       throw new Error('Invalid size');
   }
 }
@@ -516,7 +535,7 @@ export function rolOP(
   size: number
 ): [number, number] {
   switch (size) {
-    case CODE_BYTE:
+    case CODE_BYTE: {
       for (let i = 0; i < count; i++) {
         const carry = (op & MSB_BYTE_MASK) >>> 7;
         op = ((op << 1) | carry) & BYTE_MASK;
@@ -524,7 +543,8 @@ export function rolOP(
       const res8 = new Int8Array(1);
       res8[0] = op & BYTE_MASK;
       return [op, moveCCR(res8[0], ccr)];
-    case CODE_WORD:
+    }
+    case CODE_WORD: {
       for (let i = 0; i < count; i++) {
         const carry = (op & MSB_WORD_MASK) >> 15;
         op = ((op << 1) | carry) & WORD_MASK;
@@ -532,6 +552,7 @@ export function rolOP(
       const res16 = new Int16Array(1);
       res16[0] = op & WORD_MASK;
       return [op, moveCCR(res16[0], ccr)];
+    }
     case CODE_LONG:
       for (let i = 0; i < count; i++) {
         const carry = (op & MSB_LONG_MASK) >>> 31;
@@ -550,7 +571,7 @@ export function rorOP(
   size: number
 ): [number, number] {
   switch (size) {
-    case CODE_BYTE:
+    case CODE_BYTE: {
       for (let i = 0; i < count; i++) {
         const carry = op & 0x01;
         op = ((op >>> 1) | (carry << 7)) & BYTE_MASK;
@@ -558,7 +579,8 @@ export function rorOP(
       const res8 = new Int8Array(1);
       res8[0] = op & BYTE_MASK;
       return [op, moveCCR(res8[0], ccr)];
-    case CODE_WORD:
+    }
+    case CODE_WORD: {
       for (let i = 0; i < count; i++) {
         const carry = op & 0x01;
         op = ((op >>> 1) | (carry << 15)) & WORD_MASK;
@@ -566,6 +588,7 @@ export function rorOP(
       const res16 = new Int16Array(1);
       res16[0] = op & WORD_MASK;
       return [op, moveCCR(res16[0], ccr)];
+    }
     case CODE_LONG:
       for (let i = 0; i < count; i++) {
         const carry = op & 0x01;
@@ -597,7 +620,7 @@ export function mulsOP(size: number, src: number, dest: number, ccr: number): [n
     destSigned = dest | 0;
   }
   
-  let result = (srcSigned * destSigned) >>> 0;
+  const result = (srcSigned * destSigned) >>> 0;
   
   // Update CCR based on result
   if (result === 0) ccr = (ccr | 0x04) >>> 0; // Z flag

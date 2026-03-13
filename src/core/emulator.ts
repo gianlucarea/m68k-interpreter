@@ -42,7 +42,7 @@ const TOKEN_OFFSET_ADDR = 4;
 const TOKEN_LABEL = 5;
 
 // Directive regexes
-const DC_REGEX = /^[_a-zA-Z][_a-zA-Z0-9]*\:\s+dc\.[wbl]\s+("[a-zA-Z0-9]+"|([0-9]+,)*[0-9]+)$/gmi;
+const DC_REGEX = /^[_a-zA-Z][_a-zA-Z0-9]*:\s+dc\.[wbl]\s+("[a-zA-Z0-9]+"|([0-9]+,)*[0-9]+)$/gmi;
 const ORG_REGEX = /^org\s+(?:0x|\$)([0-9]+)/gmi;
 
 interface Operand {
@@ -86,7 +86,7 @@ export class Emulator {
       console.warn('Emulator: expected program to be a string, got', prog);
       try {
         prog = String(prog);
-      } catch (e) {
+      } catch {
         prog = '';
       }
     }
