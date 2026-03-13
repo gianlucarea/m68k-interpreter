@@ -31,6 +31,8 @@ import {
   lsrOP,
   rolOP,
   rorOP,
+  roxlOP,
+  roxrOP,
 } from './operations';
 
 // Token type constants
@@ -859,6 +861,27 @@ export class Emulator {
           }
           this.ror(size, operands[0], operands[1]);
           break;
+        case 'roxl':
+          if (operands.length !== 2) {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.roxl(size, operands[0], operands[1]);
+          break;
+        case 'roxr':
+          if (operands.length !== 2) {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.roxr(size, operands[0], operands[1]);
+          break;
+        case 'bsr':
+          if (operands.length !== 1) {
+            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bsr(operandTokens[0]);
+          break;
         default:
           this.errors.push(Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
           return false;
@@ -1265,9 +1288,9 @@ export class Emulator {
     }
 
     // Push current PC (return address) onto stack using A7 (stack pointer)
-    const stackPtr = this.registers[15]; // A7 is register 15
+    const stackPtr = this.registers[7]; // A7 is register index 7
     this.memory.setLong(stackPtr - 4, this.pc);
-    this.registers[15] = stackPtr - 4; // Decrement stack pointer
+    this.registers[7] = stackPtr - 4; // Decrement stack pointer
 
     // Jump to subroutine
     this.pc = this.labels[labelKey] * 4;
@@ -1275,9 +1298,9 @@ export class Emulator {
 
   private rts(): void {
     // Return from subroutine - pop return address from stack
-    const stackPtr = this.registers[15]; // A7 is register 15
+    const stackPtr = this.registers[7]; // A7 is register index 7
     this.pc = this.memory.getLong(stackPtr);
-    this.registers[15] = stackPtr + 4; // Increment stack pointer
+    this.registers[7] = stackPtr + 4; // Increment stack pointer
     this.lastInstruction = 'RTS';
   }
 
@@ -1543,6 +1566,62 @@ export class Emulator {
       this.registers[op2.value] = result;
       this.ccr = newCCR;
     }
+  }
+
+  private roxl(size: number, op1: Operand, op2: Operand): void {
+    // ROXL: Rotate Left through Extend
+    if (op1 === undefined || op2 === undefined) return;
+
+    let shiftCount = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      shiftCount = op1.value;
+    } else if (op1.type === TOKEN_REG_DATA) {
+      shiftCount = this.registers[op1.value] & 0x3F;
+    }
+
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = roxlOP(shiftCount, this.registers[op2.value], this.ccr, size);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    }
+  }
+
+  private roxr(size: number, op1: Operand, op2: Operand): void {
+    // ROXR: Rotate Right through Extend
+    if (op1 === undefined || op2 === undefined) return;
+
+    let shiftCount = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      shiftCount = op1.value;
+    } else if (op1.type === TOKEN_REG_DATA) {
+      shiftCount = this.registers[op1.value] & 0x3F;
+    }
+
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = roxrOP(shiftCount, this.registers[op2.value], this.ccr, size);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    }
+  }
+
+  private bsr(label: string): void {
+    // BSR: Branch to Subroutine
+    // Push return address onto stack and branch to label
+    label = label.trim().toLowerCase();
+    const labelKey = Object.keys(this.labels).find((k) => k.toLowerCase() === label);
+
+    if (!labelKey || this.labels[labelKey] === undefined) {
+      this.errors.push(Strings.UNKNOWN_LABEL + label + Strings.AT_LINE + this.line);
+      return;
+    }
+
+    // Push current PC (return address) onto stack using A7 (stack pointer)
+    const stackPtr = this.registers[7]; // A7 is register index 7
+    this.memory.setLong(stackPtr - 4, this.pc);
+    this.registers[7] = stackPtr - 4; // Decrement stack pointer
+
+    // Branch to subroutine
+    this.pc = this.labels[labelKey] * 4;
   }
 
   // ============== Getters ==============

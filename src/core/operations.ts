@@ -599,6 +599,162 @@ export function rorOP(
       throw new Error('Invalid size');
   }
 }
+export function roxlOP(
+  count: number,
+  op: number,
+  ccr: number,
+  size: number
+): [number, number] {
+  // ROXL: Rotate Left through Extend
+  // The X flag acts as an extra bit in the rotation
+  let xBit = (ccr & 0x10) >>> 4; // Extract X flag
+
+  switch (size) {
+    case CODE_BYTE: {
+      op = op & BYTE_MASK;
+      for (let i = 0; i < count; i++) {
+        const msb = (op & MSB_BYTE_MASK) >>> 7;
+        op = ((op << 1) | xBit) & BYTE_MASK;
+        xBit = msb;
+      }
+      // Update C and X flags with last bit shifted out
+      if (xBit) {
+        ccr = (ccr | 0x11) >>> 0; // Set both C and X
+      } else {
+        ccr = (ccr & 0xee) >>> 0; // Clear both C and X
+      }
+      const res8 = new Int8Array(1);
+      res8[0] = op & BYTE_MASK;
+      // Zero
+      if (res8[0] === 0) ccr = (ccr | 0x04) >>> 0;
+      else ccr = (ccr & 0xfb) >>> 0;
+      // Negative
+      if (res8[0] < 0) ccr = (ccr | 0x08) >>> 0;
+      else ccr = (ccr & 0xf7) >>> 0;
+      // Clear V
+      ccr = (ccr & 0xfd) >>> 0;
+      return [op, ccr];
+    }
+    case CODE_WORD: {
+      op = op & WORD_MASK;
+      for (let i = 0; i < count; i++) {
+        const msb = (op & MSB_WORD_MASK) >>> 15;
+        op = ((op << 1) | xBit) & WORD_MASK;
+        xBit = msb;
+      }
+      if (xBit) {
+        ccr = (ccr | 0x11) >>> 0;
+      } else {
+        ccr = (ccr & 0xee) >>> 0;
+      }
+      const res16 = new Int16Array(1);
+      res16[0] = op & WORD_MASK;
+      if (res16[0] === 0) ccr = (ccr | 0x04) >>> 0;
+      else ccr = (ccr & 0xfb) >>> 0;
+      if (res16[0] < 0) ccr = (ccr | 0x08) >>> 0;
+      else ccr = (ccr & 0xf7) >>> 0;
+      ccr = (ccr & 0xfd) >>> 0;
+      return [op, ccr];
+    }
+    case CODE_LONG: {
+      for (let i = 0; i < count; i++) {
+        const msb = (op & MSB_LONG_MASK) >>> 31;
+        op = ((op << 1) | xBit) >>> 0;
+        xBit = msb;
+      }
+      if (xBit) {
+        ccr = (ccr | 0x11) >>> 0;
+      } else {
+        ccr = (ccr & 0xee) >>> 0;
+      }
+      if (op === 0) ccr = (ccr | 0x04) >>> 0;
+      else ccr = (ccr & 0xfb) >>> 0;
+      if ((op | 0) < 0) ccr = (ccr | 0x08) >>> 0;
+      else ccr = (ccr & 0xf7) >>> 0;
+      ccr = (ccr & 0xfd) >>> 0;
+      return [op, ccr];
+    }
+    default:
+      throw new Error('Invalid size');
+  }
+}
+
+export function roxrOP(
+  count: number,
+  op: number,
+  ccr: number,
+  size: number
+): [number, number] {
+  // ROXR: Rotate Right through Extend
+  // The X flag acts as an extra bit in the rotation
+  let xBit = (ccr & 0x10) >>> 4; // Extract X flag
+
+  switch (size) {
+    case CODE_BYTE: {
+      op = op & BYTE_MASK;
+      for (let i = 0; i < count; i++) {
+        const lsb = op & 0x01;
+        op = ((op >>> 1) | (xBit << 7)) & BYTE_MASK;
+        xBit = lsb;
+      }
+      if (xBit) {
+        ccr = (ccr | 0x11) >>> 0;
+      } else {
+        ccr = (ccr & 0xee) >>> 0;
+      }
+      const res8 = new Int8Array(1);
+      res8[0] = op & BYTE_MASK;
+      if (res8[0] === 0) ccr = (ccr | 0x04) >>> 0;
+      else ccr = (ccr & 0xfb) >>> 0;
+      if (res8[0] < 0) ccr = (ccr | 0x08) >>> 0;
+      else ccr = (ccr & 0xf7) >>> 0;
+      ccr = (ccr & 0xfd) >>> 0;
+      return [op, ccr];
+    }
+    case CODE_WORD: {
+      op = op & WORD_MASK;
+      for (let i = 0; i < count; i++) {
+        const lsb = op & 0x01;
+        op = ((op >>> 1) | (xBit << 15)) & WORD_MASK;
+        xBit = lsb;
+      }
+      if (xBit) {
+        ccr = (ccr | 0x11) >>> 0;
+      } else {
+        ccr = (ccr & 0xee) >>> 0;
+      }
+      const res16 = new Int16Array(1);
+      res16[0] = op & WORD_MASK;
+      if (res16[0] === 0) ccr = (ccr | 0x04) >>> 0;
+      else ccr = (ccr & 0xfb) >>> 0;
+      if (res16[0] < 0) ccr = (ccr | 0x08) >>> 0;
+      else ccr = (ccr & 0xf7) >>> 0;
+      ccr = (ccr & 0xfd) >>> 0;
+      return [op, ccr];
+    }
+    case CODE_LONG: {
+      for (let i = 0; i < count; i++) {
+        const lsb = op & 0x01;
+        op = ((op >>> 1) | (xBit << 31)) >>> 0;
+        xBit = lsb;
+      }
+      if (xBit) {
+        ccr = (ccr | 0x11) >>> 0;
+      } else {
+        ccr = (ccr & 0xee) >>> 0;
+      }
+      if (op === 0) ccr = (ccr | 0x04) >>> 0;
+      else ccr = (ccr & 0xfb) >>> 0;
+      if ((op | 0) < 0) ccr = (ccr | 0x08) >>> 0;
+      else ccr = (ccr & 0xf7) >>> 0;
+      ccr = (ccr & 0xfd) >>> 0;
+      return [op, ccr];
+    }
+    default:
+      throw new Error('Invalid size');
+  }
+}
+
 export function mulsOP(size: number, src: number, dest: number, ccr: number): [number, number] {
   // MULS: Signed multiply
   // For 16-bit operands, result is 32-bit (destination register holds result)
