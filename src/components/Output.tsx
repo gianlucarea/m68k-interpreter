@@ -4,8 +4,7 @@ import { faClock } from '@fortawesome/free-solid-svg-icons';
 import { useEmulatorStore } from '@/stores/emulatorStore';
 
 const Output: React.FC = () => {
-  const { executionState } = useEmulatorStore();
-  const [delay, setDelay] = React.useState<number>(0);
+  const { executionState, delay, setDelay } = useEmulatorStore();
 
   return (
     <div className="output-container">
@@ -16,16 +15,17 @@ const Output: React.FC = () => {
         </div>
 
         <div className="delay-control">
-          <label htmlFor="delay-input">Delay (ms)</label>
+          <label htmlFor="delay-input">Delay (s)</label>
           <div className="input-group">
             <input
               id="delay-input"
               type="number"
               min="0"
-              step="100"
+              step="0.1"
               value={delay}
-              onChange={(e) => setDelay(parseInt(e.target.value, 10) || 0)}
+              onChange={(e) => setDelay(parseFloat(e.target.value) || 0)}
               placeholder="0"
+              title="Delay between instruction execution in seconds"
             />
             <FontAwesomeIcon icon={faClock} title="Execution delay" />
           </div>

@@ -14,6 +14,7 @@ interface EmulatorStore {
   executionState: ExecutionState;
   emulatorInstance: Emulator | null;
   showFlags: boolean;
+  delay: number;
   history: Array<{
     registers: Registers;
     memory: MemoryCell;
@@ -28,6 +29,7 @@ interface EmulatorStore {
   setExecutionState: (state: Partial<ExecutionState>) => void;
   setEmulatorInstance: (emulator: Emulator | null) => void;
   toggleShowFlags: () => void;
+  setDelay: (delay: number) => void;
   pushHistory: () => void;
   popHistory: () => void;
   reset: () => void;
@@ -85,6 +87,7 @@ export const useEmulatorStore = create<EmulatorStore>((set, get) => ({
   executionState: initialExecutionState,
   emulatorInstance: null,
   showFlags: false,
+  delay: 0,
   history: [],
 
   // Actions
@@ -116,6 +119,11 @@ export const useEmulatorStore = create<EmulatorStore>((set, get) => ({
   toggleShowFlags: () =>
     set((state) => ({
       showFlags: !state.showFlags,
+    })),
+
+  setDelay: (newDelay: number) =>
+    set(() => ({
+      delay: newDelay,
     })),
 
   pushHistory: () =>
@@ -153,6 +161,7 @@ export const useEmulatorStore = create<EmulatorStore>((set, get) => ({
       executionState: initialExecutionState,
       emulatorInstance: null,
       showFlags: false,
+      delay: 0,
       history: [],
     })),
 

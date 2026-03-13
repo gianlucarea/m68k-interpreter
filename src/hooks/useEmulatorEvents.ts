@@ -10,7 +10,7 @@ declare global {
 }
 
 export const useEmulatorEvents = () => {
-  const { reset, setRegister, setMemory, setFlags, setExecutionState, setEmulatorInstance, toggleShowFlags } = useEmulatorStore();
+  const { reset, setRegister, setMemory, setFlags, setExecutionState, setEmulatorInstance, toggleShowFlags, delay } = useEmulatorStore();
   const emulatorRef = useRef<Emulator | null>(null);
   const executionLoopRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -115,8 +115,9 @@ export const useEmulatorEvents = () => {
                 executionLoopRef.current = null;
               }
             } else {
-              // Schedule the next step
-              executionLoopRef.current = setTimeout(executionLoop, 50);
+              // Schedule the next step with user-configured delay (convert seconds to ms, minimum 50ms)
+              const executionDelay = Math.max(delay * 1000, 50);
+              executionLoopRef.current = setTimeout(executionLoop, executionDelay);
             }
           }
         };
@@ -225,5 +226,5 @@ export const useEmulatorEvents = () => {
         clearTimeout(executionLoopRef.current);
       }
     };
-  }, [reset, setRegister, setMemory, setFlags, setExecutionState, setEmulatorInstance, toggleShowFlags]);
+  }, [reset, setRegister, setMemory, setFlags, setExecutionState, setEmulatorInstance, toggleShowFlags, delay]);
 };
