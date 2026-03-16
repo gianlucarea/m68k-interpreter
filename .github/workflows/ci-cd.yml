@@ -1,4 +1,4 @@
-name: '🚀 CI/CD Pipeline'
+name: '🚀 CI Pipeline'
 
 on:
   push:
@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    
+
     strategy:
       matrix:
-        node-version: ['18.x', '20.x']
-    
+        node-version: ['20.x', '22.x']
+
     steps:
       - name: '📋 Checkout code'
         uses: actions/checkout@v4.1.1
@@ -28,7 +28,7 @@ jobs:
           cache: npm
 
       - name: '⬇️ Install dependencies'
-        run: npm install
+        run: npm ci
 
       - name: '🔍 Lint code'
         run: npm run lint
@@ -44,37 +44,7 @@ jobs:
         continue-on-error: true
 
       - name: '📤 Upload coverage'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
-          files: ./coverage/coverage-final.json
+          files: ./coverage/lcov.info
         continue-on-error: true
-
-  build:
-    name: '🔨 Build'
-    runs-on: ubuntu-latest
-    needs: test
-    permissions:
-      contents: read
-    
-    steps:
-      - name: '📋 Checkout code'
-        uses: actions/checkout@v4.1.1
-
-      - name: '📦 Setup Node.js'
-        uses: actions/setup-node@v4.0.2
-        with:
-          node-version: 18.x
-          cache: npm
-
-      - name: '⬇️ Install dependencies'
-        run: npm install
-
-      - name: '🔨 Build project'
-        run: npm run build
-
-      - name: '📤 Upload build artifacts'
-        uses: actions/upload-artifact@v3
-        with:
-          name: dist
-          path: dist/
-          retention-days: 5
