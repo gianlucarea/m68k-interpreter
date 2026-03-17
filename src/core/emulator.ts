@@ -854,6 +854,13 @@ export class Emulator {
           }
           this.bvc(operandTokens[0]);
           break;
+        case 'stop':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.stop(operands[0]);
+          break;
         case 'asl':
           if (operands.length !== 2) {
             this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
@@ -1529,6 +1536,23 @@ export class Emulator {
     if (!this.getVFlag()) {
       this.bra(label);
     }
+  }
+
+  private stop(op1: Operand): void {
+    // STOP: Stop processor
+    // Loads immediate operand into status register and halts execution
+    // For emulator purposes, we just halt by setting an exception
+    if (op1 === undefined) return;
+
+    // For now, we just accept the immediate value but don't use it
+    // In a full implementation, this would update the status register
+    if (op1.type === TOKEN_IMMEDIATE) {
+      // Accept the immediate value and halt
+      this.lastInstruction = 'STOP #' + (op1.value).toString(16);
+    }
+    
+    // Halt execution by advancing PC past the end of the program
+    this.pc = (this.instructions.length * 4);
   }
 
   private asl(size: number, op1: Operand, op2: Operand): void {
