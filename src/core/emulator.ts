@@ -519,7 +519,7 @@ export class Emulator {
           this.rts();
           break;
         default:
-          this.errors.push(Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
+          this.errors.push(instr + ' is a ' + Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
           return false;
       }
     } else {
@@ -860,7 +860,7 @@ export class Emulator {
           this.ror(size, operands[0], operands[1]);
           break;
         default:
-          this.errors.push(Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
+          this.errors.push(operation + ' is a ' + Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
           return false;
       }
     }
