@@ -833,6 +833,27 @@ export class Emulator {
           }
           this.blt(operandTokens[0]);
           break;
+        case 'bpl':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bpl(operandTokens[0]);
+          break;
+        case 'bcc':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bcc(operandTokens[0]);
+          break;
+        case 'bvc':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bvc(operandTokens[0]);
+          break;
         case 'asl':
           if (operands.length !== 2) {
             this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
@@ -1485,6 +1506,27 @@ export class Emulator {
   private blt(label: string): void {
     // BLT: Branch if Less Than (N flag != V flag)
     if (this.getNFlag() !== this.getVFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bpl(label: string): void {
+    // BPL: Branch if Plus (N flag clear)
+    if (!this.getNFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bcc(label: string): void {
+    // BCC: Branch if Carry Clear (C flag clear)
+    if (!this.getCFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bvc(label: string): void {
+    // BVC: Branch if Overflow Clear (V flag clear)
+    if (!this.getVFlag()) {
       this.bra(label);
     }
   }
