@@ -273,7 +273,7 @@ export class Emulator {
           return CODE_LONG;
         default:
           if (!errorsSuppressed) {
-            this.errors.push(Strings.INVALID_OP_SIZE + Strings.AT_LINE + this.line);
+            this.errors.push('.' + size + ' is an ' + Strings.INVALID_OP_SIZE + Strings.AT_LINE + this.line);
           }
           return CODE_WORD;
       }
@@ -321,7 +321,7 @@ export class Emulator {
       case 'd7':
         return 15;
       default:
-        this.errors.push(Strings.INVALID_REGISTER + Strings.AT_LINE + this.line);
+        this.errors.push(register + ' is an ' + Strings.INVALID_REGISTER + Strings.AT_LINE + this.line);
         return undefined;
     }
   }
@@ -450,7 +450,7 @@ export class Emulator {
       return res;
     }
 
-    this.errors.push(Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
+    this.errors.push(token + ' is an ' + Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
     return undefined;
   }
 
@@ -546,273 +546,273 @@ export class Emulator {
       switch (operation.toLowerCase()) {
         case 'add':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.add(size, operands[0], operands[1], false);
           break;
         case 'adda':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.adda(size, operands[0], operands[1]);
           break;
         case 'addi':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.addi(size, operands[0], operands[1]);
           break;
         case 'addq':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.addq(size, operands[0], operands[1]);
           break;
         case 'sub':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.add(size, operands[0], operands[1], true);
           break;
         case 'suba':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.suba(size, operands[0], operands[1]);
           break;
         case 'subi':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.subi(size, operands[0], operands[1]);
           break;
         case 'subq':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.subq(size, operands[0], operands[1]);
           break;
         case 'muls':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.muls(size, operands[0], operands[1]);
           break;
         case 'divs':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.divs(size, operands[0], operands[1]);
           break;
         case 'move':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.move(size, operands[0], operands[1]);
           break;
         case 'clr':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.clr(size, operands[0]);
           break;
         case 'cmp':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.cmp(size, operands[0], operands[1]);
           break;
         case 'cmpa':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.cmpa(operands[0], operands[1]);
           break;
         case 'cmpi':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.cmpi(size, operands[0], operands[1]);
           break;
         case 'tst':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.tst(size, operands[0]);
           break;
         case 'and':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.and(size, operands[0], operands[1]);
           break;
         case 'andi':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.andi(size, operands[0], operands[1]);
           break;
         case 'or':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.or(size, operands[0], operands[1]);
           break;
         case 'ori':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.ori(size, operands[0], operands[1]);
           break;
         case 'eor':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.eor(size, operands[0], operands[1]);
           break;
         case 'eori':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.eori(size, operands[0], operands[1]);
           break;
         case 'not':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.not(size, operands[0]);
           break;
         case 'neg':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.neg(size, operands[0]);
           break;
         case 'jmp':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.jmp(operandTokens[0]);
           break;
         case 'jsr':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.jsr(operandTokens[0]);
           break;
         case 'mode':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.mode(operands[0], operands[1]);
           break;
         case 'movea':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.movea(size, operands[0], operands[1]);
           break;
         case 'exg':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.exg(operands[0], operands[1]);
           break;
         case 'swap':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.swap(operands[0]);
           break;
         case 'ext':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.ext(size, operands[0]);
           break;
         case 'lea':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.lea(operands[0], operands[1]);
           break;
         case 'bra':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.bra(operandTokens[0]);
           break;
         case 'beq':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.beq(operandTokens[0]);
           break;
         case 'bne':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.bne(operandTokens[0]);
           break;
         case 'bge':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.bge(operandTokens[0]);
           break;
         case 'bgt':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.bgt(operandTokens[0]);
           break;
         case 'ble':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.ble(operandTokens[0]);
           break;
         case 'blt':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.blt(operandTokens[0]);
@@ -907,7 +907,7 @@ export class Emulator {
     // ADDI: Add immediate value
     // op1 must be immediate, op2 is destination
     if (op1.type !== TOKEN_IMMEDIATE) {
-      this.errors.push(Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
+      this.errors.push('operand expects immediate value, ' + Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
       return;
     }
 
@@ -923,7 +923,7 @@ export class Emulator {
 
     // ADDQ: Add quick (immediate 1-8)
     if (op1.type !== TOKEN_IMMEDIATE) {
-      this.errors.push(Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
+      this.errors.push('operand expects immediate value, ' + Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
       return;
     }
 
@@ -958,7 +958,7 @@ export class Emulator {
 
     // SUBI: Subtract immediate value
     if (op1.type !== TOKEN_IMMEDIATE) {
-      this.errors.push(Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
+      this.errors.push('operand expects immediate value, ' + Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
       return;
     }
 
@@ -974,7 +974,7 @@ export class Emulator {
 
     // SUBQ: Subtract quick (immediate 1-8)
     if (op1.type !== TOKEN_IMMEDIATE) {
-      this.errors.push(Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
+      this.errors.push('operand expects immediate value, ' + Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
       return;
     }
 
