@@ -26,6 +26,7 @@ import {
   mulsOP,
   muluOP,
   divsOP,
+  divuOP,
   aslOP,
   asrOP,
   lslOP,
@@ -622,6 +623,13 @@ export class Emulator {
           }
           this.divs(size, operands[0], operands[1]);
           break;
+        case 'divu':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.divu(size, operands[0], operands[1]);
+          break;
         case 'move':
           if (operands.length !== 2) {
             this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
@@ -1045,6 +1053,24 @@ export class Emulator {
 
     if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
       const [result, newCCR] = divsOP(size, src, this.registers[op2.value], this.ccr);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    }
+  }
+
+  private divu(size: number, op1: Operand, op2: Operand): void {
+    // DIVU: Unsigned division
+    if (op1 === undefined || op2 === undefined) return;
+
+    let src = 0;
+    if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
+      src = this.registers[op1.value];
+    } else if (op1.type === TOKEN_IMMEDIATE) {
+      src = op1.value;
+    }
+
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = divuOP(size, src, this.registers[op2.value], this.ccr);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
     }
