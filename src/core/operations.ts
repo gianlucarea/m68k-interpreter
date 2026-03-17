@@ -635,6 +635,37 @@ export function mulsOP(size: number, src: number, dest: number, ccr: number): [n
   return [result, ccr];
 }
 
+export function muluOP(size: number, src: number, dest: number, ccr: number): [number, number] {
+  // MULU: Unsigned multiply
+  // For 16-bit operands, result is 32-bit (destination register holds result)
+  // For 32-bit operands, results in 64-bit (we store low 32 bits in dest)
+  let srcUnsigned: number;
+  let destUnsigned: number;
+  
+  if (size === CODE_WORD) {
+    // Treat as 16-bit unsigned values - extract 16 bits
+    srcUnsigned = src & WORD_MASK;
+    destUnsigned = dest & WORD_MASK;
+  } else {
+    srcUnsigned = src >>> 0;
+    destUnsigned = dest >>> 0;
+  }
+  
+  const result = (srcUnsigned * destUnsigned) >>> 0;
+  
+  // Update CCR based on result
+  if (result === 0) ccr = (ccr | 0x04) >>> 0; // Z flag
+  else ccr = (ccr & 0xfb) >>> 0;
+  
+  if ((result | 0) < 0) ccr = (ccr | 0x08) >>> 0; // N flag
+  else ccr = (ccr & 0xf7) >>> 0;
+  
+  ccr = (ccr & 0xfd) >>> 0; // Clear V flag
+  ccr = (ccr & 0xfe) >>> 0; // Clear C flag
+  
+  return [result, ccr];
+}
+
 export function divsOP(size: number, src: number, dest: number, ccr: number): [number, number] {
   // DIVS: Signed division
   // Quotient in low word, remainder in high word (for 32-bit result)

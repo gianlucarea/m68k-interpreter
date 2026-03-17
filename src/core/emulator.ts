@@ -24,6 +24,7 @@ import {
   notOP,
   negOP,
   mulsOP,
+  muluOP,
   divsOP,
   aslOP,
   asrOP,
@@ -607,6 +608,13 @@ export class Emulator {
           }
           this.muls(size, operands[0], operands[1]);
           break;
+        case 'mulu':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.mulu(size, operands[0], operands[1]);
+          break;
         case 'divs':
           if (operands.length !== 2) {
             this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
@@ -1001,6 +1009,24 @@ export class Emulator {
 
     if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
       const [result, newCCR] = mulsOP(size, src, this.registers[op2.value], this.ccr);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    }
+  }
+
+  private mulu(size: number, op1: Operand, op2: Operand): void {
+    // MULU: Unsigned multiply
+    if (op1 === undefined || op2 === undefined) return;
+
+    let src = 0;
+    if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
+      src = this.registers[op1.value];
+    } else if (op1.type === TOKEN_IMMEDIATE) {
+      src = op1.value;
+    }
+
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = muluOP(size, src, this.registers[op2.value], this.ccr);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
     }
