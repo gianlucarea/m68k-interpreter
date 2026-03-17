@@ -23,10 +23,10 @@ Write, step through, and debug m68k assembly — no installation needed.
 
 ## Supported instructions
 
-**Arithmetic** — `ADD` `ADDA` `ADDI` `ADDQ` `SUB` `SUBA` `SUBI` `SUBQ` `MULS` `DIVS`  
-**Logic** — `AND` `ANDI` `EOR` `EORI` `NOT` `NEG` `OR` `ORI`  
-**Data movement** — `CLR` `EXG` `EXT` `MOVE` `MOVEA` `SWAP` `LEA`  
-**Shifts & rotates** — `ASL` `ASR` `LSL` `LSR` `ROL` `ROR` `ROXL` `ROXR`  
+**Arithmetic** — `ADD` `ADDA` `ADDI` `SUB` `SUBA` `SUBI`  
+**Logic** — `AND` `ANDI` `EOR` `EORI` `NOT` `OR` `ORI`  
+**Data movement** — `CLR` `EXG` `EXT` `MOVE` `MOVEA` `NEG` `SWAP`  
+**Shifts & rotates** — `ASL` `ASR` `LSL` `LSR` `ROL` `ROR`  
 **Comparisons** — `CMP` `CMPA` `CMPI` `TST`  
 **Control flow** — `JMP` `JSR` `RTS` `BRA` `BSR` `BEQ` `BNE` `BGE` `BGT` `BLE` `BLT`
 
@@ -75,6 +75,12 @@ npm run lint:fix     # lint and format
 ## For educators
 
 If you teach a course that uses Easy68K, this works as a drop-in browser-based alternative — no student setup required. If you use it in your course and want it listed here, open an issue or send an email.
+
+---
+
+## Acknowledgments
+
+Special thanks to [MarkeyJester's Motorola 68000 Beginner's Tutorial](https://mrjester.hapisan.com/04_MC68/Index.html) — an excellent reference for instruction behavior, cycle times, and assembly fundamentals that informed this implementation.
 
 ---
 
