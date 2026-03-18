@@ -7,7 +7,7 @@
  * - RESET: Reset external devices
  * - RTE: Return from exception (TEST: RTE)
  * - TRAP: Trap to exception handler (TEST: TRAP)
- * - TRAPV: Trap on overflow
+ * - TRAPV: Trap on overflow (TEST: TRAPV)
  * - CHK: Check register bounds
  * - LINK: Link stack frame
  * - UNLK: Unlink stack frame
