@@ -1,6 +1,17 @@
 /**
  * M68K Emulator - Main execution engine
  * Handles instruction parsing, execution, registers, memory, and condition codes
+ * 
+ * System Control Instructions Implemented:
+ * - NOP: No operation
+ * - RESET: Reset external devices
+ * - RTE: Return from exception
+ * - TRAP: Trap to exception handler
+ * - TRAPV: Trap on overflow
+ * - CHK: Check register bounds
+ * - LINK: Link stack frame
+ * - UNLK: Unlink stack frame
+ * - TAS: Test and set byte
  */
 
 import { Memory } from './memory';
