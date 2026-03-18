@@ -9,7 +9,7 @@
  * - TRAP: Trap to exception handler (TEST: TRAP)
  * - TRAPV: Trap on overflow (TEST: TRAPV)
  * - CHK: Check register bounds (TEST: CHK)
- * - LINK: Link stack frame
+ * - LINK: Link stack frame (TEST: LINK)
  * - UNLK: Unlink stack frame
  * - TAS: Test and set byte
  */
