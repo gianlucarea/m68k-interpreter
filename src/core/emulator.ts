@@ -33,6 +33,7 @@ import {
   lsrOP,
   rolOP,
   rorOP,
+  addxOP,
 } from './operations';
 
 // Token type constants
@@ -574,6 +575,13 @@ export class Emulator {
           }
           this.addq(size, operands[0], operands[1]);
           break;
+        case 'addx':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.addx(size, operands[0], operands[1]);
+          break;
         case 'sub':
           if (operands.length !== 2) {
             this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
@@ -1027,6 +1035,22 @@ export class Emulator {
     } else if (op2.type === TOKEN_REG_ADDR) {
       // ADDQ on address register doesn't affect CCR
       this.registers[op2.value] += op1.value;
+    }
+  }
+
+  private addx(size: number, op1: Operand, op2: Operand): void {
+    if (op1 === undefined || op2 === undefined) return;
+
+    // ADDX: Add extended (with X bit for multi-precision)
+    if (op2.type === TOKEN_REG_DATA) {
+      const src =
+        op1.type === TOKEN_REG_ADDR || op1.type === TOKEN_REG_DATA
+          ? this.registers[op1.value]
+          : op1.value;
+
+      const [result, newCCR] = addxOP(src, this.registers[op2.value], this.ccr, size);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
     }
   }
 

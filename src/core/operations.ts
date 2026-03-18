@@ -757,3 +757,13 @@ export function divuOP(size: number, src: number, dest: number, ccr: number): [n
   
   return [result, ccr];
 }
+
+export function addxOP(src: number, dest: number, ccr: number, size: number): [number, number] {
+  // ADDX: Add Extended (with X bit)
+  // X bit (bit 4) carries over for multi-precision arithmetic
+  const xBit = (ccr & 0x10) >> 4;
+  
+  // Add with X bit
+  const [result, newCCR] = addOP(src + xBit, dest, ccr, size, false);
+  return [result, newCCR];
+}
