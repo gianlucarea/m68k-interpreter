@@ -65,6 +65,7 @@ const TOKEN_SR = 7;
 // Directive regexes
 const DC_REGEX = /^[_a-zA-Z][_a-zA-Z0-9]*:\s+dc\.[wbl]\s+("[a-zA-Z0-9]+"|([0-9]+,)*[0-9]+)$/gmi;
 const ORG_REGEX = /^org\s+(?:0x|\$)([0-9]+)/gmi;
+const END_REGEX = /^end\s*([_a-zA-Z][_a-zA-Z0-9]*)?$/gmi;
 
 interface Operand {
   value: number;
@@ -192,7 +193,8 @@ export class Emulator {
       }
 
       // Check for END directive
-      if (instr === 'end') {
+      match = END_REGEX.exec(instr);
+      if (match) {
         if (this.endPointer !== undefined) {
           this.exception = Strings.DUPLICATE_END + Strings.AT_LINE + lineNum;
           return;
@@ -205,6 +207,7 @@ export class Emulator {
 
         // Remove all instructions after END
         this.instructions.splice(i + 1, this.instructions.length - i - 1);
+        END_REGEX.lastIndex = 0;
         continue;
       }
 
