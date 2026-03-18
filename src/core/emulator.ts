@@ -5,7 +5,7 @@
  * System Control Instructions Implemented:
  * - NOP: No operation
  * - RESET: Reset external devices
- * - RTE: Return from exception
+ * - RTE: Return from exception (TEST: RTE)
  * - TRAP: Trap to exception handler
  * - TRAPV: Trap on overflow
  * - CHK: Check register bounds
