@@ -784,6 +784,34 @@ export class Emulator {
           }
           this.lea(operands[0], operands[1]);
           break;
+        case 'moveq':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.moveq(operands[0], operands[1]);
+          break;
+        case 'movem':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.movem(operands[0], operands[1]);
+          break;
+        case 'movep':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.movep(size, operands[0], operands[1]);
+          break;
+        case 'pea':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.pea(operands[0]);
+          break;
         case 'bra':
           if (operands.length !== 1) {
             this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
@@ -1481,6 +1509,90 @@ export class Emulator {
     if (op2.type === TOKEN_REG_ADDR) {
       this.registers[op2.value] = address;
     }
+  }
+
+  private moveq(op1: Operand, op2: Operand): void {
+    // MOVEQ: Move quick (8-bit immediate, sign-extended to 32-bit)
+    if (op1 === undefined || op2 === undefined) return;
+
+    if (op1.type !== TOKEN_IMMEDIATE) {
+      this.errors.push(Strings.IMMEDIATE_VALUE_EXPECTED + Strings.AT_LINE + this.line);
+      return;
+    }
+
+    // Sign-extend 8-bit immediate to 32-bit
+    let value = op1.value & 0xFF;
+    if (value & 0x80) {
+      value = value | 0xFFFFFF00; // Sign extend
+    }
+
+    // Destination must be a data register
+    if (op2.type === TOKEN_REG_DATA) {
+      const [result, newCCR] = moveOP(value, this.registers[op2.value], this.ccr, CODE_LONG);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    } else {
+      this.errors.push('MOVEQ: Destination must be a data register' + Strings.AT_LINE + this.line);
+    }
+  }
+
+  private movem(op1: Operand, op2: Operand): void {
+    // MOVEM: Move multiple registers
+    // This is a complex instruction, for now basic implementation
+    if (op1 === undefined || op2 === undefined) return;
+
+    // TODO: Full MOVEM implementation with register lists
+    // For now, just copy the value like MOVE
+    let srcValue = 0;
+    if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
+      srcValue = this.registers[op1.value];
+    } else if (op1.type === TOKEN_IMMEDIATE) {
+      srcValue = op1.value;
+    }
+
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = moveOP(srcValue, this.registers[op2.value], this.ccr, CODE_LONG);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    }
+  }
+
+  private movep(_size: number, op1: Operand, op2: Operand): void {
+    // MOVEP: Move peripheral data
+    // Transfers data between register and memory in odd-byte addressing mode
+    if (op1 === undefined || op2 === undefined) return;
+
+    // TODO: Full MOVEP implementation with proper odd-byte addressing
+    // For now, basic implementation
+    let value = 0;
+    if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
+      value = this.registers[op1.value];
+    } else if (op1.type === TOKEN_IMMEDIATE) {
+      value = op1.value;
+    } else if (op1.type === TOKEN_OFFSET) {
+      value = this.memory.getLong(op1.value);
+    }
+
+    if (op2.type === TOKEN_REG_DATA) {
+      this.registers[op2.value] = value;
+    }
+  }
+
+  private pea(op: Operand): void {
+    // PEA: Push effective address
+    if (op === undefined) return;
+
+    let address = 0;
+    if (op.type === TOKEN_OFFSET) {
+      address = op.value;
+    } else if (op.type === TOKEN_OFFSET_ADDR) {
+      address = op.value;
+    }
+
+    // Push address onto stack using A7 (register 15 - stack pointer)
+    const stackPtr = this.registers[15];
+    this.memory.setLong(stackPtr - 4, address);
+    this.registers[15] = stackPtr - 4; // Decrement stack pointer
   }
 
   private bra(label: string): void {
