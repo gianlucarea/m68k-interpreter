@@ -11,7 +11,7 @@
  * - CHK: Check register bounds (TEST: CHK)
  * - LINK: Link stack frame (TEST: LINK)
  * - UNLK: Unlink stack frame (TEST: UNLK)
- * - TAS: Test and set byte
+ * - TAS: Test and set byte (TEST: TAS)
  */
 
 import { Memory } from './memory';
