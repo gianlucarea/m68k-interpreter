@@ -537,6 +537,15 @@ export class Emulator {
     if (instr.indexOf(' ') === -1 && instr.length > 0) {
       // Single-operand or no-operand instruction
       switch (instr.toLowerCase()) {
+        case 'nop':
+          this.nop();
+          break;
+        case 'reset':
+          this.reset_instr();
+          break;
+        case 'rte':
+          this.rte();
+          break;
         case 'rts':
           this.rts();
           break;
@@ -1296,6 +1305,48 @@ export class Emulator {
             break;
           }
           this.rtd(operands[0]);
+          break;
+        case 'trap':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.trap(operands[0]);
+          break;
+        case 'trapv':
+          if (operands.length !== 0) {
+            this.errors.push(operation + ' takes no parameters' + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.trapv();
+          break;
+        case 'chk':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.chk(size, operands[0], operands[1]);
+          break;
+        case 'link':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.link(operands[0], operands[1]);
+          break;
+        case 'unlk':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.unlk(operands[0]);
+          break;
+        case 'tas':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.tas(operands[0]);
           break;
         default:
           this.errors.push(operation + ' is a ' + Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
@@ -2968,4 +3019,219 @@ export class Emulator {
       this.line
     );
   }
+
+  // ============== System Control Instructions ==============
+
+  private nop(): void {
+    // NOP: No Operation
+    // Simply advances to the next instruction (PC already incremented)
+    this.lastInstruction = 'NOP';
+  }
+
+  private reset_instr(): void {
+    // RESET: Reset external devices
+    // In the context of an emulator, we'll just acknowledge the instruction
+    this.lastInstruction = 'RESET';
+  }
+
+  private rte(): void {
+    // Return from Exception - pop status register and return address from stack
+    const stackPtr = this.registers[15]; // A7 is register 15
+    
+    // Pop status register (word) from stack
+    const statusReg = this.memory.getWord(stackPtr);
+    this.ccr = statusReg & 0xFF; // Update CCR with low byte
+    
+    // Pop return address (long) from stack
+    this.pc = this.memory.getLong(stackPtr + 2);
+    
+    // Increment stack pointer by 6 (2 bytes for SR + 4 bytes for PC)
+    this.registers[15] = stackPtr + 6;
+    this.lastInstruction = 'RTE';
+  }
+
+  private trap(op: Operand): void {
+    // TRAP: Trap to exception handler
+    // op is the vector number (0-15)
+    if (op === undefined) return;
+    
+    if (op.type === TOKEN_IMMEDIATE) {
+      const vectorNum = op.value & 0x0F;
+      
+      // Push PC and SR to stack
+      const stackPtr = this.registers[15];
+      
+      // Push current PC to stack
+      this.memory.setLong(stackPtr - 4, this.pc);
+      // Push SR (CCR for now) to stack
+      this.memory.setWord(stackPtr - 6, this.ccr);
+      
+      // Update stack pointer
+      this.registers[15] = stackPtr - 6;
+      
+      // Set exception flag
+      this.exception = `TRAP #${vectorNum}`;
+      this.lastInstruction = `TRAP #${vectorNum}`;
+      
+      // In a real implementation, we'd jump to the trap handler
+      // For now, we'll halt execution
+      this.pc = this.instructions.length * 4;
+    }
+  }
+
+  private trapv(): void {
+    // TRAPV: Trap on Overflow
+    // If V (overflow) flag is set, generate a TRAP #7
+    if ((this.ccr & 0x02) !== 0) {
+      // Overflow flag is set
+      const stackPtr = this.registers[15];
+      
+      // Push current PC to stack
+      this.memory.setLong(stackPtr - 4, this.pc);
+      // Push SR (CCR for now) to stack
+      this.memory.setWord(stackPtr - 6, this.ccr);
+      
+      // Update stack pointer
+      this.registers[15] = stackPtr - 6;
+      
+      // Set exception flag
+      this.exception = 'TRAPV';
+      this.lastInstruction = 'TRAPV';
+      
+      // Halt execution
+      this.pc = this.instructions.length * 4;
+    } else {
+      this.lastInstruction = 'TRAPV';
+    }
+  }
+
+  private chk(_size: number, op1: Operand, op2: Operand): void {
+    // CHK: Check Register
+    // Raises exception if op2 value is out of range [-32768, op1]
+    // For 16-bit: checks if op2 is < 0 or > op1
+    if (op1 === undefined || op2 === undefined) return;
+    
+    let checkValue = op1.value;
+    if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
+      checkValue = this.registers[op1.value];
+    }
+    
+    let dataValue = 0;
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      dataValue = this.registers[op2.value];
+    }
+    
+    // Sign-extend to handle signed comparison
+    const isNegative = (dataValue & 0x8000) !== 0;
+    if (isNegative) {
+      dataValue = dataValue | 0xFFFF0000; // Sign extend
+    }
+    
+    // Check bounds
+    if (dataValue < 0 || dataValue > checkValue) {
+      this.exception = 'CHK: Value out of bounds';
+      this.lastInstruction = `CHK ${checkValue},${dataValue}`;
+      
+      // Halt execution
+      this.pc = this.instructions.length * 4;
+    } else {
+      this.lastInstruction = `CHK ${checkValue},${dataValue}`;
+    }
+  }
+
+  private link(op1: Operand, op2: Operand): void {
+    // LINK: Link stack frame
+    // LINK A6, #offset
+    // Pushes address register to stack, sets it to current stack pointer, then adjusts stack
+    if (op1 === undefined || op2 === undefined) return;
+    
+    const regNum = op1.value; // Register number
+    if (op1.type !== TOKEN_REG_ADDR) {
+      this.errors.push('LINK expects address register, got invalid operand');
+      return;
+    }
+    
+    let offset = op2.value;
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      offset = this.registers[op2.value];
+    }
+    
+    // Push current address register value to stack
+    const stackPtr = this.registers[15];
+    this.memory.setLong(stackPtr - 4, this.registers[regNum]);
+    
+    // Update address register with current stack pointer (minus 4 for the push)
+    this.registers[regNum] = stackPtr - 4;
+    
+    // Adjust stack pointer by offset
+    this.registers[15] = stackPtr - 4 + offset;
+    
+    this.lastInstruction = `LINK A${regNum},#${offset}`;
+  }
+
+  private unlk(op: Operand): void {
+    // UNLK: Unlink stack frame
+    // UNLK A6
+    // Restores stack pointer from address register, then pops address register
+    if (op === undefined) return;
+    
+    const regNum = op.value; // Register number
+    if (op.type !== TOKEN_REG_ADDR) {
+      this.errors.push('UNLK expects address register');
+      return;
+    }
+    
+    // Set stack pointer to address register value
+    this.registers[15] = this.registers[regNum];
+    
+    // Pop address register from stack
+    const stackPtr = this.registers[15];
+    this.registers[regNum] = this.memory.getLong(stackPtr);
+    
+    // Increment stack pointer
+    this.registers[15] = stackPtr + 4;
+    
+    this.lastInstruction = `UNLK A${regNum}`;
+  }
+
+  private tas(op: Operand): void {
+    // TAS: Test and Set
+    // Tests the byte operand, sets N and Z flags based on the result,
+    // then sets the MSB (bit 7) of the operand to 1
+    if (op === undefined) return;
+    
+    let value = 0;
+    if (op.type === TOKEN_REG_DATA) {
+      value = this.registers[op.value] & 0xFF;
+    } else if (op.type === TOKEN_IMMEDIATE) {
+      value = op.value & 0xFF;
+    }
+    
+    // Set N flag if MSB is 1
+    if ((value & 0x80) !== 0) {
+      this.ccr |= 0x08; // Set N flag
+    } else {
+      this.ccr &= ~0x08;
+    }
+    
+    // Set Z flag if value is 0
+    if (value === 0) {
+      this.ccr |= 0x04; // Set Z flag
+    } else {
+      this.ccr &= ~0x04;
+    }
+    
+    // Set MSB
+    value |= 0x80;
+    
+    // Store result back
+    if (op.type === TOKEN_REG_DATA) {
+      const regNum = op.value;
+      const regValue = this.registers[regNum];
+      this.registers[regNum] = (regValue & 0xFFFFFF00) | (value & 0xFF);
+    }
+    
+    this.lastInstruction = `TAS ${value}`;
+  }
 }
+
