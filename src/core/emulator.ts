@@ -33,6 +33,8 @@ import {
   lsrOP,
   rolOP,
   rorOP,
+  roxlOP,
+  roxrOP,
   addxOP,
   subxOP,
   negxOP,
@@ -983,6 +985,41 @@ export class Emulator {
             break;
           }
           this.bset(operands[0], operands[1]);
+          break;
+        case 'roxl':
+          if (operands.length !== 2) {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.roxl(size, operands[0], operands[1]);
+          break;
+        case 'roxr':
+          if (operands.length !== 2) {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.roxr(size, operands[0], operands[1]);
+          break;
+        case 'btst':
+          if (operands.length !== 2) {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.btst(operands[0], operands[1]);
+          break;
+        case 'bclr':
+          if (operands.length !== 2) {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bclr(operands[0], operands[1]);
+          break;
+        case 'bchg':
+          if (operands.length !== 2) {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bchg(operands[0], operands[1]);
           break;
         default:
           this.errors.push(operation + ' is a ' + Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
@@ -1940,6 +1977,130 @@ export class Emulator {
       const bitMask = 1 << bitNum;
       const oldBit = (destValue & bitMask) !== 0 ? 1 : 0;
       const newValue = (destValue | bitMask) >>> 0;
+      this.registers[op2.value] = newValue;
+      
+      // Update Z flag: Z = 1 if old bit was 0
+      if (oldBit === 0) {
+        this.ccr = (this.ccr | 0x04) >>> 0; // Set Z flag
+      } else {
+        this.ccr = (this.ccr & 0xfb) >>> 0; // Clear Z flag
+      }
+    }
+  }
+
+  private roxl(size: number, op1: Operand, op2: Operand): void {
+    // ROXL: Rotate Left including X flag
+    if (op1 === undefined || op2 === undefined) return;
+
+    let shiftCount = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      shiftCount = op1.value;
+    } else if (op1.type === TOKEN_REG_DATA) {
+      shiftCount = this.registers[op1.value] & 0x3F;
+    }
+
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = roxlOP(shiftCount, this.registers[op2.value], this.ccr, size);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    }
+  }
+
+  private roxr(size: number, op1: Operand, op2: Operand): void {
+    // ROXR: Rotate Right including X flag
+    if (op1 === undefined || op2 === undefined) return;
+
+    let shiftCount = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      shiftCount = op1.value;
+    } else if (op1.type === TOKEN_REG_DATA) {
+      shiftCount = this.registers[op1.value] & 0x3F;
+    }
+
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = roxrOP(shiftCount, this.registers[op2.value], this.ccr, size);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    }
+  }
+
+  private btst(op1: Operand, op2: Operand): void {
+    // BTST: Bit TEST - test and set Z flag based on bit value
+    // op1: bit number (immediate or data register)
+    // op2: source (data register or memory)
+    if (op1 === undefined || op2 === undefined) return;
+
+    let bitNum = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      bitNum = op1.value & 0x1F; // Only lower 5 bits for bit number
+    } else if (op1.type === TOKEN_REG_DATA) {
+      bitNum = this.registers[op1.value] & 0x1F;
+    }
+
+    // Test the bit in the source
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const srcValue = this.registers[op2.value];
+      const bitMask = 1 << bitNum;
+      const bit = (srcValue & bitMask) !== 0 ? 1 : 0;
+      
+      // Update Z flag: Z = 1 if bit was 0
+      if (bit === 0) {
+        this.ccr = (this.ccr | 0x04) >>> 0; // Set Z flag
+      } else {
+        this.ccr = (this.ccr & 0xfb) >>> 0; // Clear Z flag
+      }
+    }
+  }
+
+  private bclr(op1: Operand, op2: Operand): void {
+    // BCLR: Bit CLEAR - clear specified bit to 0
+    // op1: bit number (immediate or data register)
+    // op2: destination (data register or memory)
+    if (op1 === undefined || op2 === undefined) return;
+
+    let bitNum = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      bitNum = op1.value & 0x1F; // Only lower 5 bits for bit number
+    } else if (op1.type === TOKEN_REG_DATA) {
+      bitNum = this.registers[op1.value] & 0x1F;
+    }
+
+    // Clear the bit in the destination
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const destValue = this.registers[op2.value];
+      const bitMask = 1 << bitNum;
+      const oldBit = (destValue & bitMask) !== 0 ? 1 : 0;
+      const newValue = (destValue & ~bitMask) >>> 0;
+      this.registers[op2.value] = newValue;
+      
+      // Update Z flag: Z = 1 if old bit was 0
+      if (oldBit === 0) {
+        this.ccr = (this.ccr | 0x04) >>> 0; // Set Z flag
+      } else {
+        this.ccr = (this.ccr & 0xfb) >>> 0; // Clear Z flag
+      }
+    }
+  }
+
+  private bchg(op1: Operand, op2: Operand): void {
+    // BCHG: Bit CHANGE - toggle specified bit
+    // op1: bit number (immediate or data register)
+    // op2: destination (data register or memory)
+    if (op1 === undefined || op2 === undefined) return;
+
+    let bitNum = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      bitNum = op1.value & 0x1F; // Only lower 5 bits for bit number
+    } else if (op1.type === TOKEN_REG_DATA) {
+      bitNum = this.registers[op1.value] & 0x1F;
+    }
+
+    // Toggle the bit in the destination
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const destValue = this.registers[op2.value];
+      const bitMask = 1 << bitNum;
+      const oldBit = (destValue & bitMask) !== 0 ? 1 : 0;
+      const newValue = (destValue ^ bitMask) >>> 0;
       this.registers[op2.value] = newValue;
       
       // Update Z flag: Z = 1 if old bit was 0

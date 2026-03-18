@@ -599,6 +599,112 @@ export function rorOP(
       throw new Error('Invalid size');
   }
 }
+
+export function roxlOP(
+  count: number,
+  op: number,
+  ccr: number,
+  size: number
+): [number, number] {
+  // ROXL: Rotate Left including X flag
+  // The X flag is treated as part of the rotation path
+  let xBit = (ccr & 0x10) >> 4;
+
+  switch (size) {
+    case CODE_BYTE: {
+      // 9-bit rotation (8-bit value + X flag)
+      for (let i = 0; i < count; i++) {
+        const msb = (op & MSB_BYTE_MASK) >>> 7;
+        op = ((op << 1) | xBit) & BYTE_MASK;
+        xBit = msb;
+      }
+      const res8 = new Int8Array(1);
+      res8[0] = op & BYTE_MASK;
+      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
+      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
+      return [op, moveCCR(res8[0], ccr)];
+    }
+    case CODE_WORD: {
+      // 17-bit rotation (16-bit value + X flag)
+      for (let i = 0; i < count; i++) {
+        const msb = (op & MSB_WORD_MASK) >>> 15;
+        op = ((op << 1) | xBit) & WORD_MASK;
+        xBit = msb;
+      }
+      const res16 = new Int16Array(1);
+      res16[0] = op & WORD_MASK;
+      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
+      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
+      return [op, moveCCR(res16[0], ccr)];
+    }
+    case CODE_LONG: {
+      // 33-bit rotation (32-bit value + X flag)
+      for (let i = 0; i < count; i++) {
+        const msb = (op & MSB_LONG_MASK) >>> 31;
+        op = ((op << 1) | xBit) >>> 0;
+        xBit = msb;
+      }
+      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
+      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
+      return [op, moveCCR(op | 0, ccr)];
+    }
+    default:
+      throw new Error('Invalid size');
+  }
+}
+
+export function roxrOP(
+  count: number,
+  op: number,
+  ccr: number,
+  size: number
+): [number, number] {
+  // ROXR: Rotate Right including X flag
+  // The X flag is treated as part of the rotation path
+  let xBit = (ccr & 0x10) >> 4;
+
+  switch (size) {
+    case CODE_BYTE: {
+      // 9-bit rotation (8-bit value + X flag)
+      for (let i = 0; i < count; i++) {
+        const lsb = op & 0x01;
+        op = ((op >>> 1) | (xBit << 7)) & BYTE_MASK;
+        xBit = lsb;
+      }
+      const res8 = new Int8Array(1);
+      res8[0] = op & BYTE_MASK;
+      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
+      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
+      return [op, moveCCR(res8[0], ccr)];
+    }
+    case CODE_WORD: {
+      // 17-bit rotation (16-bit value + X flag)
+      for (let i = 0; i < count; i++) {
+        const lsb = op & 0x01;
+        op = ((op >>> 1) | (xBit << 15)) & WORD_MASK;
+        xBit = lsb;
+      }
+      const res16 = new Int16Array(1);
+      res16[0] = op & WORD_MASK;
+      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
+      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
+      return [op, moveCCR(res16[0], ccr)];
+    }
+    case CODE_LONG: {
+      // 33-bit rotation (32-bit value + X flag)
+      for (let i = 0; i < count; i++) {
+        const lsb = op & 0x01;
+        op = ((op >>> 1) | (xBit << 31)) >>> 0;
+        xBit = lsb;
+      }
+      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
+      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
+      return [op, moveCCR(op | 0, ccr)];
+    }
+    default:
+      throw new Error('Invalid size');
+  }
+}
 export function mulsOP(size: number, src: number, dest: number, ccr: number): [number, number] {
   // MULS: Signed multiply
   // For 16-bit operands, result is 32-bit (destination register holds result)
