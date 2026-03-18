@@ -854,6 +854,20 @@ export class Emulator {
           }
           this.bvc(operandTokens[0]);
           break;
+        case 'bsr':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bsr(operandTokens[0]);
+          break;
+        case 'bls':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bls(operandTokens[0]);
+          break;
         case 'stop':
           if (operands.length !== 1) {
             this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
@@ -902,6 +916,13 @@ export class Emulator {
             break;
           }
           this.ror(size, operands[0], operands[1]);
+          break;
+        case 'bset':
+          if (operands.length !== 2) {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bset(operands[0], operands[1]);
           break;
         default:
           this.errors.push(operation + ' is a ' + Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
@@ -1538,6 +1559,32 @@ export class Emulator {
     }
   }
 
+  private bsr(label: string): void {
+    // BSR: Branch to Subroutine - push return address and branch
+    label = label.trim().toLowerCase();
+    const labelKey = Object.keys(this.labels).find((k) => k.toLowerCase() === label);
+
+    if (!labelKey || this.labels[labelKey] === undefined) {
+      this.errors.push(Strings.UNKNOWN_LABEL + label + Strings.AT_LINE + this.line);
+      return;
+    }
+
+    // Push current PC (return address) onto stack using A7 (stack pointer)
+    const stackPtr = this.registers[15]; // A7 is register 15
+    this.memory.setLong(stackPtr - 4, this.pc);
+    this.registers[15] = stackPtr - 4; // Decrement stack pointer
+
+    // Branch to subroutine
+    this.pc = this.labels[labelKey] * 4;
+  }
+
+  private bls(label: string): void {
+    // BLS: Branch if Lower or Same (C flag set OR Z flag set)
+    if (this.getCFlag() || this.getZFlag()) {
+      this.bra(label);
+    }
+  }
+
   private stop(op1: Operand): void {
     // STOP: Stop processor
     // Loads immediate operand into status register and halts execution
@@ -1660,6 +1707,36 @@ export class Emulator {
       const [result, newCCR] = rorOP(shiftCount, this.registers[op2.value], this.ccr, size);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
+    }
+  }
+
+  private bset(op1: Operand, op2: Operand): void {
+    // BSET: Bit SET - set specified bit to 1
+    // op1: bit number (immediate or data register)
+    // op2: destination (data register or memory)
+    if (op1 === undefined || op2 === undefined) return;
+
+    let bitNum = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      bitNum = op1.value & 0x1F; // Only lower 5 bits for bit number
+    } else if (op1.type === TOKEN_REG_DATA) {
+      bitNum = this.registers[op1.value] & 0x1F;
+    }
+
+    // Set the bit in the destination
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const destValue = this.registers[op2.value];
+      const bitMask = 1 << bitNum;
+      const oldBit = (destValue & bitMask) !== 0 ? 1 : 0;
+      const newValue = (destValue | bitMask) >>> 0;
+      this.registers[op2.value] = newValue;
+      
+      // Update Z flag: Z = 1 if old bit was 0
+      if (oldBit === 0) {
+        this.ccr = (this.ccr | 0x04) >>> 0; // Set Z flag
+      } else {
+        this.ccr = (this.ccr & 0xfb) >>> 0; // Clear Z flag
+      }
     }
   }
 
