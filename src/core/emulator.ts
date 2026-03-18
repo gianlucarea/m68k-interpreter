@@ -540,6 +540,9 @@ export class Emulator {
         case 'rts':
           this.rts();
           break;
+        case 'rtr':
+          this.rtr();
+          break;
         default:
           this.errors.push(instr + ' is a ' + Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
           return false;
@@ -944,6 +947,258 @@ export class Emulator {
           }
           this.bls(operandTokens[0]);
           break;
+        case 'bhi':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bhi(operandTokens[0]);
+          break;
+        case 'bcs':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bcs(operandTokens[0]);
+          break;
+        case 'bmi':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bmi(operandTokens[0]);
+          break;
+        case 'bvs':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bvs(operandTokens[0]);
+          break;
+        case 'dbcc':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbcc(operands[0], operandTokens[1]);
+          break;
+        case 'dbcs':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbcs(operands[0], operandTokens[1]);
+          break;
+        case 'dbne':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbne(operands[0], operandTokens[1]);
+          break;
+        case 'dbeq':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbeq(operands[0], operandTokens[1]);
+          break;
+        case 'dbge':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbge(operands[0], operandTokens[1]);
+          break;
+        case 'dbgt':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbgt(operands[0], operandTokens[1]);
+          break;
+        case 'dble':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dble(operands[0], operandTokens[1]);
+          break;
+        case 'dblt':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dblt(operands[0], operandTokens[1]);
+          break;
+        case 'dbpl':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbpl(operands[0], operandTokens[1]);
+          break;
+        case 'dbmi':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbmi(operands[0], operandTokens[1]);
+          break;
+        case 'dbvc':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbvc(operands[0], operandTokens[1]);
+          break;
+        case 'dbvs':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbvs(operands[0], operandTokens[1]);
+          break;
+        case 'dbhi':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbhi(operands[0], operandTokens[1]);
+          break;
+        case 'dbls':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbls(operands[0], operandTokens[1]);
+          break;
+        case 'dbf':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbf(operands[0], operandTokens[1]);
+          break;
+        case 'dbt':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbt(operands[0], operandTokens[1]);
+          break;
+        case 'scc':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.scc(operands[0]);
+          break;
+        case 'scs':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.scs(operands[0]);
+          break;
+        case 'sne':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.sne(operands[0]);
+          break;
+        case 'seq':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.seq(operands[0]);
+          break;
+        case 'sge':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.sge(operands[0]);
+          break;
+        case 'sgt':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.sgt(operands[0]);
+          break;
+        case 'sle':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.sle(operands[0]);
+          break;
+        case 'slt':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.slt(operands[0]);
+          break;
+        case 'spl':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.spl(operands[0]);
+          break;
+        case 'smi':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.smi(operands[0]);
+          break;
+        case 'svc':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.svc(operands[0]);
+          break;
+        case 'svs':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.svs(operands[0]);
+          break;
+        case 'sls':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.sls(operands[0]);
+          break;
+        case 'shi':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.shi(operands[0]);
+          break;
+        case 'sf':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.sf(operands[0]);
+          break;
+        case 'st':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.st(operands[0]);
+          break;
         case 'stop':
           if (operands.length !== 1) {
             this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
@@ -1034,6 +1289,13 @@ export class Emulator {
             break;
           }
           this.bchg(operands[0], operands[1]);
+          break;
+        case 'rtd':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.rtd(operands[0]);
           break;
         default:
           this.errors.push(operation + ' is a ' + Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
@@ -1575,6 +1837,42 @@ export class Emulator {
     this.lastInstruction = 'RTS';
   }
 
+  private rtr(): void {
+    // Return and Restore - pop status register and return address from stack
+    const stackPtr = this.registers[15]; // A7 is register 15
+    
+    // Pop status register (word) from stack
+    const statusReg = this.memory.getWord(stackPtr);
+    this.ccr = statusReg & 0xFF; // Update CCR with low byte
+    
+    // Pop return address (long) from stack
+    this.pc = this.memory.getLong(stackPtr + 2);
+    
+    // Increment stack pointer by 6 (2 bytes for SR + 4 bytes for PC)
+    this.registers[15] = stackPtr + 6;
+    this.lastInstruction = 'RTR';
+  }
+
+  private rtd(op: Operand): void {
+    // Return and Discard - pop return address from stack and add immediate value to stack pointer
+    if (op === undefined) return;
+    
+    const stackPtr = this.registers[15]; // A7 is register 15
+    
+    // Pop return address from stack
+    this.pc = this.memory.getLong(stackPtr);
+    
+    // Get the immediate value to add to stack pointer
+    let displacement = 0;
+    if (op.type === TOKEN_IMMEDIATE) {
+      displacement = op.value;
+    }
+    
+    // Update stack pointer: pop return address (4 bytes) + displacement
+    this.registers[15] = stackPtr + 4 + displacement;
+    this.lastInstruction = 'RTD #' + displacement;
+  }
+
   private mode(op1: Operand, op2: Operand): void {
     // MODE instruction: move immediate value to register
     // Usage: mode #value, register
@@ -1859,6 +2157,448 @@ export class Emulator {
     // BLS: Branch if Lower or Same (C flag set OR Z flag set)
     if (this.getCFlag() || this.getZFlag()) {
       this.bra(label);
+    }
+  }
+
+  private bhi(label: string): void {
+    // BHI: Branch if Higher (C flag clear AND Z flag clear)
+    if (!this.getCFlag() && !this.getZFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bcs(label: string): void {
+    // BCS: Branch if Carry Set (C flag set)
+    if (this.getCFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bmi(label: string): void {
+    // BMI: Branch if Minus (N flag set)
+    if (this.getNFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bvs(label: string): void {
+    // BVS: Branch if Overflow Set (V flag set)
+    if (this.getVFlag()) {
+      this.bra(label);
+    }
+  }
+
+  // DBcc - Decrement and Branch on Condition
+  private dbcc(op: Operand, label: string): void {
+    // DBCC: Decrement and Branch if Carry Clear
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF; // 16-bit decrement
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && !this.getCFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbcs(op: Operand, label: string): void {
+    // DBCS: Decrement and Branch if Carry Set
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getCFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbne(op: Operand, label: string): void {
+    // DBNE: Decrement and Branch if Not Equal
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && !this.getZFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbeq(op: Operand, label: string): void {
+    // DBEQ: Decrement and Branch if Equal
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getZFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbge(op: Operand, label: string): void {
+    // DBGE: Decrement and Branch if Greater or Equal
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getNFlag() === this.getVFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbgt(op: Operand, label: string): void {
+    // DBGT: Decrement and Branch if Greater Than
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getNFlag() === this.getVFlag() && !this.getZFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dble(op: Operand, label: string): void {
+    // DBLE: Decrement and Branch if Less or Equal
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && (this.getNFlag() !== this.getVFlag() || this.getZFlag())) {
+      this.bra(label);
+    }
+  }
+
+  private dblt(op: Operand, label: string): void {
+    // DBLT: Decrement and Branch if Less Than
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getNFlag() !== this.getVFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbpl(op: Operand, label: string): void {
+    // DBPL: Decrement and Branch if Plus
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && !this.getNFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbmi(op: Operand, label: string): void {
+    // DBMI: Decrement and Branch if Minus
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getNFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbvc(op: Operand, label: string): void {
+    // DBVC: Decrement and Branch if Overflow Clear
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && !this.getVFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbvs(op: Operand, label: string): void {
+    // DBVS: Decrement and Branch if Overflow Set
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getVFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbhi(op: Operand, label: string): void {
+    // DBHI: Decrement and Branch if Higher
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && !this.getCFlag() && !this.getZFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbls(op: Operand, label: string): void {
+    // DBLS: Decrement and Branch if Lower or Same
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && (this.getCFlag() || this.getZFlag())) {
+      this.bra(label);
+    }
+  }
+
+  private dbf(op: Operand, _label: string): void {
+    // DBF: Decrement and Branch Never (always decrement, never branch)
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    // Never branch, just decrement
+  }
+
+  private dbt(op: Operand, label: string): void {
+    // DBT: Decrement and Branch Always (always decrement and branch if Dn != -1)
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    // Always branch if counter != -1 (0xFFFF)
+    if (value !== 0xFFFF) {
+      this.bra(label);
+    }
+  }
+
+  // Scc - Set according to Condition
+  private scc(op: Operand): void {
+    // SCC: Set if Carry Clear (set byte to 0xFF if condition true, 0x00 if false)
+    if (op === undefined) return;
+    
+    const value = !this.getCFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private scs(op: Operand): void {
+    // SCS: Set if Carry Set
+    if (op === undefined) return;
+    
+    const value = this.getCFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private sne(op: Operand): void {
+    // SNE: Set if Not Equal
+    if (op === undefined) return;
+    
+    const value = !this.getZFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private seq(op: Operand): void {
+    // SEQ: Set if Equal
+    if (op === undefined) return;
+    
+    const value = this.getZFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private sge(op: Operand): void {
+    // SGE: Set if Greater or Equal
+    if (op === undefined) return;
+    
+    const value = this.getNFlag() === this.getVFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private sgt(op: Operand): void {
+    // SGT: Set if Greater Than
+    if (op === undefined) return;
+    
+    const value = this.getNFlag() === this.getVFlag() && !this.getZFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private sle(op: Operand): void {
+    // SLE: Set if Less or Equal
+    if (op === undefined) return;
+    
+    const value = this.getNFlag() !== this.getVFlag() || this.getZFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private slt(op: Operand): void {
+    // SLT: Set if Less Than
+    if (op === undefined) return;
+    
+    const value = this.getNFlag() !== this.getVFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private spl(op: Operand): void {
+    // SPL: Set if Plus
+    if (op === undefined) return;
+    
+    const value = !this.getNFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private smi(op: Operand): void {
+    // SMI: Set if Minus
+    if (op === undefined) return;
+    
+    const value = this.getNFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private svc(op: Operand): void {
+    // SVC: Set if Overflow Clear
+    if (op === undefined) return;
+    
+    const value = !this.getVFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private svs(op: Operand): void {
+    // SVS: Set if Overflow Set
+    if (op === undefined) return;
+    
+    const value = this.getVFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private sls(op: Operand): void {
+    // SLS: Set if Lower or Same
+    if (op === undefined) return;
+    
+    const value = this.getCFlag() || this.getZFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private shi(op: Operand): void {
+    // SHI: Set if Higher
+    if (op === undefined) return;
+    
+    const value = !this.getCFlag() && !this.getZFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private sf(op: Operand): void {
+    // SF: Set if False (always clear)
+    if (op === undefined) return;
+    
+    this.setByteOperand(op, 0x00);
+  }
+
+  private st(op: Operand): void {
+    // ST: Set if True (always set)
+    if (op === undefined) return;
+    
+    this.setByteOperand(op, 0xFF);
+  }
+
+  private setByteOperand(op: Operand, value: number): void {
+    // Helper function to set a byte operand
+    if (op.type === TOKEN_REG_DATA) {
+      // For data registers, set the low byte
+      this.registers[op.value] = (this.registers[op.value] & 0xFFFFFF00) | (value & 0xFF);
+    } else if (op.type === TOKEN_OFFSET_ADDR) {
+      // For memory addresses with offset
+      const addr = this.registers[op.value] + (op.offset || 0);
+      this.memory.set(addr, this.line, CODE_BYTE);
+      if (value !== 0x00) {
+        this.memory.setByte(addr, value);
+      }
     }
   }
 
