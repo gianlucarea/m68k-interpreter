@@ -777,3 +777,13 @@ export function subxOP(src: number, dest: number, ccr: number, size: number): [n
   const [result, newCCR] = addOP(src + xBit, dest, ccr, size, true);
   return [result, newCCR];
 }
+
+export function negxOP(size: number, op: number, ccr: number): [number, number] {
+  // NEGX: Negate Extended (with X bit)
+  // X bit (bit 4) carries over for multi-precision arithmetic
+  const xBit = (ccr & 0x10) >> 4;
+  
+  // Negate with X bit: 0 - op - X
+  const [result, newCCR] = addOP(op + xBit, 0, ccr, size, true);
+  return [result, newCCR];
+}

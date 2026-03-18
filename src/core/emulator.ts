@@ -35,6 +35,7 @@ import {
   rorOP,
   addxOP,
   subxOP,
+  negxOP,
 } from './operations';
 
 // Token type constants
@@ -744,6 +745,13 @@ export class Emulator {
           }
           this.neg(size, operands[0]);
           break;
+        case 'negx':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.negx(size, operands[0]);
+          break;
         case 'jmp':
           if (operands.length !== 1) {
             this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
@@ -1414,6 +1422,17 @@ export class Emulator {
 
     if (op.type === TOKEN_REG_DATA || op.type === TOKEN_REG_ADDR) {
       const [result, newCCR] = negOP(size, this.registers[op.value], this.ccr);
+      this.registers[op.value] = result;
+      this.ccr = newCCR;
+    }
+  }
+
+  private negx(size: number, op: Operand): void {
+    // NEGX: Arithmetic negate with extend (twos complement with X bit)
+    if (op === undefined) return;
+
+    if (op.type === TOKEN_REG_DATA || op.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = negxOP(size, this.registers[op.value], this.ccr);
       this.registers[op.value] = result;
       this.ccr = newCCR;
     }
