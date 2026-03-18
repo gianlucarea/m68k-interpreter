@@ -6,7 +6,7 @@
  * - NOP: No operation
  * - RESET: Reset external devices
  * - RTE: Return from exception (TEST: RTE)
- * - TRAP: Trap to exception handler
+ * - TRAP: Trap to exception handler (TEST: TRAP)
  * - TRAPV: Trap on overflow
  * - CHK: Check register bounds
  * - LINK: Link stack frame
