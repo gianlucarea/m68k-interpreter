@@ -767,3 +767,13 @@ export function addxOP(src: number, dest: number, ccr: number, size: number): [n
   const [result, newCCR] = addOP(src + xBit, dest, ccr, size, false);
   return [result, newCCR];
 }
+
+export function subxOP(src: number, dest: number, ccr: number, size: number): [number, number] {
+  // SUBX: Subtract Extended (with X bit)
+  // X bit (bit 4) carries over for multi-precision arithmetic
+  const xBit = (ccr & 0x10) >> 4;
+  
+  // Subtract with X bit
+  const [result, newCCR] = addOP(src + xBit, dest, ccr, size, true);
+  return [result, newCCR];
+}
