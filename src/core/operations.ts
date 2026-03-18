@@ -635,6 +635,37 @@ export function mulsOP(size: number, src: number, dest: number, ccr: number): [n
   return [result, ccr];
 }
 
+export function muluOP(size: number, src: number, dest: number, ccr: number): [number, number] {
+  // MULU: Unsigned multiply
+  // For 16-bit operands, result is 32-bit (destination register holds result)
+  // For 32-bit operands, results in 64-bit (we store low 32 bits in dest)
+  let srcUnsigned: number;
+  let destUnsigned: number;
+  
+  if (size === CODE_WORD) {
+    // Treat as 16-bit unsigned values - extract 16 bits
+    srcUnsigned = src & WORD_MASK;
+    destUnsigned = dest & WORD_MASK;
+  } else {
+    srcUnsigned = src >>> 0;
+    destUnsigned = dest >>> 0;
+  }
+  
+  const result = (srcUnsigned * destUnsigned) >>> 0;
+  
+  // Update CCR based on result
+  if (result === 0) ccr = (ccr | 0x04) >>> 0; // Z flag
+  else ccr = (ccr & 0xfb) >>> 0;
+  
+  if ((result | 0) < 0) ccr = (ccr | 0x08) >>> 0; // N flag
+  else ccr = (ccr & 0xf7) >>> 0;
+  
+  ccr = (ccr & 0xfd) >>> 0; // Clear V flag
+  ccr = (ccr & 0xfe) >>> 0; // Clear C flag
+  
+  return [result, ccr];
+}
+
 export function divsOP(size: number, src: number, dest: number, ccr: number): [number, number] {
   // DIVS: Signed division
   // Quotient in low word, remainder in high word (for 32-bit result)
@@ -664,6 +695,51 @@ export function divsOP(size: number, src: number, dest: number, ccr: number): [n
   // Perform signed division
   const quotient = Math.trunc(destSigned / srcSigned);
   const remainder = destSigned % srcSigned;
+  
+  // Pack result: remainder in high word, quotient in low word
+  let result = ((remainder & WORD_MASK) << 16) | (quotient & WORD_MASK);
+  result = result >>> 0;
+  
+  // Update CCR
+  if (quotient === 0) ccr = (ccr | 0x04) >>> 0; // Z flag
+  else ccr = (ccr & 0xfb) >>> 0;
+  
+  if (quotient < 0) ccr = (ccr | 0x08) >>> 0; // N flag
+  else ccr = (ccr & 0xf7) >>> 0;
+  
+  ccr = (ccr & 0xfd) >>> 0; // Clear V flag
+  ccr = (ccr & 0xfe) >>> 0; // Clear C flag
+  
+  return [result, ccr];
+}
+
+export function divuOP(size: number, src: number, dest: number, ccr: number): [number, number] {
+  // DIVU: Unsigned division
+  // Quotient in low word, remainder in high word (for 32-bit result)
+  // Returns remainder:quotient in a single 32-bit value
+  
+  if (src === 0) {
+    // Division by zero - would cause trap in real M68K
+    return [dest, ccr];
+  }
+  
+  let srcUnsigned: number;
+  let destUnsigned: number;
+  
+  if (size === CODE_WORD) {
+    // Convert to unsigned 16-bit divisor
+    srcUnsigned = src & WORD_MASK;
+    
+    // Dividend is 32-bit unsigned
+    destUnsigned = dest >>> 0;
+  } else {
+    srcUnsigned = src >>> 0;
+    destUnsigned = dest >>> 0;
+  }
+  
+  // Perform unsigned division
+  const quotient = Math.trunc(destUnsigned / srcUnsigned);
+  const remainder = destUnsigned % srcUnsigned;
   
   // Pack result: remainder in high word, quotient in low word
   let result = ((remainder & WORD_MASK) << 16) | (quotient & WORD_MASK);

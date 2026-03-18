@@ -24,7 +24,9 @@ import {
   notOP,
   negOP,
   mulsOP,
+  muluOP,
   divsOP,
+  divuOP,
   aslOP,
   asrOP,
   lslOP,
@@ -607,12 +609,26 @@ export class Emulator {
           }
           this.muls(size, operands[0], operands[1]);
           break;
+        case 'mulu':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.mulu(size, operands[0], operands[1]);
+          break;
         case 'divs':
           if (operands.length !== 2) {
             this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.divs(size, operands[0], operands[1]);
+          break;
+        case 'divu':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.divu(size, operands[0], operands[1]);
           break;
         case 'move':
           if (operands.length !== 2) {
@@ -817,6 +833,48 @@ export class Emulator {
           }
           this.blt(operandTokens[0]);
           break;
+        case 'bpl':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bpl(operandTokens[0]);
+          break;
+        case 'bcc':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bcc(operandTokens[0]);
+          break;
+        case 'bvc':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bvc(operandTokens[0]);
+          break;
+        case 'bsr':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bsr(operandTokens[0]);
+          break;
+        case 'bls':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bls(operandTokens[0]);
+          break;
+        case 'stop':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.stop(operands[0]);
+          break;
         case 'asl':
           if (operands.length !== 2) {
             this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
@@ -858,6 +916,13 @@ export class Emulator {
             break;
           }
           this.ror(size, operands[0], operands[1]);
+          break;
+        case 'bset':
+          if (operands.length !== 2) {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bset(operands[0], operands[1]);
           break;
         default:
           this.errors.push(operation + ' is a ' + Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
@@ -1006,6 +1071,24 @@ export class Emulator {
     }
   }
 
+  private mulu(size: number, op1: Operand, op2: Operand): void {
+    // MULU: Unsigned multiply
+    if (op1 === undefined || op2 === undefined) return;
+
+    let src = 0;
+    if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
+      src = this.registers[op1.value];
+    } else if (op1.type === TOKEN_IMMEDIATE) {
+      src = op1.value;
+    }
+
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = muluOP(size, src, this.registers[op2.value], this.ccr);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    }
+  }
+
   private divs(size: number, op1: Operand, op2: Operand): void {
     // DIVS: Signed division
     if (op1 === undefined || op2 === undefined) return;
@@ -1019,6 +1102,24 @@ export class Emulator {
 
     if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
       const [result, newCCR] = divsOP(size, src, this.registers[op2.value], this.ccr);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    }
+  }
+
+  private divu(size: number, op1: Operand, op2: Operand): void {
+    // DIVU: Unsigned division
+    if (op1 === undefined || op2 === undefined) return;
+
+    let src = 0;
+    if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
+      src = this.registers[op1.value];
+    } else if (op1.type === TOKEN_IMMEDIATE) {
+      src = op1.value;
+    }
+
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = divuOP(size, src, this.registers[op2.value], this.ccr);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
     }
@@ -1437,6 +1538,70 @@ export class Emulator {
     }
   }
 
+  private bpl(label: string): void {
+    // BPL: Branch if Plus (N flag clear)
+    if (!this.getNFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bcc(label: string): void {
+    // BCC: Branch if Carry Clear (C flag clear)
+    if (!this.getCFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bvc(label: string): void {
+    // BVC: Branch if Overflow Clear (V flag clear)
+    if (!this.getVFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bsr(label: string): void {
+    // BSR: Branch to Subroutine - push return address and branch
+    label = label.trim().toLowerCase();
+    const labelKey = Object.keys(this.labels).find((k) => k.toLowerCase() === label);
+
+    if (!labelKey || this.labels[labelKey] === undefined) {
+      this.errors.push(Strings.UNKNOWN_LABEL + label + Strings.AT_LINE + this.line);
+      return;
+    }
+
+    // Push current PC (return address) onto stack using A7 (stack pointer)
+    const stackPtr = this.registers[15]; // A7 is register 15
+    this.memory.setLong(stackPtr - 4, this.pc);
+    this.registers[15] = stackPtr - 4; // Decrement stack pointer
+
+    // Branch to subroutine
+    this.pc = this.labels[labelKey] * 4;
+  }
+
+  private bls(label: string): void {
+    // BLS: Branch if Lower or Same (C flag set OR Z flag set)
+    if (this.getCFlag() || this.getZFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private stop(op1: Operand): void {
+    // STOP: Stop processor
+    // Loads immediate operand into status register and halts execution
+    // For emulator purposes, we just halt by setting an exception
+    if (op1 === undefined) return;
+
+    // For now, we just accept the immediate value but don't use it
+    // In a full implementation, this would update the status register
+    if (op1.type === TOKEN_IMMEDIATE) {
+      // Accept the immediate value and halt
+      this.lastInstruction = 'STOP #' + (op1.value).toString(16);
+    }
+    
+    // Halt execution by advancing PC past the end of the program
+    this.pc = (this.instructions.length * 4);
+  }
+
   private asl(size: number, op1: Operand, op2: Operand): void {
     // ASL: Arithmetic Shift Left
     if (op1 === undefined || op2 === undefined) return;
@@ -1542,6 +1707,36 @@ export class Emulator {
       const [result, newCCR] = rorOP(shiftCount, this.registers[op2.value], this.ccr, size);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
+    }
+  }
+
+  private bset(op1: Operand, op2: Operand): void {
+    // BSET: Bit SET - set specified bit to 1
+    // op1: bit number (immediate or data register)
+    // op2: destination (data register or memory)
+    if (op1 === undefined || op2 === undefined) return;
+
+    let bitNum = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      bitNum = op1.value & 0x1F; // Only lower 5 bits for bit number
+    } else if (op1.type === TOKEN_REG_DATA) {
+      bitNum = this.registers[op1.value] & 0x1F;
+    }
+
+    // Set the bit in the destination
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const destValue = this.registers[op2.value];
+      const bitMask = 1 << bitNum;
+      const oldBit = (destValue & bitMask) !== 0 ? 1 : 0;
+      const newValue = (destValue | bitMask) >>> 0;
+      this.registers[op2.value] = newValue;
+      
+      // Update Z flag: Z = 1 if old bit was 0
+      if (oldBit === 0) {
+        this.ccr = (this.ccr | 0x04) >>> 0; // Set Z flag
+      } else {
+        this.ccr = (this.ccr & 0xfb) >>> 0; // Clear Z flag
+      }
     }
   }
 
