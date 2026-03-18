@@ -787,3 +787,9 @@ export function negxOP(size: number, op: number, ccr: number): [number, number] 
   const [result, newCCR] = addOP(op + xBit, 0, ccr, size, true);
   return [result, newCCR];
 }
+
+export function cmpmOP(src: number, dest: number, ccr: number, size: number): number {
+  // CMPM: Compare Memory with Memory
+  // This is essentially CMP but can be used with post-increment addressing
+  return cmpOP(src, dest, ccr, size);
+}

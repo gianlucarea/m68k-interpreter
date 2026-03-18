@@ -36,6 +36,7 @@ import {
   addxOP,
   subxOP,
   negxOP,
+  cmpmOP,
 } from './operations';
 
 // Token type constants
@@ -682,6 +683,13 @@ export class Emulator {
           }
           this.cmpi(size, operands[0], operands[1]);
           break;
+        case 'cmpm':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.cmpm(size, operands[0], operands[1]);
+          break;
         case 'tst':
           if (operands.length !== 1) {
             this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
@@ -1289,6 +1297,30 @@ export class Emulator {
     }
 
     this.ccr = cmpOP(src, dest, this.ccr, size);
+  }
+
+  private cmpm(size: number, op1: Operand, op2: Operand): void {
+    // CMPM: Compare memory with post-increment addressing
+    // (A0)+, (A1)+ - compares and increments both address registers
+    if (op1 === undefined || op2 === undefined) return;
+
+    let src = 0;
+    if (op1.type === TOKEN_REG_ADDR) {
+      src = this.memory.getLong(this.registers[op1.value]);
+      this.registers[op1.value] += 4; // Post-increment
+    } else if (op1.type === TOKEN_REG_DATA) {
+      src = this.registers[op1.value];
+    }
+
+    let dest = 0;
+    if (op2.type === TOKEN_REG_ADDR) {
+      dest = this.memory.getLong(this.registers[op2.value]);
+      this.registers[op2.value] += 4; // Post-increment
+    } else if (op2.type === TOKEN_REG_DATA) {
+      dest = this.registers[op2.value];
+    }
+
+    this.ccr = cmpmOP(src, dest, this.ccr, size);
   }
 
   private tst(size: number, op: Operand): void {
