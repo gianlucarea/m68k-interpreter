@@ -48,6 +48,8 @@ const TOKEN_REG_ADDR = 2;
 const TOKEN_REG_DATA = 3;
 const TOKEN_OFFSET_ADDR = 4;
 const TOKEN_LABEL = 5;
+const TOKEN_CCR = 6;
+const TOKEN_SR = 7;
 
 // Directive regexes
 const DC_REGEX = /^[_a-zA-Z][_a-zA-Z0-9]*:\s+dc\.[wbl]\s+("[a-zA-Z0-9]+"|([0-9]+,)*[0-9]+)$/gmi;
@@ -447,6 +449,18 @@ export class Emulator {
     } else if (!isNaN(parseInt(token))) {
       res.value = parseInt(token);
       res.type = TOKEN_OFFSET;
+      return res;
+    }
+
+    // Check for CCR or SR register
+    if (token.toLowerCase() === 'ccr') {
+      res.value = 0; // CCR register
+      res.type = TOKEN_CCR;
+      return res;
+    }
+    if (token.toLowerCase() === 'sr') {
+      res.value = 0; // SR register
+      res.type = TOKEN_SR;
       return res;
     }
 
@@ -1264,12 +1278,18 @@ export class Emulator {
       srcValue = op1.value;
     } else if (op1.type === TOKEN_OFFSET) {
       srcValue = this.memory.getLong(op1.value);
+    } else if (op1.type === TOKEN_CCR) {
+      // MOVE from CCR: source is CCR register
+      srcValue = this.ccr;
     }
 
     if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
       const [result, newCCR] = moveOP(srcValue, this.registers[op2.value], this.ccr, size);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
+    } else if (op2.type === TOKEN_CCR) {
+      // MOVE to CCR: destination is CCR register
+      this.ccr = (srcValue & 0xFF) >>> 0;
     }
   }
 
@@ -1403,6 +1423,9 @@ export class Emulator {
       const [result, newCCR] = andOP(size, src, this.registers[op2.value], this.ccr);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
+    } else if (op2.type === TOKEN_CCR) {
+      // ANDI to CCR: Perform AND operation on CCR (byte operation)
+      this.ccr = (this.ccr & src) >>> 0;
     }
   }
 
@@ -1437,6 +1460,9 @@ export class Emulator {
       const [result, newCCR] = orOP(size, src, this.registers[op2.value], this.ccr);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
+    } else if (op2.type === TOKEN_CCR) {
+      // ORI to CCR: Perform OR operation on CCR (byte operation)
+      this.ccr = (this.ccr | src) >>> 0;
     }
   }
 
@@ -1471,6 +1497,9 @@ export class Emulator {
       const [result, newCCR] = eorOP(size, src, this.registers[op2.value], this.ccr);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
+    } else if (op2.type === TOKEN_CCR) {
+      // EORI to CCR: Perform XOR operation on CCR (byte operation)
+      this.ccr = (this.ccr ^ src) >>> 0;
     }
   }
 
