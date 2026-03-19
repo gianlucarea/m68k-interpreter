@@ -422,15 +422,15 @@ export class Emulator {
       return res;
     }
 
-    // Check for address register
-    if (token.charAt(0).toLowerCase() === 'a') {
+    // Check for address register (a0-a7 or sp)
+    if (/^(a[0-7]|sp)$/i.test(token)) {
       res.value = this.parseRegisters(token) ?? 0;
       res.type = TOKEN_REG_ADDR;
       return res;
     }
 
-    // Check for data register
-    if (token.charAt(0).toLowerCase() === 'd') {
+    // Check for data register (d0-d7)
+    if (/^d[0-7]$/i.test(token)) {
       res.value = this.parseRegisters(token) ?? 0;
       res.type = TOKEN_REG_DATA;
       return res;
