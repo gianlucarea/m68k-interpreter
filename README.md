@@ -23,12 +23,14 @@ Write, step through, and debug m68k assembly — no installation needed.
 
 ## Supported instructions
 
-**Arithmetic** — `ADD` `ADDA` `ADDI` `SUB` `SUBA` `SUBI`  
-**Logic** — `AND` `ANDI` `EOR` `EORI` `NOT` `OR` `ORI`  
-**Data movement** — `CLR` `EXG` `EXT` `MOVE` `MOVEA` `NEG` `SWAP`  
-**Shifts & rotates** — `ASL` `ASR` `LSL` `LSR` `ROL` `ROR`  
-**Comparisons** — `CMP` `CMPA` `CMPI` `TST`  
-**Control flow** — `JMP` `JSR` `RTS` `BRA` `BSR` `BEQ` `BNE` `BGE` `BGT` `BLE` `BLT`
+**Data movement** — `MOVE` `MOVEA` `MOVEQ` `MOVEM` `MOVEP` `LEA` `PEA` `CLR` `EXG` `SWAP`  
+**Integer arithmetic** — `ADD` `ADDA` `ADDI` `ADDQ` `ADDX` `SUB` `SUBA` `SUBI` `SUBQ` `SUBX` `MULS` `MULU` `DIVS` `DIVU` `NEG` `NEGX` `EXT` `CLR` `CMP` `CMPA` `CMPI` `CMPM` `TST`  
+**Logical operations** — `AND` `ANDI` `OR` `ORI` `EOR` `EORI` `NOT`  
+**Shift & rotate** — `ASL` `ASR` `LSL` `LSR` `ROL` `ROR` `ROXL` `ROXR`  
+**Bit manipulation** — `BTST` `BSET` `BCLR` `BCHG`  
+**CCR operations** — `ANDI to CCR` `ORI to CCR` `EORI to CCR` `MOVE to CCR` `MOVE from CCR`  
+**Program control & branching** — `BRA` `BSR` `Bcc` (`BHI` `BLS` `BCC` `BCS` `BNE` `BEQ` `BVC` `BVS` `BPL` `BMI` `BGE` `BLT` `BGT` `BLE`) `DBcc` (`DBHI` `DBLS` `DBCC` `DBCS` `DBNE` `DBEQ` `DBVC` `DBVS` `DBPL` `DBMI` `DBGE` `DBLT` `DBGT` `DBLE` `DBF` `DBT`) `Scc` (`SHI` `SLS` `SCC` `SCS` `SNE` `SEQ` `SVC` `SVS` `SPL` `SMI` `SGE` `SLT` `SGT` `SLE` `SF` `ST`) `JMP` `JSR` `RTS` `RTR` `RTD`  
+**System control & exceptions** — `RESET` `NOP` `STOP` `RTE` `TRAP` `TRAPV` `CHK` `LINK` `UNLK` `MOVE to SR` `MOVE from SR` `ORI to SR` `ANDI to SR` `EORI to SR` `TAS`
 
 ---
 <!-- 
@@ -37,7 +39,7 @@ Write, step through, and debug m68k assembly — no installation needed.
 The [`examples/`](./examples) folder contains annotated programs to get started:
 
 | File | What it demonstrates |
-|---|---|
+| --- | --- |
 | `fibonacci.asm` | Loops, D registers, branching |
 | `factorial.asm` | Recursion via JSR/RTS, stack discipline |
 | `bubble_sort.asm` | Nested loops, memory addressing, CMPI |

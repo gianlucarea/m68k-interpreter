@@ -24,6 +24,7 @@
       }
 
       .main-content {
+        display: block;
         padding: var(--spacing-xl);
       }
 
@@ -129,9 +130,7 @@
       }
 
       .instruction-section {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
       }
 
       .instruction-card {
@@ -161,22 +160,24 @@
 
       .instruction-list {
         list-style: none;
-        padding: 0;
+        padding: var(--spacing-md);
         margin: 0;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-md);
       }
 
       .instruction-item {
-        padding: var(--spacing-lg);
-        border-bottom: 1px solid var(--border-color);
-        transition: background-color 200ms ease;
-      }
-
-      .instruction-item:last-child {
-        border-bottom: none;
+        padding: var(--spacing-md);
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: calc(var(--border-radius) - 4px);
+        transition: background-color 200ms ease, border-color 200ms ease;
       }
 
       .instruction-item:hover {
-        background-color: rgba(var(--primary-color-rgb), 0.02);
+        background-color: rgba(var(--primary-color-rgb), 0.04);
+        border-color: var(--primary-color);
       }
 
       .instruction-name {
@@ -282,12 +283,12 @@
           grid-template-columns: repeat(2, 1fr);
         }
 
-        .instruction-header {
-          font-size: 18px;
-          padding: var(--spacing-md);
+        .instruction-list {
+          grid-template-columns: repeat(2, 1fr);
         }
 
-        .instruction-item {
+        .instruction-header {
+          font-size: 18px;
           padding: var(--spacing-md);
         }
 
@@ -306,6 +307,10 @@
         }
 
         .quick-action-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .instruction-list {
           grid-template-columns: 1fr;
         }
 
@@ -356,9 +361,57 @@
         <section class="section" id="instructions">
           <h2 class="section-title"><span class="section-icon">📚</span>Instruction Set Reference</h2>
 
+          <div class="instruction-section" id="data-movement">
+            <div class="instruction-card">
+              <div class="instruction-header">Data Movement</div>
+              <ul class="instruction-list">
+                <li class="instruction-item">
+                  <span class="instruction-name">MOVE</span>
+                  <p class="instruction-desc">Move the contents of the source to the destination location. This is a copy operation; the source is not affected.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">MOVEA</span>
+                  <p class="instruction-desc">Move the contents of the source to the destination address register. If a word, it is sign-extended to a longword.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">MOVEQ</span>
+                  <p class="instruction-desc">Move an 8-bit immediate value (sign-extended to 32 bits) into a data register. Faster than MOVE for small constants.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">MOVEM</span>
+                  <p class="instruction-desc">Move multiple registers to or from consecutive memory locations. Used for saving/restoring registers on the stack.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">MOVEP</span>
+                  <p class="instruction-desc">Move data between a data register and alternate bytes in memory. Used for peripheral access on 8-bit buses.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">LEA</span>
+                  <p class="instruction-desc">Load effective address. Computes the effective address of the source operand and loads it into an address register.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">PEA</span>
+                  <p class="instruction-desc">Push effective address. Computes the effective address of the source operand and pushes it onto the stack.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">CLR</span>
+                  <p class="instruction-desc">The destination is cleared and loaded with all zeros. Cannot be used to clear an address register.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">EXG</span>
+                  <p class="instruction-desc">Exchange the contents of two registers. The entire 32-bit contents are exchanged. Supports data, address, and mixed exchanges.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">SWAP</span>
+                  <p class="instruction-desc">Exchange the upper and lower 16-bit words of a data register.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+
           <div class="instruction-section" id="arithmetic">
             <div class="instruction-card">
-              <div class="instruction-header">Arithmetic Operations</div>
+              <div class="instruction-header">Integer Arithmetic</div>
               <ul class="instruction-list">
                 <li class="instruction-item">
                   <span class="instruction-name">ADD</span>
@@ -373,6 +426,14 @@
                   <p class="instruction-desc">Add immediate data to the destination operand. Store the result in the destination operand.</p>
                 </li>
                 <li class="instruction-item">
+                  <span class="instruction-name">ADDQ</span>
+                  <p class="instruction-desc">Add a small immediate value (1–8) to the destination operand. Optimized for quick additions.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">ADDX</span>
+                  <p class="instruction-desc">Add the source operand and the extend bit (X) to the destination operand. Used for multi-precision arithmetic.</p>
+                </li>
+                <li class="instruction-item">
                   <span class="instruction-name">SUB</span>
                   <p class="instruction-desc">Subtract the source operand from the destination operand and store the result in the destination location.</p>
                 </li>
@@ -384,13 +445,73 @@
                   <span class="instruction-name">SUBI</span>
                   <p class="instruction-desc">Subtract the immediate data from the destination operand. Store the result in the destination operand.</p>
                 </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">SUBQ</span>
+                  <p class="instruction-desc">Subtract a small immediate value (1–8) from the destination operand. Optimized for quick subtractions.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">SUBX</span>
+                  <p class="instruction-desc">Subtract the source operand and the extend bit (X) from the destination operand. Used for multi-precision arithmetic.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">MULS</span>
+                  <p class="instruction-desc">Multiply two signed 16-bit values and produce a signed 32-bit result in the destination data register.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">MULU</span>
+                  <p class="instruction-desc">Multiply two unsigned 16-bit values and produce an unsigned 32-bit result in the destination data register.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">DIVS</span>
+                  <p class="instruction-desc">Divide a signed 32-bit dividend by a signed 16-bit divisor. Quotient in lower word, remainder in upper word.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">DIVU</span>
+                  <p class="instruction-desc">Divide an unsigned 32-bit dividend by an unsigned 16-bit divisor. Quotient in lower word, remainder in upper word.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">NEG</span>
+                  <p class="instruction-desc">Subtract the destination operand from 0 and store the result in the destination location. Performs twos complement negation.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">NEGX</span>
+                  <p class="instruction-desc">Subtract the destination operand and the extend bit (X) from 0. Used for multi-precision negation.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">EXT</span>
+                  <p class="instruction-desc">Extend the least-significant byte in a data register to a word, or the least-significant word to a longword.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">CLR</span>
+                  <p class="instruction-desc">The destination is cleared and loaded with all zeros. Cannot be used to clear an address register.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">CMP</span>
+                  <p class="instruction-desc">Subtract the source operand from the destination operand and set the condition codes accordingly. The destination is not modified.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">CMPA</span>
+                  <p class="instruction-desc">Subtract the source operand from the destination address register and set the condition codes. Supports word or longword operations.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">CMPI</span>
+                  <p class="instruction-desc">Subtract the immediate data from the destination operand and set the condition codes accordingly. The destination is not modified.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">CMPM</span>
+                  <p class="instruction-desc">Compare memory to memory using postincrement addressing. Sets condition codes based on the subtraction of source from destination.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">TST</span>
+                  <p class="instruction-desc">Compare the operand with zero. No result is saved, but the CCR bits are set according to the result.</p>
+                </li>
               </ul>
             </div>
           </div>
 
           <div class="instruction-section" id="logic">
             <div class="instruction-card">
-              <div class="instruction-header">Logic Operations</div>
+              <div class="instruction-header">Logical Operations</div>
               <ul class="instruction-list">
                 <li class="instruction-item">
                   <span class="instruction-name">AND</span>
@@ -399,6 +520,14 @@
                 <li class="instruction-item">
                   <span class="instruction-name">ANDI</span>
                   <p class="instruction-desc">AND the immediate data to the destination operand.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">OR</span>
+                  <p class="instruction-desc">OR the source operand to the destination operand, and store the result in the destination location.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">ORI</span>
+                  <p class="instruction-desc">OR the immediate data with the destination operand. Store the result in the destination operand.</p>
                 </li>
                 <li class="instruction-item">
                   <span class="instruction-name">EOR</span>
@@ -411,50 +540,6 @@
                 <li class="instruction-item">
                   <span class="instruction-name">NOT</span>
                   <p class="instruction-desc">Calculate the logical complement of the destination and store the result. NOT performs bit-by-bit logical complementation.</p>
-                </li>
-                <li class="instruction-item">
-                  <span class="instruction-name">OR</span>
-                  <p class="instruction-desc">OR the source operand to the destination operand, and store the result in the destination location.</p>
-                </li>
-                <li class="instruction-item">
-                  <span class="instruction-name">ORI</span>
-                  <p class="instruction-desc">OR the immediate data with the destination operand. Store the result in the destination operand.</p>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="instruction-section" id="basic">
-            <div class="instruction-card">
-              <div class="instruction-header">Basic Instructions</div>
-              <ul class="instruction-list">
-                <li class="instruction-item">
-                  <span class="instruction-name">CLR</span>
-                  <p class="instruction-desc">The destination is cleared and loaded with all zeros. Cannot be used to clear an address register.</p>
-                </li>
-                <li class="instruction-item">
-                  <span class="instruction-name">EXG</span>
-                  <p class="instruction-desc">Exchange the contents of two registers. The entire 32-bit contents are exchanged. Supports data, address, and mixed exchanges.</p>
-                </li>
-                <li class="instruction-item">
-                  <span class="instruction-name">EXT</span>
-                  <p class="instruction-desc">Extend the least-significant byte in a data register to a word, or the least-significant word to a longword.</p>
-                </li>
-                <li class="instruction-item">
-                  <span class="instruction-name">MOVE</span>
-                  <p class="instruction-desc">Move the contents of the source to the destination location. This is a copy operation; the source is not affected.</p>
-                </li>
-                <li class="instruction-item">
-                  <span class="instruction-name">MOVEA</span>
-                  <p class="instruction-desc">Move the contents of the source to the destination address register. If a word, it is sign-extended to a longword.</p>
-                </li>
-                <li class="instruction-item">
-                  <span class="instruction-name">NEG</span>
-                  <p class="instruction-desc">Subtract the destination operand from 0 and store the result in the destination location. Performs twos complement arithmetic subtraction.</p>
-                </li>
-                <li class="instruction-item">
-                  <span class="instruction-name">SWAP</span>
-                  <p class="instruction-desc">Exchange the upper and lower 16-bit words of a data register.</p>
                 </li>
               </ul>
             </div>
@@ -488,38 +573,94 @@
                   <span class="instruction-name">ROR</span>
                   <p class="instruction-desc">Rotate the bits right. The extend bit X is not included in the operation. Bits shifted out at one end are shifted into the other end.</p>
                 </li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="instruction-section" id="conditional">
-            <div class="instruction-card">
-              <div class="instruction-header">Conditional Operations</div>
-              <ul class="instruction-list">
                 <li class="instruction-item">
-                  <span class="instruction-name">CMP</span>
-                  <p class="instruction-desc">Subtract the source operand from the destination operand and set the condition codes accordingly. The destination is not modified.</p>
+                  <span class="instruction-name">ROXL</span>
+                  <p class="instruction-desc">Rotate left through the extend bit (X). The X bit is included in the rotation as an additional bit position.</p>
                 </li>
                 <li class="instruction-item">
-                  <span class="instruction-name">CMPA</span>
-                  <p class="instruction-desc">Subtract the source operand from the destination address register and set the condition codes. Supports word or longword operations.</p>
-                </li>
-                <li class="instruction-item">
-                  <span class="instruction-name">CMPI</span>
-                  <p class="instruction-desc">Subtract the immediate data from the destination operand and set the condition codes accordingly. The destination is not modified.</p>
-                </li>
-                <li class="instruction-item">
-                  <span class="instruction-name">TST</span>
-                  <p class="instruction-desc">Compare the operand with zero. No result is saved, but the CCR bits are set according to the result.</p>
+                  <span class="instruction-name">ROXR</span>
+                  <p class="instruction-desc">Rotate right through the extend bit (X). The X bit is included in the rotation as an additional bit position.</p>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div class="instruction-section" id="jumps">
+          <div class="instruction-section" id="bit-manipulation">
             <div class="instruction-card">
-              <div class="instruction-header">Jump Instructions</div>
+              <div class="instruction-header">Bit Manipulation</div>
               <ul class="instruction-list">
+                <li class="instruction-item">
+                  <span class="instruction-name">BTST</span>
+                  <p class="instruction-desc">Test a bit in the destination operand. The Z flag is set if the tested bit is zero, cleared otherwise.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">BSET</span>
+                  <p class="instruction-desc">Test a bit in the destination operand and then set it. The Z flag reflects the original value of the bit before setting.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">BCLR</span>
+                  <p class="instruction-desc">Test a bit in the destination operand and then clear it. The Z flag reflects the original value of the bit before clearing.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">BCHG</span>
+                  <p class="instruction-desc">Test a bit in the destination operand and then toggle (complement) it. The Z flag reflects the original value of the bit.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="instruction-section" id="ccr-operations">
+            <div class="instruction-card">
+              <div class="instruction-header">Condition Code Register Operations</div>
+              <ul class="instruction-list">
+                <li class="instruction-item">
+                  <span class="instruction-name">ANDI to CCR</span>
+                  <p class="instruction-desc">AND immediate data with the condition code register (CCR). Used to selectively clear CCR bits.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">ORI to CCR</span>
+                  <p class="instruction-desc">OR immediate data with the condition code register (CCR). Used to selectively set CCR bits.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">EORI to CCR</span>
+                  <p class="instruction-desc">Exclusive-OR immediate data with the condition code register (CCR). Used to selectively toggle CCR bits.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">MOVE to CCR</span>
+                  <p class="instruction-desc">Move the source operand to the condition code register. The upper byte of the SR is not affected.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">MOVE from CCR</span>
+                  <p class="instruction-desc">Move the contents of the condition code register to the destination operand.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="instruction-section" id="program-control">
+            <div class="instruction-card">
+              <div class="instruction-header">Program Control & Branching</div>
+              <ul class="instruction-list">
+                <li class="instruction-item">
+                  <span class="instruction-name">BRA</span>
+                  <p class="instruction-desc">Branch always. Program execution continues at [PC] + displacement. Displacement is a twos complement value (8-bit or 16-bit).</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">BSR</span>
+                  <p class="instruction-desc">Branch to subroutine. Pushes the next instruction address onto the stack (A7). Execution continues at [PC] + displacement.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">Bcc</span>
+                  <p class="instruction-desc">Branch conditionally. Includes BHI, BLS, BCC, BCS, BNE, BEQ, BVC, BVS, BPL, BMI, BGE, BLT, BGT, BLE. Branch is taken if the specified condition is true.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">DBcc</span>
+                  <p class="instruction-desc">Test condition, decrement, and branch. Includes DBHI, DBLS, DBCC, DBCS, DBNE, DBEQ, DBVC, DBVS, DBPL, DBMI, DBGE, DBLT, DBGT, DBLE, DBF, DBT. If condition is false, decrement the data register and branch if result is not −1.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">Scc</span>
+                  <p class="instruction-desc">Set according to condition. Includes SHI, SLS, SCC, SCS, SNE, SEQ, SVC, SVS, SPL, SMI, SGE, SLT, SGT, SLE, SF, ST. Sets the destination byte to all ones if condition is true, all zeros otherwise.</p>
+                </li>
                 <li class="instruction-item">
                   <span class="instruction-name">JMP</span>
                   <p class="instruction-desc">Program execution continues at the effective address specified by the instruction.</p>
@@ -532,45 +673,81 @@
                   <span class="instruction-name">RTS</span>
                   <p class="instruction-desc">Return from subroutine. The program counter is pulled from the stack. Used to terminate a subroutine and return to the calling code.</p>
                 </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">RTR</span>
+                  <p class="instruction-desc">Return and restore condition codes. Pulls the CCR and then the PC from the stack.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">RTD</span>
+                  <p class="instruction-desc">Return and deallocate. Pulls the PC from the stack and then adds a displacement to the stack pointer to deallocate stack frame parameters.</p>
+                </li>
               </ul>
             </div>
           </div>
 
-          <div class="instruction-section" id="branches">
+          <div class="instruction-section" id="system-control">
             <div class="instruction-card">
-              <div class="instruction-header">Branch Instructions</div>
+              <div class="instruction-header">System Control & Exception Handling</div>
               <ul class="instruction-list">
                 <li class="instruction-item">
-                  <span class="instruction-name">BRA</span>
-                  <p class="instruction-desc">Branch always. Program execution continues at [PC] + displacement. Displacement is a twos complement value (8-bit or 16-bit).</p>
+                  <span class="instruction-name">RESET</span>
+                  <p class="instruction-desc">Assert the RESET line. In supervisor mode, resets external devices without affecting internal processor state.</p>
                 </li>
                 <li class="instruction-item">
-                  <span class="instruction-name">BSR</span>
-                  <p class="instruction-desc">Branch to subroutine. Pushes the next instruction address onto the stack (A7). Execution continues at [PC] + displacement.</p>
+                  <span class="instruction-name">NOP</span>
+                  <p class="instruction-desc">No operation. Performs no action other than advancing the program counter. Used for timing or alignment.</p>
                 </li>
                 <li class="instruction-item">
-                  <span class="instruction-name">BEQ</span>
-                  <p class="instruction-desc">Branch if equal (zero flag set). If condition is met, execution continues at [PC] + displacement.</p>
+                  <span class="instruction-name">STOP</span>
+                  <p class="instruction-desc">Load immediate data into the status register and stop execution. The processor waits for an interrupt or reset.</p>
                 </li>
                 <li class="instruction-item">
-                  <span class="instruction-name">BNE</span>
-                  <p class="instruction-desc">Branch if not equal (zero flag clear). If condition is met, execution continues at [PC] + displacement.</p>
+                  <span class="instruction-name">RTE</span>
+                  <p class="instruction-desc">Return from exception. Restores the status register and program counter from the supervisor stack.</p>
                 </li>
                 <li class="instruction-item">
-                  <span class="instruction-name">BGE</span>
-                  <p class="instruction-desc">Branch if greater than or equal (no overflow/negative mismatch). If condition is met, execution continues at [PC] + displacement.</p>
+                  <span class="instruction-name">TRAP</span>
+                  <p class="instruction-desc">Initiate a software trap exception. The trap number (0–15) selects the vector for the exception handler.</p>
                 </li>
                 <li class="instruction-item">
-                  <span class="instruction-name">BGT</span>
-                  <p class="instruction-desc">Branch if greater than. If condition is met, execution continues at [PC] + displacement.</p>
+                  <span class="instruction-name">TRAPV</span>
+                  <p class="instruction-desc">Trap on overflow. If the overflow flag (V) is set, a TRAPV exception is generated.</p>
                 </li>
                 <li class="instruction-item">
-                  <span class="instruction-name">BLE</span>
-                  <p class="instruction-desc">Branch if less than or equal. If condition is met, execution continues at [PC] + displacement.</p>
+                  <span class="instruction-name">CHK</span>
+                  <p class="instruction-desc">Check register against bounds. If the data register value is negative or greater than the upper bound, a CHK exception is generated.</p>
                 </li>
                 <li class="instruction-item">
-                  <span class="instruction-name">BLT</span>
-                  <p class="instruction-desc">Branch if less than. If condition is met, execution continues at [PC] + displacement.</p>
+                  <span class="instruction-name">LINK</span>
+                  <p class="instruction-desc">Link and allocate. Pushes the specified address register onto the stack, copies SP to the address register, then adds a displacement to SP to allocate a stack frame.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">UNLK</span>
+                  <p class="instruction-desc">Unlink. Restores SP from the address register and then pops the address register from the stack. Reverses the LINK operation.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">MOVE to SR</span>
+                  <p class="instruction-desc">Move the source operand to the status register. Privileged instruction; affects both the CCR and supervisor byte.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">MOVE from SR</span>
+                  <p class="instruction-desc">Move the contents of the status register to the destination operand.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">ORI to SR</span>
+                  <p class="instruction-desc">OR immediate data with the status register. Privileged instruction used to set SR bits.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">ANDI to SR</span>
+                  <p class="instruction-desc">AND immediate data with the status register. Privileged instruction used to clear SR bits.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">EORI to SR</span>
+                  <p class="instruction-desc">Exclusive-OR immediate data with the status register. Privileged instruction used to toggle SR bits.</p>
+                </li>
+                <li class="instruction-item">
+                  <span class="instruction-name">TAS</span>
+                  <p class="instruction-desc">Test and set. Tests the destination byte (sets N and Z flags), then sets the high-order bit (bit 7) of the operand. Uses an indivisible read-modify-write bus cycle.</p>
                 </li>
               </ul>
             </div>

@@ -17,9 +17,10 @@ export class Strings {
   static readonly INVALID_REGISTER = 'Invalid register name';
   static readonly NOT_AN_ADDRESS_REGISTER = 'Address register expected';
   static readonly UNKNOWN_OPERAND = 'Unknown operand';
+  static readonly IMMEDIATE_VALUE_EXPECTED = 'Immediate value expected';
   static readonly TWO_PARAMETERS_EXPECTED = 'Two parameters are expected';
   static readonly ONE_PARAMETER_EXPECTED = 'One parameter is expected';
-  static readonly UNRECOGNISED_INSTRUCTION = 'Unrecognised instruction';
+  static readonly UNRECOGNISED_INSTRUCTION = 'unrecognised instruction';
   static readonly NO_MEMORY_MEMORY_ALLOWED = 'Memory to memory is not allowed for operation';
   static readonly INVALID_ADDRESS = 'Invalid address';
   static readonly DATA_ONLY_SWAP = 'Can only SWAP a data register';

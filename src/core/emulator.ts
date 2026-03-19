@@ -1,6 +1,17 @@
 /**
  * M68K Emulator - Main execution engine
  * Handles instruction parsing, execution, registers, memory, and condition codes
+ * 
+ * System Control Instructions Implemented:
+ * - NOP: No operation
+ * - RESET: Reset external devices
+ * - RTE: Return from exception (TEST: RTE)
+ * - TRAP: Trap to exception handler (TEST: TRAP)
+ * - TRAPV: Trap on overflow (TEST: TRAPV)
+ * - CHK: Check register bounds (TEST: CHK)
+ * - LINK: Link stack frame (TEST: LINK)
+ * - UNLK: Unlink stack frame (TEST: UNLK)
+ * - TAS: Test and set byte (TEST: TAS)
  */
 
 import { Memory } from './memory';
@@ -24,13 +35,21 @@ import {
   notOP,
   negOP,
   mulsOP,
+  muluOP,
   divsOP,
+  divuOP,
   aslOP,
   asrOP,
   lslOP,
   lsrOP,
   rolOP,
   rorOP,
+  roxlOP,
+  roxrOP,
+  addxOP,
+  subxOP,
+  negxOP,
+  cmpmOP,
 } from './operations';
 
 // Token type constants
@@ -40,10 +59,13 @@ const TOKEN_REG_ADDR = 2;
 const TOKEN_REG_DATA = 3;
 const TOKEN_OFFSET_ADDR = 4;
 const TOKEN_LABEL = 5;
+const TOKEN_CCR = 6;
+const TOKEN_SR = 7;
 
 // Directive regexes
 const DC_REGEX = /^[_a-zA-Z][_a-zA-Z0-9]*:\s+dc\.[wbl]\s+("[a-zA-Z0-9]+"|([0-9]+,)*[0-9]+)$/gmi;
 const ORG_REGEX = /^org\s+(?:0x|\$)([0-9]+)/gmi;
+const END_REGEX = /^end\s*([_a-zA-Z][_a-zA-Z0-9]*)?$/gmi;
 
 interface Operand {
   value: number;
@@ -171,7 +193,8 @@ export class Emulator {
       }
 
       // Check for END directive
-      if (instr === 'end') {
+      match = END_REGEX.exec(instr);
+      if (match) {
         if (this.endPointer !== undefined) {
           this.exception = Strings.DUPLICATE_END + Strings.AT_LINE + lineNum;
           return;
@@ -184,6 +207,7 @@ export class Emulator {
 
         // Remove all instructions after END
         this.instructions.splice(i + 1, this.instructions.length - i - 1);
+        END_REGEX.lastIndex = 0;
         continue;
       }
 
@@ -271,9 +295,11 @@ export class Emulator {
           return CODE_WORD;
         case 'l':
           return CODE_LONG;
+        case 's':
+          return CODE_WORD;
         default:
           if (!errorsSuppressed) {
-            this.errors.push(Strings.INVALID_OP_SIZE + Strings.AT_LINE + this.line);
+            this.errors.push('.' + size + ' is an ' + Strings.INVALID_OP_SIZE + Strings.AT_LINE + this.line);
           }
           return CODE_WORD;
       }
@@ -321,7 +347,7 @@ export class Emulator {
       case 'd7':
         return 15;
       default:
-        this.errors.push(Strings.INVALID_REGISTER + Strings.AT_LINE + this.line);
+        this.errors.push(register + ' is an ' + Strings.INVALID_REGISTER + Strings.AT_LINE + this.line);
         return undefined;
     }
   }
@@ -396,15 +422,15 @@ export class Emulator {
       return res;
     }
 
-    // Check for address register
-    if (token.charAt(0).toLowerCase() === 'a') {
+    // Check for address register (a0-a7 or sp)
+    if (/^(a[0-7]|sp)$/i.test(token)) {
       res.value = this.parseRegisters(token) ?? 0;
       res.type = TOKEN_REG_ADDR;
       return res;
     }
 
-    // Check for data register
-    if (token.charAt(0).toLowerCase() === 'd') {
+    // Check for data register (d0-d7)
+    if (/^d[0-7]$/i.test(token)) {
       res.value = this.parseRegisters(token) ?? 0;
       res.type = TOKEN_REG_DATA;
       return res;
@@ -442,6 +468,18 @@ export class Emulator {
       return res;
     }
 
+    // Check for CCR or SR register
+    if (token.toLowerCase() === 'ccr') {
+      res.value = 0; // CCR register
+      res.type = TOKEN_CCR;
+      return res;
+    }
+    if (token.toLowerCase() === 'sr') {
+      res.value = 0; // SR register
+      res.type = TOKEN_SR;
+      return res;
+    }
+
     // Check for label
     if (/^[_a-zA-Z][_a-zA-Z0-9]*$/.test(token)) {
       res.value = 0; // Will be resolved later based on label position
@@ -450,7 +488,7 @@ export class Emulator {
       return res;
     }
 
-    this.errors.push(Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
+    this.errors.push(token + ' is an ' + Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
     return undefined;
   }
 
@@ -515,11 +553,23 @@ export class Emulator {
     if (instr.indexOf(' ') === -1 && instr.length > 0) {
       // Single-operand or no-operand instruction
       switch (instr.toLowerCase()) {
+        case 'nop':
+          this.nop();
+          break;
+        case 'reset':
+          this.reset_instr();
+          break;
+        case 'rte':
+          this.rte();
+          break;
         case 'rts':
           this.rts();
           break;
+        case 'rtr':
+          this.rtr();
+          break;
         default:
-          this.errors.push(Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
+          this.errors.push(instr + ' is a ' + Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
           return false;
       }
     } else {
@@ -536,331 +586,808 @@ export class Emulator {
 
       const operandStr = instr.substring(instr.indexOf(' ') + 1);
       const operandTokens = operandStr.split(',').map((s) => s.trim());
-      operands = operandTokens
-        .map((t) => this.parseOperand(t))
-        .filter((o) => o !== undefined) as Operand[];
-
       size = this.parseOpSize(instr, false);
+
+      // MOVEM uses its own register-list parser, so skip standard operand parsing
+      if (operation.toLowerCase() !== 'movem') {
+        operands = operandTokens
+          .map((t) => this.parseOperand(t))
+          .filter((o) => o !== undefined) as Operand[];
+      }
 
       // Execute instruction
       switch (operation.toLowerCase()) {
         case 'add':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.add(size, operands[0], operands[1], false);
           break;
         case 'adda':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.adda(size, operands[0], operands[1]);
           break;
         case 'addi':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.addi(size, operands[0], operands[1]);
           break;
         case 'addq':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.addq(size, operands[0], operands[1]);
           break;
+        case 'addx':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.addx(size, operands[0], operands[1]);
+          break;
         case 'sub':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.add(size, operands[0], operands[1], true);
           break;
         case 'suba':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.suba(size, operands[0], operands[1]);
           break;
         case 'subi':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.subi(size, operands[0], operands[1]);
           break;
         case 'subq':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.subq(size, operands[0], operands[1]);
           break;
+        case 'subx':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.subx(size, operands[0], operands[1]);
+          break;
         case 'muls':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.muls(size, operands[0], operands[1]);
           break;
+        case 'mulu':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.mulu(size, operands[0], operands[1]);
+          break;
         case 'divs':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.divs(size, operands[0], operands[1]);
           break;
+        case 'divu':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.divu(size, operands[0], operands[1]);
+          break;
         case 'move':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.move(size, operands[0], operands[1]);
           break;
         case 'clr':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.clr(size, operands[0]);
           break;
         case 'cmp':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.cmp(size, operands[0], operands[1]);
           break;
         case 'cmpa':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.cmpa(operands[0], operands[1]);
           break;
         case 'cmpi':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.cmpi(size, operands[0], operands[1]);
           break;
+        case 'cmpm':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.cmpm(size, operands[0], operands[1]);
+          break;
         case 'tst':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.tst(size, operands[0]);
           break;
         case 'and':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.and(size, operands[0], operands[1]);
           break;
         case 'andi':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.andi(size, operands[0], operands[1]);
           break;
         case 'or':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.or(size, operands[0], operands[1]);
           break;
         case 'ori':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.ori(size, operands[0], operands[1]);
           break;
         case 'eor':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.eor(size, operands[0], operands[1]);
           break;
         case 'eori':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.eori(size, operands[0], operands[1]);
           break;
         case 'not':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.not(size, operands[0]);
           break;
         case 'neg':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.neg(size, operands[0]);
           break;
+        case 'negx':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.negx(size, operands[0]);
+          break;
         case 'jmp':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.jmp(operandTokens[0]);
           break;
         case 'jsr':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.jsr(operandTokens[0]);
           break;
         case 'mode':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.mode(operands[0], operands[1]);
           break;
         case 'movea':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.movea(size, operands[0], operands[1]);
           break;
         case 'exg':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.exg(operands[0], operands[1]);
           break;
         case 'swap':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.swap(operands[0]);
           break;
         case 'ext':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.ext(size, operands[0]);
           break;
         case 'lea':
           if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.lea(operands[0], operands[1]);
           break;
+        case 'moveq':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.moveq(operands[0], operands[1]);
+          break;
+        case 'movem': {
+          // MOVEM needs special handling: the first or second operand can be a register list
+          const movemTokens = operandStr.split(',').map((s) => s.trim());
+          if (movemTokens.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.movemFull(size, movemTokens[0], movemTokens[1]);
+        }
+          break;
+        case 'movep':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.movep(size, operands[0], operands[1]);
+          break;
+        case 'pea':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.pea(operands[0]);
+          break;
         case 'bra':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.bra(operandTokens[0]);
           break;
         case 'beq':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.beq(operandTokens[0]);
           break;
         case 'bne':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.bne(operandTokens[0]);
           break;
         case 'bge':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.bge(operandTokens[0]);
           break;
         case 'bgt':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.bgt(operandTokens[0]);
           break;
         case 'ble':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.ble(operandTokens[0]);
           break;
         case 'blt':
           if (operands.length !== 1) {
-            this.errors.push(Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
           this.blt(operandTokens[0]);
           break;
-        case 'asl':
-          if (operands.length !== 2) {
-            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+        case 'bpl':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
-          this.asl(size, operands[0], operands[1]);
+          this.bpl(operandTokens[0]);
+          break;
+        case 'bcc':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bcc(operandTokens[0]);
+          break;
+        case 'bvc':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bvc(operandTokens[0]);
+          break;
+        case 'bsr':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bsr(operandTokens[0]);
+          break;
+        case 'bls':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bls(operandTokens[0]);
+          break;
+        case 'bhi':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bhi(operandTokens[0]);
+          break;
+        case 'bcs':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bcs(operandTokens[0]);
+          break;
+        case 'bmi':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bmi(operandTokens[0]);
+          break;
+        case 'bvs':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bvs(operandTokens[0]);
+          break;
+        case 'dbcc':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbcc(operands[0], operandTokens[1]);
+          break;
+        case 'dbcs':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbcs(operands[0], operandTokens[1]);
+          break;
+        case 'dbne':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbne(operands[0], operandTokens[1]);
+          break;
+        case 'dbeq':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbeq(operands[0], operandTokens[1]);
+          break;
+        case 'dbge':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbge(operands[0], operandTokens[1]);
+          break;
+        case 'dbgt':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbgt(operands[0], operandTokens[1]);
+          break;
+        case 'dble':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dble(operands[0], operandTokens[1]);
+          break;
+        case 'dblt':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dblt(operands[0], operandTokens[1]);
+          break;
+        case 'dbpl':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbpl(operands[0], operandTokens[1]);
+          break;
+        case 'dbmi':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbmi(operands[0], operandTokens[1]);
+          break;
+        case 'dbvc':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbvc(operands[0], operandTokens[1]);
+          break;
+        case 'dbvs':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbvs(operands[0], operandTokens[1]);
+          break;
+        case 'dbhi':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbhi(operands[0], operandTokens[1]);
+          break;
+        case 'dbls':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbls(operands[0], operandTokens[1]);
+          break;
+        case 'dbf':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbf(operands[0], operandTokens[1]);
+          break;
+        case 'dbt':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.dbt(operands[0], operandTokens[1]);
+          break;
+        case 'scc':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.scc(operands[0]);
+          break;
+        case 'scs':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.scs(operands[0]);
+          break;
+        case 'sne':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.sne(operands[0]);
+          break;
+        case 'seq':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.seq(operands[0]);
+          break;
+        case 'sge':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.sge(operands[0]);
+          break;
+        case 'sgt':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.sgt(operands[0]);
+          break;
+        case 'sle':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.sle(operands[0]);
+          break;
+        case 'slt':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.slt(operands[0]);
+          break;
+        case 'spl':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.spl(operands[0]);
+          break;
+        case 'smi':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.smi(operands[0]);
+          break;
+        case 'svc':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.svc(operands[0]);
+          break;
+        case 'svs':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.svs(operands[0]);
+          break;
+        case 'sls':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.sls(operands[0]);
+          break;
+        case 'shi':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.shi(operands[0]);
+          break;
+        case 'sf':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.sf(operands[0]);
+          break;
+        case 'st':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.st(operands[0]);
+          break;
+        case 'stop':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.stop(operands[0]);
+          break;
+        case 'asl':
+          if (operands.length === 1) {
+            this.asl(size, { type: TOKEN_IMMEDIATE, value: 1 }, operands[0]);
+          } else if (operands.length === 2) {
+            this.asl(size, operands[0], operands[1]);
+          } else {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+          }
           break;
         case 'asr':
-          if (operands.length !== 2) {
+          if (operands.length === 1) {
+            this.asr(size, { type: TOKEN_IMMEDIATE, value: 1 }, operands[0]);
+          } else if (operands.length === 2) {
+            this.asr(size, operands[0], operands[1]);
+          } else {
             this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
-            break;
           }
-          this.asr(size, operands[0], operands[1]);
           break;
         case 'lsl':
-          if (operands.length !== 2) {
+          if (operands.length === 1) {
+            this.lsl(size, { type: TOKEN_IMMEDIATE, value: 1 }, operands[0]);
+          } else if (operands.length === 2) {
+            this.lsl(size, operands[0], operands[1]);
+          } else {
             this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
-            break;
           }
-          this.lsl(size, operands[0], operands[1]);
           break;
         case 'lsr':
-          if (operands.length !== 2) {
+          if (operands.length === 1) {
+            this.lsr(size, { type: TOKEN_IMMEDIATE, value: 1 }, operands[0]);
+          } else if (operands.length === 2) {
+            this.lsr(size, operands[0], operands[1]);
+          } else {
             this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
-            break;
           }
-          this.lsr(size, operands[0], operands[1]);
           break;
         case 'rol':
-          if (operands.length !== 2) {
+          if (operands.length === 1) {
+            this.rol(size, { type: TOKEN_IMMEDIATE, value: 1 }, operands[0]);
+          } else if (operands.length === 2) {
+            this.rol(size, operands[0], operands[1]);
+          } else {
             this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
-            break;
           }
-          this.rol(size, operands[0], operands[1]);
           break;
         case 'ror':
+          if (operands.length === 1) {
+            this.ror(size, { type: TOKEN_IMMEDIATE, value: 1 }, operands[0]);
+          } else if (operands.length === 2) {
+            this.ror(size, operands[0], operands[1]);
+          } else {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+          }
+          break;
+        case 'bset':
           if (operands.length !== 2) {
             this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
             break;
           }
-          this.ror(size, operands[0], operands[1]);
+          this.bset(operands[0], operands[1]);
+          break;
+        case 'roxl':
+          if (operands.length === 1) {
+            this.roxl(size, { type: TOKEN_IMMEDIATE, value: 1 }, operands[0]);
+          } else if (operands.length === 2) {
+            this.roxl(size, operands[0], operands[1]);
+          } else {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+          }
+          break;
+        case 'roxr':
+          if (operands.length === 1) {
+            this.roxr(size, { type: TOKEN_IMMEDIATE, value: 1 }, operands[0]);
+          } else if (operands.length === 2) {
+            this.roxr(size, operands[0], operands[1]);
+          } else {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+          }
+          break;
+        case 'btst':
+          if (operands.length !== 2) {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.btst(operands[0], operands[1]);
+          break;
+        case 'bclr':
+          if (operands.length !== 2) {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bclr(operands[0], operands[1]);
+          break;
+        case 'bchg':
+          if (operands.length !== 2) {
+            this.errors.push(Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.bchg(operands[0], operands[1]);
+          break;
+        case 'rtd':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.rtd(operands[0]);
+          break;
+        case 'trap':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.trap(operands[0]);
+          break;
+        case 'trapv':
+          if (operands.length !== 0) {
+            this.errors.push(operation + ' takes no parameters' + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.trapv();
+          break;
+        case 'chk':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.chk(size, operands[0], operands[1]);
+          break;
+        case 'link':
+          if (operands.length !== 2) {
+            this.errors.push(operation + ' ' + Strings.TWO_PARAMETERS_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.link(operands[0], operands[1]);
+          break;
+        case 'unlk':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.unlk(operands[0]);
+          break;
+        case 'tas':
+          if (operands.length !== 1) {
+            this.errors.push(operation + ' ' + Strings.ONE_PARAMETER_EXPECTED + Strings.AT_LINE + this.line);
+            break;
+          }
+          this.tas(operands[0]);
           break;
         default:
-          this.errors.push(Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
+          this.errors.push(operation + ' is a ' + Strings.UNRECOGNISED_INSTRUCTION + Strings.AT_LINE + this.line);
           return false;
       }
     }
@@ -907,7 +1434,7 @@ export class Emulator {
     // ADDI: Add immediate value
     // op1 must be immediate, op2 is destination
     if (op1.type !== TOKEN_IMMEDIATE) {
-      this.errors.push(Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
+      this.errors.push('operand expects immediate value, ' + Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
       return;
     }
 
@@ -923,7 +1450,7 @@ export class Emulator {
 
     // ADDQ: Add quick (immediate 1-8)
     if (op1.type !== TOKEN_IMMEDIATE) {
-      this.errors.push(Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
+      this.errors.push('operand expects immediate value, ' + Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
       return;
     }
 
@@ -934,6 +1461,22 @@ export class Emulator {
     } else if (op2.type === TOKEN_REG_ADDR) {
       // ADDQ on address register doesn't affect CCR
       this.registers[op2.value] += op1.value;
+    }
+  }
+
+  private addx(size: number, op1: Operand, op2: Operand): void {
+    if (op1 === undefined || op2 === undefined) return;
+
+    // ADDX: Add extended (with X bit for multi-precision)
+    if (op2.type === TOKEN_REG_DATA) {
+      const src =
+        op1.type === TOKEN_REG_ADDR || op1.type === TOKEN_REG_DATA
+          ? this.registers[op1.value]
+          : op1.value;
+
+      const [result, newCCR] = addxOP(src, this.registers[op2.value], this.ccr, size);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
     }
   }
 
@@ -958,7 +1501,7 @@ export class Emulator {
 
     // SUBI: Subtract immediate value
     if (op1.type !== TOKEN_IMMEDIATE) {
-      this.errors.push(Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
+      this.errors.push('operand expects immediate value, ' + Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
       return;
     }
 
@@ -974,7 +1517,7 @@ export class Emulator {
 
     // SUBQ: Subtract quick (immediate 1-8)
     if (op1.type !== TOKEN_IMMEDIATE) {
-      this.errors.push(Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
+      this.errors.push('operand expects immediate value, ' + Strings.UNKNOWN_OPERAND + Strings.AT_LINE + this.line);
       return;
     }
 
@@ -985,6 +1528,22 @@ export class Emulator {
     } else if (op2.type === TOKEN_REG_ADDR) {
       // SUBQ on address register doesn't affect CCR
       this.registers[op2.value] -= op1.value;
+    }
+  }
+
+  private subx(size: number, op1: Operand, op2: Operand): void {
+    if (op1 === undefined || op2 === undefined) return;
+
+    // SUBX: Subtract extended (with X bit for multi-precision)
+    if (op2.type === TOKEN_REG_DATA) {
+      const src =
+        op1.type === TOKEN_REG_ADDR || op1.type === TOKEN_REG_DATA
+          ? this.registers[op1.value]
+          : op1.value;
+
+      const [result, newCCR] = subxOP(src, this.registers[op2.value], this.ccr, size);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
     }
   }
 
@@ -1001,6 +1560,24 @@ export class Emulator {
 
     if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
       const [result, newCCR] = mulsOP(size, src, this.registers[op2.value], this.ccr);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    }
+  }
+
+  private mulu(size: number, op1: Operand, op2: Operand): void {
+    // MULU: Unsigned multiply
+    if (op1 === undefined || op2 === undefined) return;
+
+    let src = 0;
+    if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
+      src = this.registers[op1.value];
+    } else if (op1.type === TOKEN_IMMEDIATE) {
+      src = op1.value;
+    }
+
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = muluOP(size, src, this.registers[op2.value], this.ccr);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
     }
@@ -1024,6 +1601,24 @@ export class Emulator {
     }
   }
 
+  private divu(size: number, op1: Operand, op2: Operand): void {
+    // DIVU: Unsigned division
+    if (op1 === undefined || op2 === undefined) return;
+
+    let src = 0;
+    if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
+      src = this.registers[op1.value];
+    } else if (op1.type === TOKEN_IMMEDIATE) {
+      src = op1.value;
+    }
+
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = divuOP(size, src, this.registers[op2.value], this.ccr);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    }
+  }
+
   private move(size: number, op1: Operand, op2: Operand): void {
     if (op1 === undefined || op2 === undefined) return;
 
@@ -1034,12 +1629,18 @@ export class Emulator {
       srcValue = op1.value;
     } else if (op1.type === TOKEN_OFFSET) {
       srcValue = this.memory.getLong(op1.value);
+    } else if (op1.type === TOKEN_CCR) {
+      // MOVE from CCR: source is CCR register
+      srcValue = this.ccr;
     }
 
     if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
       const [result, newCCR] = moveOP(srcValue, this.registers[op2.value], this.ccr, size);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
+    } else if (op2.type === TOKEN_CCR) {
+      // MOVE to CCR: destination is CCR register
+      this.ccr = (srcValue & 0xFF) >>> 0;
     }
   }
 
@@ -1106,6 +1707,30 @@ export class Emulator {
     this.ccr = cmpOP(src, dest, this.ccr, size);
   }
 
+  private cmpm(size: number, op1: Operand, op2: Operand): void {
+    // CMPM: Compare memory with post-increment addressing
+    // (A0)+, (A1)+ - compares and increments both address registers
+    if (op1 === undefined || op2 === undefined) return;
+
+    let src = 0;
+    if (op1.type === TOKEN_REG_ADDR) {
+      src = this.memory.getLong(this.registers[op1.value]);
+      this.registers[op1.value] += 4; // Post-increment
+    } else if (op1.type === TOKEN_REG_DATA) {
+      src = this.registers[op1.value];
+    }
+
+    let dest = 0;
+    if (op2.type === TOKEN_REG_ADDR) {
+      dest = this.memory.getLong(this.registers[op2.value]);
+      this.registers[op2.value] += 4; // Post-increment
+    } else if (op2.type === TOKEN_REG_DATA) {
+      dest = this.registers[op2.value];
+    }
+
+    this.ccr = cmpmOP(src, dest, this.ccr, size);
+  }
+
   private tst(size: number, op: Operand): void {
     // TST: Test operand (set condition codes based on value)
     if (op === undefined) return;
@@ -1149,6 +1774,9 @@ export class Emulator {
       const [result, newCCR] = andOP(size, src, this.registers[op2.value], this.ccr);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
+    } else if (op2.type === TOKEN_CCR) {
+      // ANDI to CCR: Perform AND operation on CCR (byte operation)
+      this.ccr = (this.ccr & src) >>> 0;
     }
   }
 
@@ -1183,6 +1811,9 @@ export class Emulator {
       const [result, newCCR] = orOP(size, src, this.registers[op2.value], this.ccr);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
+    } else if (op2.type === TOKEN_CCR) {
+      // ORI to CCR: Perform OR operation on CCR (byte operation)
+      this.ccr = (this.ccr | src) >>> 0;
     }
   }
 
@@ -1217,6 +1848,9 @@ export class Emulator {
       const [result, newCCR] = eorOP(size, src, this.registers[op2.value], this.ccr);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
+    } else if (op2.type === TOKEN_CCR) {
+      // EORI to CCR: Perform XOR operation on CCR (byte operation)
+      this.ccr = (this.ccr ^ src) >>> 0;
     }
   }
 
@@ -1237,6 +1871,17 @@ export class Emulator {
 
     if (op.type === TOKEN_REG_DATA || op.type === TOKEN_REG_ADDR) {
       const [result, newCCR] = negOP(size, this.registers[op.value], this.ccr);
+      this.registers[op.value] = result;
+      this.ccr = newCCR;
+    }
+  }
+
+  private negx(size: number, op: Operand): void {
+    // NEGX: Arithmetic negate with extend (twos complement with X bit)
+    if (op === undefined) return;
+
+    if (op.type === TOKEN_REG_DATA || op.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = negxOP(size, this.registers[op.value], this.ccr);
       this.registers[op.value] = result;
       this.ccr = newCCR;
     }
@@ -1279,6 +1924,42 @@ export class Emulator {
     this.pc = this.memory.getLong(stackPtr);
     this.registers[15] = stackPtr + 4; // Increment stack pointer
     this.lastInstruction = 'RTS';
+  }
+
+  private rtr(): void {
+    // Return and Restore - pop status register and return address from stack
+    const stackPtr = this.registers[15]; // A7 is register 15
+    
+    // Pop status register (word) from stack
+    const statusReg = this.memory.getWord(stackPtr);
+    this.ccr = statusReg & 0xFF; // Update CCR with low byte
+    
+    // Pop return address (long) from stack
+    this.pc = this.memory.getLong(stackPtr + 2);
+    
+    // Increment stack pointer by 6 (2 bytes for SR + 4 bytes for PC)
+    this.registers[15] = stackPtr + 6;
+    this.lastInstruction = 'RTR';
+  }
+
+  private rtd(op: Operand): void {
+    // Return and Discard - pop return address from stack and add immediate value to stack pointer
+    if (op === undefined) return;
+    
+    const stackPtr = this.registers[15]; // A7 is register 15
+    
+    // Pop return address from stack
+    this.pc = this.memory.getLong(stackPtr);
+    
+    // Get the immediate value to add to stack pointer
+    let displacement = 0;
+    if (op.type === TOKEN_IMMEDIATE) {
+      displacement = op.value;
+    }
+    
+    // Update stack pointer: pop return address (4 bytes) + displacement
+    this.registers[15] = stackPtr + 4 + displacement;
+    this.lastInstruction = 'RTD #' + displacement;
   }
 
   private mode(op1: Operand, op2: Operand): void {
@@ -1327,7 +2008,7 @@ export class Emulator {
         (op1.type === TOKEN_REG_ADDR && op2.type === TOKEN_REG_ADDR) ||
         (op1.type === TOKEN_REG_DATA && op2.type === TOKEN_REG_ADDR) ||
         (op1.type === TOKEN_REG_ADDR && op2.type === TOKEN_REG_DATA)) {
-      const [newOp2, newOp1] = exgOP(this.registers[op1.value], this.registers[op2.value]);
+      const [newOp1, newOp2] = exgOP(this.registers[op1.value], this.registers[op2.value]);
       this.registers[op1.value] = newOp1;
       this.registers[op2.value] = newOp2;
     } else {
@@ -1373,13 +2054,187 @@ export class Emulator {
     if (op1.type === TOKEN_OFFSET) {
       address = op1.value;
     } else if (op1.type === TOKEN_OFFSET_ADDR) {
-      address = op1.value;
+      // For address register with offset, calculate effective address
+      address = this.registers[op1.value] + (op1.offset || 0);
     }
 
     // Destination must be an address register
     if (op2.type === TOKEN_REG_ADDR) {
       this.registers[op2.value] = address;
     }
+  }
+
+  private moveq(op1: Operand, op2: Operand): void {
+    // MOVEQ: Move quick (8-bit immediate, sign-extended to 32-bit)
+    if (op1 === undefined || op2 === undefined) return;
+
+    if (op1.type !== TOKEN_IMMEDIATE) {
+      this.errors.push(Strings.IMMEDIATE_VALUE_EXPECTED + Strings.AT_LINE + this.line);
+      return;
+    }
+
+    // Sign-extend 8-bit immediate to 32-bit
+    let value = op1.value & 0xFF;
+    if (value & 0x80) {
+      value = value | 0xFFFFFF00; // Sign extend
+    }
+
+    // Destination must be a data register
+    if (op2.type === TOKEN_REG_DATA) {
+      const [result, newCCR] = moveOP(value, this.registers[op2.value], this.ccr, CODE_LONG);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    } else {
+      this.errors.push('MOVEQ: Destination must be a data register' + Strings.AT_LINE + this.line);
+    }
+  }
+
+  /**
+   * Parse a register list string like "D0-D3/A0-A2" into an array of register indices.
+   * Supports individual registers (D0), ranges (D0-D3), and slash-separated groups.
+   * Returns indices in the same order used by registers array: A0-A7 = 0-7, D0-D7 = 8-15.
+   */
+  private parseRegisterList(listStr: string): number[] {
+    const regs: number[] = [];
+    const groups = listStr.split('/');
+    for (const group of groups) {
+      const trimmed = group.trim();
+      if (trimmed.indexOf('-') !== -1) {
+        const [startStr, endStr] = trimmed.split('-');
+        const startIdx = this.parseRegisters(startStr.trim());
+        const endIdx = this.parseRegisters(endStr.trim());
+        if (startIdx === undefined || endIdx === undefined) continue;
+        const lo = Math.min(startIdx, endIdx);
+        const hi = Math.max(startIdx, endIdx);
+        for (let i = lo; i <= hi; i++) {
+          if (regs.indexOf(i) === -1) regs.push(i);
+        }
+      } else {
+        const idx = this.parseRegisters(trimmed);
+        if (idx !== undefined && regs.indexOf(idx) === -1) regs.push(idx);
+      }
+    }
+    return regs;
+  }
+
+  private movemFull(size: number, token1: string, token2: string): void {
+    // Determine direction: register list -> memory  OR  memory -> register list
+    const isPreDec = token2.indexOf('-(') !== -1;  // e.g. -(A7)
+    const isPostInc = token1.indexOf(')+') !== -1 || (token1.indexOf('(') !== -1 && token1.indexOf('+') !== -1); // e.g. (A7)+
+
+    const bytesPer = size === CODE_LONG ? 4 : 2;
+
+    if (isPreDec) {
+      // Registers -> memory with pre-decrement: MOVEM.L D0-D3/A0, -(A7)
+      const regList = this.parseRegisterList(token1);
+      const addrOp = this.parseOperand(token2);
+      if (!addrOp || addrOp.type !== TOKEN_OFFSET_ADDR) {
+        this.errors.push('MOVEM: destination must be address register indirect' + Strings.AT_LINE + this.line);
+        return;
+      }
+      let sp = this.registers[addrOp.value];
+      // In pre-decrement mode, registers are pushed in reverse order (A7 first, D0 last)
+      const sorted = [...regList].sort((a, b) => {
+        // Sort: address regs (0-7) after data regs (8-15) => higher index first
+        return b - a;
+      });
+      for (const regIdx of sorted) {
+        sp -= bytesPer;
+        if (size === CODE_LONG) {
+          this.memory.setLong(sp, this.registers[regIdx]);
+        } else {
+          this.memory.setWord(sp, this.registers[regIdx] & 0xFFFF);
+        }
+      }
+      this.registers[addrOp.value] = sp;
+    } else if (isPostInc) {
+      // Memory -> registers with post-increment: MOVEM.L (A7)+, D0-D3/A0
+      const regList = this.parseRegisterList(token2);
+      const addrOp = this.parseOperand(token1);
+      if (!addrOp || addrOp.type !== TOKEN_OFFSET_ADDR) {
+        this.errors.push('MOVEM: source must be address register indirect' + Strings.AT_LINE + this.line);
+        return;
+      }
+      let sp = this.registers[addrOp.value];
+      // In post-increment mode, registers are loaded in order (D0 first, A7 last)
+      const sorted = [...regList].sort((a, b) => {
+        // Data regs (8-15) before address regs (0-7) for standard ordering
+        // D0(8) < D1(9) ... < D7(15) < A0(0) < A1(1) ... < A7(7)
+        const orderA = a >= 8 ? a - 8 : a + 8;
+        const orderB = b >= 8 ? b - 8 : b + 8;
+        return orderA - orderB;
+      });
+      for (const regIdx of sorted) {
+        if (size === CODE_LONG) {
+          this.registers[regIdx] = this.memory.getLong(sp);
+        } else {
+          // Sign-extend word to long for address registers
+          let val = this.memory.getWord(sp);
+          if (regIdx <= 7 && (val & 0x8000)) {
+            val = val | 0xFFFF0000;
+          }
+          this.registers[regIdx] = val;
+        }
+        sp += bytesPer;
+      }
+      this.registers[addrOp.value] = sp;
+    } else {
+      // Fallback: try as simple register-to-register or register-to-address
+      const op1 = this.parseOperand(token1);
+      const op2 = this.parseOperand(token2);
+      if (!op1 || !op2) return;
+
+      let srcValue = 0;
+      if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
+        srcValue = this.registers[op1.value];
+      } else if (op1.type === TOKEN_IMMEDIATE) {
+        srcValue = op1.value;
+      }
+
+      if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+        const [result, newCCR] = moveOP(srcValue, this.registers[op2.value], this.ccr, CODE_LONG);
+        this.registers[op2.value] = result;
+        this.ccr = newCCR;
+      }
+    }
+  }
+
+  private movep(_size: number, op1: Operand, op2: Operand): void {
+    // MOVEP: Move peripheral data
+    // Transfers data between register and memory in odd-byte addressing mode
+    if (op1 === undefined || op2 === undefined) return;
+
+    // TODO: Full MOVEP implementation with proper odd-byte addressing
+    // For now, basic implementation
+    let value = 0;
+    if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
+      value = this.registers[op1.value];
+    } else if (op1.type === TOKEN_IMMEDIATE) {
+      value = op1.value;
+    } else if (op1.type === TOKEN_OFFSET) {
+      value = this.memory.getLong(op1.value);
+    }
+
+    if (op2.type === TOKEN_REG_DATA) {
+      this.registers[op2.value] = value;
+    }
+  }
+
+  private pea(op: Operand): void {
+    // PEA: Push effective address
+    if (op === undefined) return;
+
+    let address = 0;
+    if (op.type === TOKEN_OFFSET) {
+      address = op.value;
+    } else if (op.type === TOKEN_OFFSET_ADDR) {
+      address = op.value;
+    }
+
+    // Push address onto stack using A7 (register 15 - stack pointer)
+    const stackPtr = this.registers[15];
+    this.memory.setLong(stackPtr - 4, address);
+    this.registers[15] = stackPtr - 4; // Decrement stack pointer
   }
 
   private bra(label: string): void {
@@ -1437,6 +2292,512 @@ export class Emulator {
     }
   }
 
+  private bpl(label: string): void {
+    // BPL: Branch if Plus (N flag clear)
+    if (!this.getNFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bcc(label: string): void {
+    // BCC: Branch if Carry Clear (C flag clear)
+    if (!this.getCFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bvc(label: string): void {
+    // BVC: Branch if Overflow Clear (V flag clear)
+    if (!this.getVFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bsr(label: string): void {
+    // BSR: Branch to Subroutine - push return address and branch
+    label = label.trim().toLowerCase();
+    const labelKey = Object.keys(this.labels).find((k) => k.toLowerCase() === label);
+
+    if (!labelKey || this.labels[labelKey] === undefined) {
+      this.errors.push(Strings.UNKNOWN_LABEL + label + Strings.AT_LINE + this.line);
+      return;
+    }
+
+    // Push current PC (return address) onto stack using A7 (stack pointer)
+    const stackPtr = this.registers[15]; // A7 is register 15
+    this.memory.setLong(stackPtr - 4, this.pc);
+    this.registers[15] = stackPtr - 4; // Decrement stack pointer
+
+    // Branch to subroutine
+    this.pc = this.labels[labelKey] * 4;
+  }
+
+  private bls(label: string): void {
+    // BLS: Branch if Lower or Same (C flag set OR Z flag set)
+    if (this.getCFlag() || this.getZFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bhi(label: string): void {
+    // BHI: Branch if Higher (C flag clear AND Z flag clear)
+    if (!this.getCFlag() && !this.getZFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bcs(label: string): void {
+    // BCS: Branch if Carry Set (C flag set)
+    if (this.getCFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bmi(label: string): void {
+    // BMI: Branch if Minus (N flag set)
+    if (this.getNFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private bvs(label: string): void {
+    // BVS: Branch if Overflow Set (V flag set)
+    if (this.getVFlag()) {
+      this.bra(label);
+    }
+  }
+
+  // DBcc - Decrement and Branch on Condition
+  private dbcc(op: Operand, label: string): void {
+    // DBCC: Decrement and Branch if Carry Clear
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF; // 16-bit decrement
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && !this.getCFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbcs(op: Operand, label: string): void {
+    // DBCS: Decrement and Branch if Carry Set
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getCFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbne(op: Operand, label: string): void {
+    // DBNE: Decrement and Branch if Not Equal
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && !this.getZFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbeq(op: Operand, label: string): void {
+    // DBEQ: Decrement and Branch if Equal
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getZFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbge(op: Operand, label: string): void {
+    // DBGE: Decrement and Branch if Greater or Equal
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getNFlag() === this.getVFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbgt(op: Operand, label: string): void {
+    // DBGT: Decrement and Branch if Greater Than
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getNFlag() === this.getVFlag() && !this.getZFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dble(op: Operand, label: string): void {
+    // DBLE: Decrement and Branch if Less or Equal
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && (this.getNFlag() !== this.getVFlag() || this.getZFlag())) {
+      this.bra(label);
+    }
+  }
+
+  private dblt(op: Operand, label: string): void {
+    // DBLT: Decrement and Branch if Less Than
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getNFlag() !== this.getVFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbpl(op: Operand, label: string): void {
+    // DBPL: Decrement and Branch if Plus
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && !this.getNFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbmi(op: Operand, label: string): void {
+    // DBMI: Decrement and Branch if Minus
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getNFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbvc(op: Operand, label: string): void {
+    // DBVC: Decrement and Branch if Overflow Clear
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && !this.getVFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbvs(op: Operand, label: string): void {
+    // DBVS: Decrement and Branch if Overflow Set
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && this.getVFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbhi(op: Operand, label: string): void {
+    // DBHI: Decrement and Branch if Higher
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && !this.getCFlag() && !this.getZFlag()) {
+      this.bra(label);
+    }
+  }
+
+  private dbls(op: Operand, label: string): void {
+    // DBLS: Decrement and Branch if Lower or Same
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    if (value !== 0xFFFF && (this.getCFlag() || this.getZFlag())) {
+      this.bra(label);
+    }
+  }
+
+  private dbf(op: Operand, _label: string): void {
+    // DBF: Decrement and Branch Never (always decrement, never branch)
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    // Never branch, just decrement
+  }
+
+  private dbt(op: Operand, label: string): void {
+    // DBT: Decrement and Branch Always (always decrement and branch if Dn != -1)
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
+    }
+    
+    const regIndex = op.value;
+    let value = this.registers[regIndex] & 0xFFFF;
+    value = (value - 1) & 0xFFFF;
+    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
+    
+    // Always branch if counter != -1 (0xFFFF)
+    if (value !== 0xFFFF) {
+      this.bra(label);
+    }
+  }
+
+  // Scc - Set according to Condition
+  private scc(op: Operand): void {
+    // SCC: Set if Carry Clear (set byte to 0xFF if condition true, 0x00 if false)
+    if (op === undefined) return;
+    
+    const value = !this.getCFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private scs(op: Operand): void {
+    // SCS: Set if Carry Set
+    if (op === undefined) return;
+    
+    const value = this.getCFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private sne(op: Operand): void {
+    // SNE: Set if Not Equal
+    if (op === undefined) return;
+    
+    const value = !this.getZFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private seq(op: Operand): void {
+    // SEQ: Set if Equal
+    if (op === undefined) return;
+    
+    const value = this.getZFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private sge(op: Operand): void {
+    // SGE: Set if Greater or Equal
+    if (op === undefined) return;
+    
+    const value = this.getNFlag() === this.getVFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private sgt(op: Operand): void {
+    // SGT: Set if Greater Than
+    if (op === undefined) return;
+    
+    const value = this.getNFlag() === this.getVFlag() && !this.getZFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private sle(op: Operand): void {
+    // SLE: Set if Less or Equal
+    if (op === undefined) return;
+    
+    const value = this.getNFlag() !== this.getVFlag() || this.getZFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private slt(op: Operand): void {
+    // SLT: Set if Less Than
+    if (op === undefined) return;
+    
+    const value = this.getNFlag() !== this.getVFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private spl(op: Operand): void {
+    // SPL: Set if Plus
+    if (op === undefined) return;
+    
+    const value = !this.getNFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private smi(op: Operand): void {
+    // SMI: Set if Minus
+    if (op === undefined) return;
+    
+    const value = this.getNFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private svc(op: Operand): void {
+    // SVC: Set if Overflow Clear
+    if (op === undefined) return;
+    
+    const value = !this.getVFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private svs(op: Operand): void {
+    // SVS: Set if Overflow Set
+    if (op === undefined) return;
+    
+    const value = this.getVFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private sls(op: Operand): void {
+    // SLS: Set if Lower or Same
+    if (op === undefined) return;
+    
+    const value = this.getCFlag() || this.getZFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private shi(op: Operand): void {
+    // SHI: Set if Higher
+    if (op === undefined) return;
+    
+    const value = !this.getCFlag() && !this.getZFlag() ? 0xFF : 0x00;
+    this.setByteOperand(op, value);
+  }
+
+  private sf(op: Operand): void {
+    // SF: Set if False (always clear)
+    if (op === undefined) return;
+    
+    this.setByteOperand(op, 0x00);
+  }
+
+  private st(op: Operand): void {
+    // ST: Set if True (always set)
+    if (op === undefined) return;
+    
+    this.setByteOperand(op, 0xFF);
+  }
+
+  private setByteOperand(op: Operand, value: number): void {
+    // Helper function to set a byte operand
+    if (op.type === TOKEN_REG_DATA) {
+      // For data registers, set the low byte
+      this.registers[op.value] = (this.registers[op.value] & 0xFFFFFF00) | (value & 0xFF);
+    } else if (op.type === TOKEN_OFFSET_ADDR) {
+      // For memory addresses with offset
+      const addr = this.registers[op.value] + (op.offset || 0);
+      this.memory.set(addr, this.line, CODE_BYTE);
+      if (value !== 0x00) {
+        this.memory.setByte(addr, value);
+      }
+    }
+  }
+
+  private stop(op1: Operand): void {
+    // STOP: Stop processor
+    // Loads immediate operand into status register and halts execution
+    // For emulator purposes, we just halt by setting an exception
+    if (op1 === undefined) return;
+
+    // For now, we just accept the immediate value but don't use it
+    // In a full implementation, this would update the status register
+    if (op1.type === TOKEN_IMMEDIATE) {
+      // Accept the immediate value and halt
+      this.lastInstruction = 'STOP #' + (op1.value).toString(16);
+    }
+    
+    // Halt execution by advancing PC past the end of the program
+    this.pc = (this.instructions.length * 4);
+  }
+
   private asl(size: number, op1: Operand, op2: Operand): void {
     // ASL: Arithmetic Shift Left
     if (op1 === undefined || op2 === undefined) return;
@@ -1451,6 +2812,12 @@ export class Emulator {
     if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
       const [result, newCCR] = aslOP(shiftCount, this.registers[op2.value], this.ccr, size);
       this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    } else if (op2.type === TOKEN_OFFSET_ADDR) {
+      const addr = this.registers[op2.value] + (op2.offset || 0);
+      const memValue = size === CODE_LONG ? this.memory.getLong(addr) : size === CODE_WORD ? this.memory.getWord(addr) : this.memory.getByte(addr);
+      const [result, newCCR] = aslOP(shiftCount, memValue, this.ccr, size);
+      this.memory.set(addr, result, size);
       this.ccr = newCCR;
     }
   }
@@ -1470,6 +2837,12 @@ export class Emulator {
       const [result, newCCR] = asrOP(shiftCount, this.registers[op2.value], this.ccr, size);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
+    } else if (op2.type === TOKEN_OFFSET_ADDR) {
+      const addr = this.registers[op2.value] + (op2.offset || 0);
+      const memValue = size === CODE_LONG ? this.memory.getLong(addr) : size === CODE_WORD ? this.memory.getWord(addr) : this.memory.getByte(addr);
+      const [result, newCCR] = asrOP(shiftCount, memValue, this.ccr, size);
+      this.memory.set(addr, result, size);
+      this.ccr = newCCR;
     }
   }
 
@@ -1487,6 +2860,12 @@ export class Emulator {
     if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
       const [result, newCCR] = lslOP(shiftCount, this.registers[op2.value], this.ccr, size);
       this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    } else if (op2.type === TOKEN_OFFSET_ADDR) {
+      const addr = this.registers[op2.value] + (op2.offset || 0);
+      const memValue = size === CODE_LONG ? this.memory.getLong(addr) : size === CODE_WORD ? this.memory.getWord(addr) : this.memory.getByte(addr);
+      const [result, newCCR] = lslOP(shiftCount, memValue, this.ccr, size);
+      this.memory.set(addr, result, size);
       this.ccr = newCCR;
     }
   }
@@ -1506,6 +2885,12 @@ export class Emulator {
       const [result, newCCR] = lsrOP(shiftCount, this.registers[op2.value], this.ccr, size);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
+    } else if (op2.type === TOKEN_OFFSET_ADDR) {
+      const addr = this.registers[op2.value] + (op2.offset || 0);
+      const memValue = size === CODE_LONG ? this.memory.getLong(addr) : size === CODE_WORD ? this.memory.getWord(addr) : this.memory.getByte(addr);
+      const [result, newCCR] = lsrOP(shiftCount, memValue, this.ccr, size);
+      this.memory.set(addr, result, size);
+      this.ccr = newCCR;
     }
   }
 
@@ -1523,6 +2908,12 @@ export class Emulator {
     if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
       const [result, newCCR] = rolOP(shiftCount, this.registers[op2.value], this.ccr, size);
       this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    } else if (op2.type === TOKEN_OFFSET_ADDR) {
+      const addr = this.registers[op2.value] + (op2.offset || 0);
+      const memValue = size === CODE_LONG ? this.memory.getLong(addr) : size === CODE_WORD ? this.memory.getWord(addr) : this.memory.getByte(addr);
+      const [result, newCCR] = rolOP(shiftCount, memValue, this.ccr, size);
+      this.memory.set(addr, result, size);
       this.ccr = newCCR;
     }
   }
@@ -1542,6 +2933,178 @@ export class Emulator {
       const [result, newCCR] = rorOP(shiftCount, this.registers[op2.value], this.ccr, size);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
+    } else if (op2.type === TOKEN_OFFSET_ADDR) {
+      const addr = this.registers[op2.value] + (op2.offset || 0);
+      const memValue = size === CODE_LONG ? this.memory.getLong(addr) : size === CODE_WORD ? this.memory.getWord(addr) : this.memory.getByte(addr);
+      const [result, newCCR] = rorOP(shiftCount, memValue, this.ccr, size);
+      this.memory.set(addr, result, size);
+      this.ccr = newCCR;
+    }
+  }
+
+  private bset(op1: Operand, op2: Operand): void {
+    // BSET: Bit SET - set specified bit to 1
+    // op1: bit number (immediate or data register)
+    // op2: destination (data register or memory)
+    if (op1 === undefined || op2 === undefined) return;
+
+    let bitNum = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      bitNum = op1.value & 0x1F; // Only lower 5 bits for bit number
+    } else if (op1.type === TOKEN_REG_DATA) {
+      bitNum = this.registers[op1.value] & 0x1F;
+    }
+
+    // Set the bit in the destination
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const destValue = this.registers[op2.value];
+      const bitMask = 1 << bitNum;
+      const oldBit = (destValue & bitMask) !== 0 ? 1 : 0;
+      const newValue = (destValue | bitMask) >>> 0;
+      this.registers[op2.value] = newValue;
+      
+      // Update Z flag: Z = 1 if old bit was 0
+      if (oldBit === 0) {
+        this.ccr = (this.ccr | 0x04) >>> 0; // Set Z flag
+      } else {
+        this.ccr = (this.ccr & 0xfb) >>> 0; // Clear Z flag
+      }
+    }
+  }
+
+  private roxl(size: number, op1: Operand, op2: Operand): void {
+    // ROXL: Rotate Left including X flag
+    if (op1 === undefined || op2 === undefined) return;
+
+    let shiftCount = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      shiftCount = op1.value;
+    } else if (op1.type === TOKEN_REG_DATA) {
+      shiftCount = this.registers[op1.value] & 0x3F;
+    }
+
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = roxlOP(shiftCount, this.registers[op2.value], this.ccr, size);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    } else if (op2.type === TOKEN_OFFSET_ADDR) {
+      const addr = this.registers[op2.value] + (op2.offset || 0);
+      const memValue = size === CODE_LONG ? this.memory.getLong(addr) : size === CODE_WORD ? this.memory.getWord(addr) : this.memory.getByte(addr);
+      const [result, newCCR] = roxlOP(shiftCount, memValue, this.ccr, size);
+      this.memory.set(addr, result, size);
+      this.ccr = newCCR;
+    }
+  }
+
+  private roxr(size: number, op1: Operand, op2: Operand): void {
+    // ROXR: Rotate Right including X flag
+    if (op1 === undefined || op2 === undefined) return;
+
+    let shiftCount = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      shiftCount = op1.value;
+    } else if (op1.type === TOKEN_REG_DATA) {
+      shiftCount = this.registers[op1.value] & 0x3F;
+    }
+
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const [result, newCCR] = roxrOP(shiftCount, this.registers[op2.value], this.ccr, size);
+      this.registers[op2.value] = result;
+      this.ccr = newCCR;
+    } else if (op2.type === TOKEN_OFFSET_ADDR) {
+      const addr = this.registers[op2.value] + (op2.offset || 0);
+      const memValue = size === CODE_LONG ? this.memory.getLong(addr) : size === CODE_WORD ? this.memory.getWord(addr) : this.memory.getByte(addr);
+      const [result, newCCR] = roxrOP(shiftCount, memValue, this.ccr, size);
+      this.memory.set(addr, result, size);
+      this.ccr = newCCR;
+    }
+  }
+
+  private btst(op1: Operand, op2: Operand): void {
+    // BTST: Bit TEST - test and set Z flag based on bit value
+    // op1: bit number (immediate or data register)
+    // op2: source (data register or memory)
+    if (op1 === undefined || op2 === undefined) return;
+
+    let bitNum = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      bitNum = op1.value & 0x1F; // Only lower 5 bits for bit number
+    } else if (op1.type === TOKEN_REG_DATA) {
+      bitNum = this.registers[op1.value] & 0x1F;
+    }
+
+    // Test the bit in the source
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const srcValue = this.registers[op2.value];
+      const bitMask = 1 << bitNum;
+      const bit = (srcValue & bitMask) !== 0 ? 1 : 0;
+      
+      // Update Z flag: Z = 1 if bit was 0
+      if (bit === 0) {
+        this.ccr = (this.ccr | 0x04) >>> 0; // Set Z flag
+      } else {
+        this.ccr = (this.ccr & 0xfb) >>> 0; // Clear Z flag
+      }
+    }
+  }
+
+  private bclr(op1: Operand, op2: Operand): void {
+    // BCLR: Bit CLEAR - clear specified bit to 0
+    // op1: bit number (immediate or data register)
+    // op2: destination (data register or memory)
+    if (op1 === undefined || op2 === undefined) return;
+
+    let bitNum = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      bitNum = op1.value & 0x1F; // Only lower 5 bits for bit number
+    } else if (op1.type === TOKEN_REG_DATA) {
+      bitNum = this.registers[op1.value] & 0x1F;
+    }
+
+    // Clear the bit in the destination
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const destValue = this.registers[op2.value];
+      const bitMask = 1 << bitNum;
+      const oldBit = (destValue & bitMask) !== 0 ? 1 : 0;
+      const newValue = (destValue & ~bitMask) >>> 0;
+      this.registers[op2.value] = newValue;
+      
+      // Update Z flag: Z = 1 if old bit was 0
+      if (oldBit === 0) {
+        this.ccr = (this.ccr | 0x04) >>> 0; // Set Z flag
+      } else {
+        this.ccr = (this.ccr & 0xfb) >>> 0; // Clear Z flag
+      }
+    }
+  }
+
+  private bchg(op1: Operand, op2: Operand): void {
+    // BCHG: Bit CHANGE - toggle specified bit
+    // op1: bit number (immediate or data register)
+    // op2: destination (data register or memory)
+    if (op1 === undefined || op2 === undefined) return;
+
+    let bitNum = 0;
+    if (op1.type === TOKEN_IMMEDIATE) {
+      bitNum = op1.value & 0x1F; // Only lower 5 bits for bit number
+    } else if (op1.type === TOKEN_REG_DATA) {
+      bitNum = this.registers[op1.value] & 0x1F;
+    }
+
+    // Toggle the bit in the destination
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      const destValue = this.registers[op2.value];
+      const bitMask = 1 << bitNum;
+      const oldBit = (destValue & bitMask) !== 0 ? 1 : 0;
+      const newValue = (destValue ^ bitMask) >>> 0;
+      this.registers[op2.value] = newValue;
+      
+      // Update Z flag: Z = 1 if old bit was 0
+      if (oldBit === 0) {
+        this.ccr = (this.ccr | 0x04) >>> 0; // Set Z flag
+      } else {
+        this.ccr = (this.ccr & 0xfb) >>> 0; // Clear Z flag
+      }
     }
   }
 
@@ -1632,4 +3195,219 @@ export class Emulator {
       this.line
     );
   }
+
+  // ============== System Control Instructions ==============
+
+  private nop(): void {
+    // NOP: No Operation
+    // Simply advances to the next instruction (PC already incremented)
+    this.lastInstruction = 'NOP';
+  }
+
+  private reset_instr(): void {
+    // RESET: Reset external devices
+    // In the context of an emulator, we'll just acknowledge the instruction
+    this.lastInstruction = 'RESET';
+  }
+
+  private rte(): void {
+    // Return from Exception - pop status register and return address from stack
+    const stackPtr = this.registers[15]; // A7 is register 15
+    
+    // Pop status register (word) from stack
+    const statusReg = this.memory.getWord(stackPtr);
+    this.ccr = statusReg & 0xFF; // Update CCR with low byte
+    
+    // Pop return address (long) from stack
+    this.pc = this.memory.getLong(stackPtr + 2);
+    
+    // Increment stack pointer by 6 (2 bytes for SR + 4 bytes for PC)
+    this.registers[15] = stackPtr + 6;
+    this.lastInstruction = 'RTE';
+  }
+
+  private trap(op: Operand): void {
+    // TRAP: Trap to exception handler
+    // op is the vector number (0-15)
+    if (op === undefined) return;
+    
+    if (op.type === TOKEN_IMMEDIATE) {
+      const vectorNum = op.value & 0x0F;
+      
+      // Push PC and SR to stack
+      const stackPtr = this.registers[15];
+      
+      // Push current PC to stack
+      this.memory.setLong(stackPtr - 4, this.pc);
+      // Push SR (CCR for now) to stack
+      this.memory.setWord(stackPtr - 6, this.ccr);
+      
+      // Update stack pointer
+      this.registers[15] = stackPtr - 6;
+      
+      // Set exception flag
+      this.exception = `TRAP #${vectorNum}`;
+      this.lastInstruction = `TRAP #${vectorNum}`;
+      
+      // In a real implementation, we'd jump to the trap handler
+      // For now, we'll halt execution
+      this.pc = this.instructions.length * 4;
+    }
+  }
+
+  private trapv(): void {
+    // TRAPV: Trap on Overflow
+    // If V (overflow) flag is set, generate a TRAP #7
+    if ((this.ccr & 0x02) !== 0) {
+      // Overflow flag is set
+      const stackPtr = this.registers[15];
+      
+      // Push current PC to stack
+      this.memory.setLong(stackPtr - 4, this.pc);
+      // Push SR (CCR for now) to stack
+      this.memory.setWord(stackPtr - 6, this.ccr);
+      
+      // Update stack pointer
+      this.registers[15] = stackPtr - 6;
+      
+      // Set exception flag
+      this.exception = 'TRAPV';
+      this.lastInstruction = 'TRAPV';
+      
+      // Halt execution
+      this.pc = this.instructions.length * 4;
+    } else {
+      this.lastInstruction = 'TRAPV';
+    }
+  }
+
+  private chk(_size: number, op1: Operand, op2: Operand): void {
+    // CHK: Check Register
+    // Raises exception if op2 value is out of range [-32768, op1]
+    // For 16-bit: checks if op2 is < 0 or > op1
+    if (op1 === undefined || op2 === undefined) return;
+    
+    let checkValue = op1.value;
+    if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
+      checkValue = this.registers[op1.value];
+    }
+    
+    let dataValue = 0;
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      dataValue = this.registers[op2.value];
+    }
+    
+    // Sign-extend to handle signed comparison
+    const isNegative = (dataValue & 0x8000) !== 0;
+    if (isNegative) {
+      dataValue = dataValue | 0xFFFF0000; // Sign extend
+    }
+    
+    // Check bounds
+    if (dataValue < 0 || dataValue > checkValue) {
+      this.exception = 'CHK: Value out of bounds';
+      this.lastInstruction = `CHK ${checkValue},${dataValue}`;
+      
+      // Halt execution
+      this.pc = this.instructions.length * 4;
+    } else {
+      this.lastInstruction = `CHK ${checkValue},${dataValue}`;
+    }
+  }
+
+  private link(op1: Operand, op2: Operand): void {
+    // LINK: Link stack frame
+    // LINK A6, #offset
+    // Pushes address register to stack, sets it to current stack pointer, then adjusts stack
+    if (op1 === undefined || op2 === undefined) return;
+    
+    const regNum = op1.value; // Register number
+    if (op1.type !== TOKEN_REG_ADDR) {
+      this.errors.push('LINK expects address register, got invalid operand');
+      return;
+    }
+    
+    let offset = op2.value;
+    if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
+      offset = this.registers[op2.value];
+    }
+    
+    // Push current address register value to stack
+    const stackPtr = this.registers[15];
+    this.memory.setLong(stackPtr - 4, this.registers[regNum]);
+    
+    // Update address register with current stack pointer (minus 4 for the push)
+    this.registers[regNum] = stackPtr - 4;
+    
+    // Adjust stack pointer by offset
+    this.registers[15] = stackPtr - 4 + offset;
+    
+    this.lastInstruction = `LINK A${regNum},#${offset}`;
+  }
+
+  private unlk(op: Operand): void {
+    // UNLK: Unlink stack frame
+    // UNLK A6
+    // Restores stack pointer from address register, then pops address register
+    if (op === undefined) return;
+    
+    const regNum = op.value; // Register number
+    if (op.type !== TOKEN_REG_ADDR) {
+      this.errors.push('UNLK expects address register');
+      return;
+    }
+    
+    // Set stack pointer to address register value
+    this.registers[15] = this.registers[regNum];
+    
+    // Pop address register from stack
+    const stackPtr = this.registers[15];
+    this.registers[regNum] = this.memory.getLong(stackPtr);
+    
+    // Increment stack pointer
+    this.registers[15] = stackPtr + 4;
+    
+    this.lastInstruction = `UNLK A${regNum}`;
+  }
+
+  private tas(op: Operand): void {
+    // TAS: Test and Set
+    // Tests the byte operand, sets N and Z flags based on the result,
+    // then sets the MSB (bit 7) of the operand to 1
+    if (op === undefined) return;
+    
+    let value = 0;
+    if (op.type === TOKEN_REG_DATA) {
+      value = this.registers[op.value] & 0xFF;
+    } else if (op.type === TOKEN_IMMEDIATE) {
+      value = op.value & 0xFF;
+    }
+    
+    // Set N flag if MSB is 1
+    if ((value & 0x80) !== 0) {
+      this.ccr |= 0x08; // Set N flag
+    } else {
+      this.ccr &= ~0x08;
+    }
+    
+    // Set Z flag if value is 0
+    if (value === 0) {
+      this.ccr |= 0x04; // Set Z flag
+    } else {
+      this.ccr &= ~0x04;
+    }
+    
+    // Set MSB
+    value |= 0x80;
+    
+    // Store result back
+    if (op.type === TOKEN_REG_DATA) {
+      const regNum = op.value;
+      const regValue = this.registers[regNum];
+      this.registers[regNum] = (regValue & 0xFFFFFF00) | (value & 0xFF);
+    }
+    
+    this.lastInstruction = `TAS ${value}`;
+  }
 }
+
