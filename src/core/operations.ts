@@ -172,41 +172,21 @@ function moveCCR(res: number, ccr: number): number {
 }
 
 export function moveOP(src: number, dest: number, ccr: number, size: number): [number, number] {
-  let aux: number;
-
   switch (size) {
     case CODE_LONG:
-      return [src, moveCCR(src | 0, ccr)];
+      return [src | 0, moveCCR(src | 0, ccr)];
     case CODE_WORD: {
-      aux = addOP(src, dest & ~WORD_MASK, ccr, size, false)[0]; // New register value
+      const aux = ((dest & ~WORD_MASK) | (src & WORD_MASK)) | 0;
       const aux16 = new Int16Array(1);
-      aux16[0] = aux & WORD_MASK; // Force the result to 16 bit signed for CCR
-      
-      // Sign-extend 16-bit value to 32-bit
-      if (aux16[0] < 0) {
-        aux = ((aux & ~WORD_MASK) | (aux16[0] & WORD_MASK)) >>> 0;
-        // Sign extend the 16-bit value to 32 bits
-        aux = (aux | 0xFFFF0000) >>> 0;
-      } else {
-        aux = (aux & ~WORD_MASK) | (aux16[0] & WORD_MASK);
-      }
-      
+      aux16[0] = aux & WORD_MASK; // Evaluate CCR as signed 16-bit result
+
       return [aux, moveCCR(aux16[0], ccr)];
     }
     case CODE_BYTE: {
-      aux = addOP(src, dest & ~BYTE_MASK, ccr, size, false)[0]; // New register value
+      const aux = ((dest & ~BYTE_MASK) | (src & BYTE_MASK)) | 0;
       const aux8 = new Int8Array(1);
-      aux8[0] = aux & BYTE_MASK; // Force the result to 8 bit signed for CCR
-      
-      // Sign-extend 8-bit value to 32-bit
-      if (aux8[0] < 0) {
-        aux = (aux & ~BYTE_MASK) | (aux8[0] & BYTE_MASK);
-        // Sign extend the 8-bit value to 32 bits
-        aux = (aux | 0xFFFFFF00) >>> 0;
-      } else {
-        aux = (aux & ~BYTE_MASK) | (aux8[0] & BYTE_MASK);
-      }
-      
+      aux8[0] = aux & BYTE_MASK; // Evaluate CCR as signed 8-bit result
+
       return [aux, moveCCR(aux8[0], ccr)];
     }
     default:
@@ -599,6 +579,112 @@ export function rorOP(
       throw new Error('Invalid size');
   }
 }
+
+export function roxlOP(
+  count: number,
+  op: number,
+  ccr: number,
+  size: number
+): [number, number] {
+  // ROXL: Rotate Left including X flag
+  // The X flag is treated as part of the rotation path
+  let xBit = (ccr & 0x10) >> 4;
+
+  switch (size) {
+    case CODE_BYTE: {
+      // 9-bit rotation (8-bit value + X flag)
+      for (let i = 0; i < count; i++) {
+        const msb = (op & MSB_BYTE_MASK) >>> 7;
+        op = ((op << 1) | xBit) & BYTE_MASK;
+        xBit = msb;
+      }
+      const res8 = new Int8Array(1);
+      res8[0] = op & BYTE_MASK;
+      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
+      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
+      return [op, moveCCR(res8[0], ccr)];
+    }
+    case CODE_WORD: {
+      // 17-bit rotation (16-bit value + X flag)
+      for (let i = 0; i < count; i++) {
+        const msb = (op & MSB_WORD_MASK) >>> 15;
+        op = ((op << 1) | xBit) & WORD_MASK;
+        xBit = msb;
+      }
+      const res16 = new Int16Array(1);
+      res16[0] = op & WORD_MASK;
+      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
+      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
+      return [op, moveCCR(res16[0], ccr)];
+    }
+    case CODE_LONG: {
+      // 33-bit rotation (32-bit value + X flag)
+      for (let i = 0; i < count; i++) {
+        const msb = (op & MSB_LONG_MASK) >>> 31;
+        op = ((op << 1) | xBit) >>> 0;
+        xBit = msb;
+      }
+      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
+      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
+      return [op, moveCCR(op | 0, ccr)];
+    }
+    default:
+      throw new Error('Invalid size');
+  }
+}
+
+export function roxrOP(
+  count: number,
+  op: number,
+  ccr: number,
+  size: number
+): [number, number] {
+  // ROXR: Rotate Right including X flag
+  // The X flag is treated as part of the rotation path
+  let xBit = (ccr & 0x10) >> 4;
+
+  switch (size) {
+    case CODE_BYTE: {
+      // 9-bit rotation (8-bit value + X flag)
+      for (let i = 0; i < count; i++) {
+        const lsb = op & 0x01;
+        op = ((op >>> 1) | (xBit << 7)) & BYTE_MASK;
+        xBit = lsb;
+      }
+      const res8 = new Int8Array(1);
+      res8[0] = op & BYTE_MASK;
+      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
+      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
+      return [op, moveCCR(res8[0], ccr)];
+    }
+    case CODE_WORD: {
+      // 17-bit rotation (16-bit value + X flag)
+      for (let i = 0; i < count; i++) {
+        const lsb = op & 0x01;
+        op = ((op >>> 1) | (xBit << 15)) & WORD_MASK;
+        xBit = lsb;
+      }
+      const res16 = new Int16Array(1);
+      res16[0] = op & WORD_MASK;
+      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
+      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
+      return [op, moveCCR(res16[0], ccr)];
+    }
+    case CODE_LONG: {
+      // 33-bit rotation (32-bit value + X flag)
+      for (let i = 0; i < count; i++) {
+        const lsb = op & 0x01;
+        op = ((op >>> 1) | (xBit << 31)) >>> 0;
+        xBit = lsb;
+      }
+      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
+      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
+      return [op, moveCCR(op | 0, ccr)];
+    }
+    default:
+      throw new Error('Invalid size');
+  }
+}
 export function mulsOP(size: number, src: number, dest: number, ccr: number): [number, number] {
   // MULS: Signed multiply
   // For 16-bit operands, result is 32-bit (destination register holds result)
@@ -756,4 +842,40 @@ export function divuOP(size: number, src: number, dest: number, ccr: number): [n
   ccr = (ccr & 0xfe) >>> 0; // Clear C flag
   
   return [result, ccr];
+}
+
+export function addxOP(src: number, dest: number, ccr: number, size: number): [number, number] {
+  // ADDX: Add Extended (with X bit)
+  // X bit (bit 4) carries over for multi-precision arithmetic
+  const xBit = (ccr & 0x10) >> 4;
+  
+  // Add with X bit
+  const [result, newCCR] = addOP(src + xBit, dest, ccr, size, false);
+  return [result, newCCR];
+}
+
+export function subxOP(src: number, dest: number, ccr: number, size: number): [number, number] {
+  // SUBX: Subtract Extended (with X bit)
+  // X bit (bit 4) carries over for multi-precision arithmetic
+  const xBit = (ccr & 0x10) >> 4;
+  
+  // Subtract with X bit
+  const [result, newCCR] = addOP(src + xBit, dest, ccr, size, true);
+  return [result, newCCR];
+}
+
+export function negxOP(size: number, op: number, ccr: number): [number, number] {
+  // NEGX: Negate Extended (with X bit)
+  // X bit (bit 4) carries over for multi-precision arithmetic
+  const xBit = (ccr & 0x10) >> 4;
+  
+  // Negate with X bit: 0 - op - X
+  const [result, newCCR] = addOP(op + xBit, 0, ccr, size, true);
+  return [result, newCCR];
+}
+
+export function cmpmOP(src: number, dest: number, ccr: number, size: number): number {
+  // CMPM: Compare Memory with Memory
+  // This is essentially CMP but can be used with post-increment addressing
+  return cmpOP(src, dest, ccr, size);
 }

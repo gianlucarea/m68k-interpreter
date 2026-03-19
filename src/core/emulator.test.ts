@@ -41,3 +41,39 @@ describe('Emulator - END directive handling', () => {
     expect(goodEmulator.getException()).toBeUndefined();
   });
 });
+
+describe('Emulator - MOVE into data registers', () => {
+  it('should not sign-extend MOVE.B immediate into Dn', () => {
+    const code = `
+      ORG $1000
+      MOVE.B #$81, D1
+      END
+    `;
+    const emulator = new Emulator(code);
+
+    let stop = false;
+    for (let i = 0; i < 10 && !stop; i++) {
+      stop = emulator.emulationStep();
+    }
+
+    expect(emulator.getRegisters()[9] >>> 0).toBe(0x00000081);
+  });
+
+  it('should preserve upper bytes on MOVE.B and upper word on MOVE.W', () => {
+    const code = `
+      ORG $1000
+      MOVE.L #$12345678, D1
+      MOVE.B #$81, D1
+      MOVE.W #$ABCD, D1
+      END
+    `;
+    const emulator = new Emulator(code);
+
+    let stop = false;
+    for (let i = 0; i < 20 && !stop; i++) {
+      stop = emulator.emulationStep();
+    }
+
+    expect(emulator.getRegisters()[9] >>> 0).toBe(0x1234abcd);
+  });
+});

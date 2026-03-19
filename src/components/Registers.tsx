@@ -6,6 +6,9 @@ import { useEmulatorStore } from '@/stores/emulatorStore';
 const Registers: React.FC = () => {
   const { registers, setRegisterInEmulator } = useEmulatorStore();
 
+  const formatHex = (value: number, width: number): string =>
+    `0x${(value >>> 0).toString(16).padStart(width, '0')}`;
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     registerName: string,
@@ -18,7 +21,7 @@ const Registers: React.FC = () => {
 
   const handleDownload = (): void => {
     const registerData = Object.entries(registers)
-      .map(([name, value]) => `${name}=${value.toString(16).padStart(8, '0')}`)
+      .map(([name, value]) => `${name}=${(value >>> 0).toString(16).padStart(8, '0')}`)
       .join('\n');
 
     const element = document.createElement('a');
@@ -70,7 +73,7 @@ const Registers: React.FC = () => {
                         onChange={(e) => handleInputChange(e, regName)}
                       />
                     </td>
-                    <td>{`0x${value.toString(16).padStart(8, '0')}`}</td>
+                    <td>{formatHex(value, 8)}</td>
                   </tr>
                 );
               })}
@@ -101,7 +104,7 @@ const Registers: React.FC = () => {
                         onChange={(e) => handleInputChange(e, regName)}
                       />
                     </td>
-                    <td>{`0x${value.toString(16).padStart(8, '0')}`}</td>
+                    <td>{formatHex(value, 8)}</td>
                   </tr>
                 );
               })}
@@ -125,12 +128,12 @@ const Registers: React.FC = () => {
             <tr>
               <td className="reg-name">PC</td>
               <td>{registers.pc}</td>
-              <td>{`0x${registers.pc.toString(16).padStart(8, '0')}`}</td>
+              <td>{formatHex(registers.pc, 8)}</td>
             </tr>
             <tr>
               <td className="reg-name">CCR</td>
               <td>{registers.ccr}</td>
-              <td>{`0x${registers.ccr.toString(16).padStart(2, '0')}`}</td>
+              <td>{formatHex(registers.ccr, 2)}</td>
             </tr>
           </tbody>
         </table>
