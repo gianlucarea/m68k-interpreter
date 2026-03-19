@@ -172,41 +172,21 @@ function moveCCR(res: number, ccr: number): number {
 }
 
 export function moveOP(src: number, dest: number, ccr: number, size: number): [number, number] {
-  let aux: number;
-
   switch (size) {
     case CODE_LONG:
-      return [src, moveCCR(src | 0, ccr)];
+      return [src | 0, moveCCR(src | 0, ccr)];
     case CODE_WORD: {
-      aux = addOP(src, dest & ~WORD_MASK, ccr, size, false)[0]; // New register value
+      const aux = ((dest & ~WORD_MASK) | (src & WORD_MASK)) | 0;
       const aux16 = new Int16Array(1);
-      aux16[0] = aux & WORD_MASK; // Force the result to 16 bit signed for CCR
-      
-      // Sign-extend 16-bit value to 32-bit
-      if (aux16[0] < 0) {
-        aux = ((aux & ~WORD_MASK) | (aux16[0] & WORD_MASK)) >>> 0;
-        // Sign extend the 16-bit value to 32 bits
-        aux = (aux | 0xFFFF0000) >>> 0;
-      } else {
-        aux = (aux & ~WORD_MASK) | (aux16[0] & WORD_MASK);
-      }
-      
+      aux16[0] = aux & WORD_MASK; // Evaluate CCR as signed 16-bit result
+
       return [aux, moveCCR(aux16[0], ccr)];
     }
     case CODE_BYTE: {
-      aux = addOP(src, dest & ~BYTE_MASK, ccr, size, false)[0]; // New register value
+      const aux = ((dest & ~BYTE_MASK) | (src & BYTE_MASK)) | 0;
       const aux8 = new Int8Array(1);
-      aux8[0] = aux & BYTE_MASK; // Force the result to 8 bit signed for CCR
-      
-      // Sign-extend 8-bit value to 32-bit
-      if (aux8[0] < 0) {
-        aux = (aux & ~BYTE_MASK) | (aux8[0] & BYTE_MASK);
-        // Sign extend the 8-bit value to 32 bits
-        aux = (aux | 0xFFFFFF00) >>> 0;
-      } else {
-        aux = (aux & ~BYTE_MASK) | (aux8[0] & BYTE_MASK);
-      }
-      
+      aux8[0] = aux & BYTE_MASK; // Evaluate CCR as signed 8-bit result
+
       return [aux, moveCCR(aux8[0], ccr)];
     }
     default:
