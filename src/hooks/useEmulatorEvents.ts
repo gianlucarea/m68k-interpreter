@@ -36,6 +36,9 @@ export const useEmulatorEvents = () => {
       // Update program counter
       setRegister('pc', emulator.getPC());
 
+      // Update CCR register value
+      setRegister('ccr', emulator.getCCR());
+
       // Update memory
       const memory = emulator.getMemory();
       setMemory(memory);
