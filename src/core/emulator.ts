@@ -596,6 +596,14 @@ export class Emulator {
       const operandTokens = operandStr.split(',').map((s) => s.trim());
       size = this.parseOpSize(instr, false);
 
+      // Logical operations default to LONG when no size suffix is specified
+      if (instr.indexOf('.') === -1) {
+        const op = operation.toLowerCase();
+        if (op === 'and' || op === 'andi' || op === 'or' || op === 'ori' || op === 'eor' || op === 'eori' || op === 'not') {
+          size = CODE_LONG;
+        }
+      }
+
       // MOVEM uses its own register-list parser, so skip standard operand parsing
       if (operation.toLowerCase() !== 'movem') {
         operands = operandTokens
