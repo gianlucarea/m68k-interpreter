@@ -5,6 +5,9 @@ Write, step through, and debug m68k assembly — no installation needed.
 
 **[→ Live demo](https://gianlucarea.dev/m68k-interpreter/)**
 
+[![CI Pipeline](https://github.com/gianlucarea/m68k-interpreter/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/gianlucarea/m68k-interpreter/actions)
+[![codecov](https://codecov.io/gh/gianlucarea/m68k-interpreter/branch/main/graph/badge.svg)](https://codecov.io/gh/gianlucarea/m68k-interpreter)
+
 ---
 
 ## Why this exists

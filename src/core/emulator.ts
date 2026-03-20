@@ -80,6 +80,9 @@ export class Emulator {
   
   private pc: number = 0x0; // Program counter
   private ccr: number = 0x00; // Condition Code Register
+  private interruptMask: number = 0x00; // Interrupt priority mask (bits 8-10 of SR)
+  private supervisorMode: boolean = true; // Supervisor mode bit (bit 13 of SR)
+  private traceBits: number = 0x00; // Trace bits (bits 14-15 of SR)
   private memory: Memory;
   private undo: Undo;
   
@@ -90,6 +93,7 @@ export class Emulator {
   // State
   private labels: Record<string, number> = {};
   private endPointer: [number, number] | undefined;
+  private orgAddress: number | undefined; // The actual ORG address (before memory placeholder increments)
   private orgOffset: number | undefined;
   private lastInstruction: string = Strings.LAST_INSTRUCTION_DEFAULT_TEXT;
   private exception: string | undefined;
@@ -132,6 +136,9 @@ export class Emulator {
       this.exception = Strings.END_MISSING;
       return;
     }
+
+    // PC starts at 0 internally (instruction counter), but ORG affects displayed PC
+    this.pc = 0;
 
     this.lastInstruction = this.instructions.length > 0 ? this.instructions[0][0] : '';
 
@@ -184,7 +191,8 @@ export class Emulator {
       // Check for ORG directive
       let match = ORG_REGEX.exec(instr);
       if (match) {
-        this.orgOffset = parseInt(match[1], 16);
+        this.orgAddress = parseInt(match[1], 16); // Save the actual ORG address
+        this.orgOffset = this.orgAddress;
         this.instructions[i][2] = true; // Mark as directive
         this.memory.set(this.orgOffset++, lineNum, CODE_BYTE);
         this.memory.set(this.orgOffset++, lineNum, CODE_BYTE);
@@ -1632,7 +1640,13 @@ export class Emulator {
     } else if (op1.type === TOKEN_CCR) {
       // MOVE from CCR: source is CCR register
       srcValue = this.ccr;
+    } else if (op1.type === TOKEN_SR) {
+      // MOVE from SR: source is SR register
+      srcValue = this.getSR();
     }
+
+    // Determine increment size for post-increment addressing
+    const incrementSize = size === CODE_LONG ? 4 : size === CODE_WORD ? 2 : 1;
 
     if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
       const [result, newCCR] = moveOP(srcValue, this.registers[op2.value], this.ccr, size);
@@ -1641,6 +1655,26 @@ export class Emulator {
     } else if (op2.type === TOKEN_CCR) {
       // MOVE to CCR: destination is CCR register
       this.ccr = (srcValue & 0xFF) >>> 0;
+    } else if (op2.type === TOKEN_SR) {
+      // MOVE to SR: destination is SR register
+      this.setSR((srcValue & 0xFFFF) >>> 0);
+    } else if (op2.type === TOKEN_OFFSET_ADDR) {
+      // Handle destination indirect addressing: (An), (An)+, -(An)
+      const addr = this.registers[op2.value];
+      
+      // Write to memory
+      if (size === CODE_LONG) {
+        this.memory.setLong(addr, srcValue);
+      } else if (size === CODE_WORD) {
+        this.memory.setWord(addr, srcValue & 0xFFFF);
+      } else {
+        this.memory.setByte(addr, srcValue & 0xFF);
+      }
+      
+      // Handle post-increment: (An)+
+      if (op2.offset === 0x1) {
+        this.registers[op2.value] += incrementSize;
+      }
     }
   }
 
@@ -1777,6 +1811,10 @@ export class Emulator {
     } else if (op2.type === TOKEN_CCR) {
       // ANDI to CCR: Perform AND operation on CCR (byte operation)
       this.ccr = (this.ccr & src) >>> 0;
+    } else if (op2.type === TOKEN_SR) {
+      // ANDI to SR: Perform AND operation on SR (word operation)
+      const sr = this.getSR();
+      this.setSR((sr & src) >>> 0);
     }
   }
 
@@ -1814,6 +1852,10 @@ export class Emulator {
     } else if (op2.type === TOKEN_CCR) {
       // ORI to CCR: Perform OR operation on CCR (byte operation)
       this.ccr = (this.ccr | src) >>> 0;
+    } else if (op2.type === TOKEN_SR) {
+      // ORI to SR: Perform OR operation on SR (word operation)
+      const sr = this.getSR();
+      this.setSR((sr | src) >>> 0);
     }
   }
 
@@ -1851,6 +1893,10 @@ export class Emulator {
     } else if (op2.type === TOKEN_CCR) {
       // EORI to CCR: Perform XOR operation on CCR (byte operation)
       this.ccr = (this.ccr ^ src) >>> 0;
+    } else if (op2.type === TOKEN_SR) {
+      // EORI to SR: Perform XOR operation on SR (word operation)
+      const sr = this.getSR();
+      this.setSR((sr ^ src) >>> 0);
     }
   }
 
@@ -3111,6 +3157,11 @@ export class Emulator {
   // ============== Getters ==============
 
   getPC(): number {
+    // If ORG was specified, return the virtual memory address
+    // Otherwise return the raw PC (instruction counter)
+    if (this.orgAddress !== undefined) {
+      return this.pc + this.orgAddress;
+    }
     return this.pc;
   }
 
@@ -3120,6 +3171,51 @@ export class Emulator {
 
   getMemory(): Record<number, number> {
     return this.memory.getMemory();
+  }
+
+  readByte(address: number): number {
+    return this.memory.getByte(address);
+  }
+
+  readWord(address: number): number {
+    return this.memory.getWord(address);
+  }
+
+  readLong(address: number): number {
+    return this.memory.getLong(address);
+  }
+
+  getCCR(): number {
+    return this.ccr;
+  }
+
+  getSR(): number {
+    // Assemble the 16-bit Status Register from its components
+    // Bits 0-4: CCR (condition code flags)
+    // Bits 5-7: Reserved (0)
+    // Bits 8-10: Interrupt mask
+    // Bits 11-12: Reserved (0)
+    // Bit 13: Supervisor mode
+    // Bits 14-15: Trace bits
+    let sr = this.ccr & 0x1F; // Lower 5 bits: CCR
+    sr |= (this.interruptMask & 0x07) << 8; // Bits 8-10: Interrupt mask
+    if (this.supervisorMode) {
+      sr |= 0x2000; // Bit 13: Supervisor mode
+    }
+    sr |= (this.traceBits & 0x03) << 14; // Bits 14-15: Trace bits
+    return sr;
+  }
+
+  setSR(value: number): void {
+    // Extract components from the 16-bit Status Register
+    // Bits 0-4: CCR (condition code flags)
+    // Bits 8-10: Interrupt mask
+    // Bit 13: Supervisor mode
+    // Bits 14-15: Trace bits
+    this.ccr = value & 0x1F; // Extract CCR
+    this.interruptMask = (value >> 8) & 0x07; // Extract interrupt mask
+    this.supervisorMode = !!(value & 0x2000); // Extract supervisor mode
+    this.traceBits = (value >> 14) & 0x03; // Extract trace bits
   }
 
   getZFlag(): number {
