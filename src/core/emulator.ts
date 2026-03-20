@@ -93,6 +93,7 @@ export class Emulator {
   private instrVirtualAddr: number[] = [];     // virtual address for each instruction index (-1 for directives)
   private virtualToRawPC: Map<number, number> = new Map(); // virtual address → raw PC
   private orgBoundaryIndices: Set<number> = new Set();      // non-first ORG instruction indices
+  private lastBranchTarget: number | undefined;             // last explicit address target for BRA/JMP
 
   constructor(program: string = '') {
     this.memory = new Memory();
@@ -2082,6 +2083,7 @@ export class Emulator {
       if (rawPC !== undefined) {
         this.pc = rawPC;
       } else {
+        this.lastBranchTarget = addr;
         this.pc = this.instructions.length * 4;
       }
       return;
@@ -2501,6 +2503,7 @@ export class Emulator {
       if (rawPC !== undefined) {
         this.pc = rawPC;
       } else {
+        this.lastBranchTarget = addr;
         this.pc = this.instructions.length * 4;
       }
       return;
@@ -3379,16 +3382,26 @@ export class Emulator {
   // ============== Getters ==============
 
   getPC(): number {
+    // If we branched to an explicit address (BRA $XXXX / JMP $XXXX), use it
+    if (this.lastBranchTarget !== undefined && this.pc / 4 >= this.instructions.length) {
+      return this.lastBranchTarget;
+    }
     // Use the virtual address map if available
     const instrIdx = Math.floor(this.pc / 4);
     if (instrIdx >= 0 && instrIdx < this.instrVirtualAddr.length) {
       const vaddr = this.instrVirtualAddr[instrIdx];
       if (vaddr >= 0) return vaddr;
     }
-    // Past end or at a directive: find last real instruction's virtual address + offset
+    // Past end or at a directive: find last real instruction's virtual address
+    // and count only real instructions from there to compute the offset
     for (let j = Math.min(instrIdx, this.instrVirtualAddr.length) - 1; j >= 0; j--) {
       if (this.instrVirtualAddr[j] >= 0) {
-        return this.instrVirtualAddr[j] + (instrIdx - j) * 4;
+        let realCount = 0;
+        for (let k = j + 1; k < instrIdx && k < this.instrVirtualAddr.length; k++) {
+          if (this.instrVirtualAddr[k] >= 0) realCount++;
+        }
+        if (instrIdx >= this.instrVirtualAddr.length) realCount++;
+        return this.instrVirtualAddr[j] + realCount * 4;
       }
     }
     // Fallback to the old logic
