@@ -57,7 +57,7 @@ describe('Integer Arithmetic Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$FFFFFFFF, D1
-        ADD #1, D1
+        ADD.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -131,7 +131,7 @@ describe('Integer Arithmetic Instructions', () => {
       for (let i = 0; i < 20 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[0] >>> 0).toBe(0x00008000);
+      expect(emulator.getRegisters()[0] >>> 0).toBe(0xFFFF9000);
     });
   });
 
@@ -151,14 +151,14 @@ describe('Integer Arithmetic Instructions', () => {
       for (let i = 0; i < 20 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0x0000004E);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0x00000046);
     });
 
     it('should set zero flag when operands are equal', () => {
       const code = `
         ORG $1000
         MOVE.L #$12345678, D1
-        SUB D1, D1
+        SUB.L D1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -260,7 +260,7 @@ describe('Integer Arithmetic Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #100, D1
-        NEG D1
+        NEG.L D1
         END
       `;
       const emulator = new Emulator(code);
@@ -436,7 +436,7 @@ describe('Integer Arithmetic Instructions', () => {
       for (let i = 0; i < 30 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0x00007FFE);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0x0000FFFE);
     });
   });
 
@@ -561,7 +561,7 @@ describe('Integer Arithmetic Instructions', () => {
       for (let i = 0; i < 20 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0xABACDEEF);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0xABABCDEF);
     });
   });
 

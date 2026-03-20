@@ -410,6 +410,10 @@ export class Emulator {
           this.errors.push(Strings.NOT_AN_ADDRESS_REGISTER + Strings.AT_LINE + this.line);
           return undefined;
         }
+        // If inner content is an absolute address, preserve as TOKEN_OFFSET
+        if (result.type === TOKEN_OFFSET) {
+          return result;
+        }
         res.value = result.value;
         res.type = TOKEN_OFFSET_ADDR;
         res.offset = 0x0;
@@ -1428,7 +1432,7 @@ export class Emulator {
     }
   }
 
-  private adda(_size: number, op1: Operand, op2: Operand): void {
+  private adda(size: number, op1: Operand, op2: Operand): void {
     if (op1 === undefined || op2 === undefined) return;
 
     let src = 0;
@@ -1436,6 +1440,11 @@ export class Emulator {
       src = this.registers[op1.value];
     } else if (op1.type === TOKEN_IMMEDIATE) {
       src = op1.value;
+    }
+
+    // ADDA.W sign-extends the source word operand to 32 bits before adding
+    if (size === CODE_WORD) {
+      src = (src << 16) >> 16;
     }
 
     // ADDA always affects address register (no CCR update)
@@ -1700,10 +1709,27 @@ export class Emulator {
   }
 
   private clr(size: number, op: Operand): void {
+    const incrementSize = size === CODE_LONG ? 4 : size === CODE_WORD ? 2 : 1;
+
     if (op.type === TOKEN_REG_DATA) {
       const [result, newCCR] = clrOP(size, this.registers[op.value], this.ccr);
       this.registers[op.value] = result;
       this.ccr = newCCR;
+    } else if (op.type === TOKEN_OFFSET) {
+      const [, newCCR] = clrOP(size, 0, this.ccr);
+      if (size === CODE_LONG) this.memory.setLong(op.value, 0);
+      else if (size === CODE_WORD) this.memory.setWord(op.value, 0);
+      else this.memory.setByte(op.value, 0);
+      this.ccr = newCCR;
+    } else if (op.type === TOKEN_OFFSET_ADDR) {
+      if (op.offset === -0x1) this.registers[op.value] -= incrementSize;
+      const addr = this.registers[op.value];
+      const [, newCCR] = clrOP(size, 0, this.ccr);
+      if (size === CODE_LONG) this.memory.setLong(addr, 0);
+      else if (size === CODE_WORD) this.memory.setWord(addr, 0);
+      else this.memory.setByte(addr, 0);
+      this.ccr = newCCR;
+      if (op.offset === 0x1) this.registers[op.value] += incrementSize;
     }
   }
 
@@ -2048,7 +2074,7 @@ export class Emulator {
     }
   }
 
-  private movea(_size: number, op1: Operand, op2: Operand): void {
+  private movea(size: number, op1: Operand, op2: Operand): void {
     // MOVEA: Move to address register
     if (op1 === undefined || op2 === undefined) return;
 
@@ -2059,6 +2085,20 @@ export class Emulator {
       srcValue = op1.value;
     } else if (op1.type === TOKEN_OFFSET) {
       srcValue = this.memory.getLong(op1.value);
+    } else if (op1.type === TOKEN_OFFSET_ADDR) {
+      if (op1.offset === -0x1) {
+        this.registers[op1.value] -= size === CODE_LONG ? 4 : size === CODE_WORD ? 2 : 1;
+      }
+      const addr = this.registers[op1.value];
+      srcValue = size === CODE_LONG ? this.memory.getLong(addr) : this.memory.getWord(addr);
+      if (op1.offset === 0x1) {
+        this.registers[op1.value] += size === CODE_LONG ? 4 : size === CODE_WORD ? 2 : 1;
+      }
+    }
+
+    // Sign-extend word to longword for MOVEA.W
+    if (size === CODE_WORD) {
+      srcValue = (srcValue << 16) >> 16;
     }
 
     // Destination must be an address register
@@ -2295,13 +2335,13 @@ export class Emulator {
     if (op.type === TOKEN_OFFSET) {
       address = op.value;
     } else if (op.type === TOKEN_OFFSET_ADDR) {
-      address = op.value;
+      address = this.registers[op.value] + (op.offset || 0);
     }
 
-    // Push address onto stack using A7 (register 15 - stack pointer)
-    const stackPtr = this.registers[15];
+    // Push address onto stack using A7 (register 7 - stack pointer)
+    const stackPtr = this.registers[7];
     this.memory.setLong(stackPtr - 4, address);
-    this.registers[15] = stackPtr - 4; // Decrement stack pointer
+    this.registers[7] = stackPtr - 4; // Decrement stack pointer
   }
 
   private bra(label: string): void {

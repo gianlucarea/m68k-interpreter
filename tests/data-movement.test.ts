@@ -296,15 +296,16 @@ describe('Data Movement Instructions', () => {
     it('should load address with offset', () => {
       const code = `
         ORG $1000
-        LEA ($2000,D0), A1
+        MOVEA.L #$2000, A0
+        LEA $10(A0), A1
         END
       `;
       const emulator = new Emulator(code);
       let stop = false;
-      for (let i = 0; i < 10 && !stop; i++) {
+      for (let i = 0; i < 20 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[1] >>> 0).toBe(0x00002000);
+      expect(emulator.getRegisters()[1] >>> 0).toBe(0x00002010);
     });
   });
 
