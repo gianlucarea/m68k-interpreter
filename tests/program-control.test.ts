@@ -496,7 +496,7 @@ describe('Program Control & Flow Instructions', () => {
       for (let i = 0; i < 100 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[10] >>> 0).toBe(50);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(50);
     });
   });
 
@@ -598,7 +598,7 @@ describe('Program Control & Flow Instructions', () => {
         MOVEA.L #$3000, A7
         MOVEA.L #$1234, A6
         LINK A6, #-8
-        MOVE.L (A7), D0
+        MOVE.L (A6), D0
         END
       `;
       const emulator = new Emulator(code);
