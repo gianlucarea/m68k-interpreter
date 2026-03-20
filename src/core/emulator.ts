@@ -1,17 +1,6 @@
 /**
  * M68K Emulator - Main execution engine
  * Handles instruction parsing, execution, registers, memory, and condition codes
- * 
- * System Control Instructions Implemented:
- * - NOP: No operation
- * - RESET: Reset external devices
- * - RTE: Return from exception (TEST: RTE)
- * - TRAP: Trap to exception handler (TEST: TRAP)
- * - TRAPV: Trap on overflow (TEST: TRAPV)
- * - CHK: Check register bounds (TEST: CHK)
- * - LINK: Link stack frame (TEST: LINK)
- * - UNLK: Unlink stack frame (TEST: UNLK)
- * - TAS: Test and set byte (TEST: TAS)
  */
 
 import { Memory } from './memory';
@@ -100,6 +89,11 @@ export class Emulator {
   private errors: string[] = [];
   private line: number = 0;
 
+  // Virtual address mapping for ORG support
+  private instrVirtualAddr: number[] = [];     // virtual address for each instruction index (-1 for directives)
+  private virtualToRawPC: Map<number, number> = new Map(); // virtual address → raw PC
+  private orgBoundaryIndices: Set<number> = new Set();      // non-first ORG instruction indices
+
   constructor(program: string = '') {
     this.memory = new Memory();
     this.undo = new Undo();
@@ -131,6 +125,7 @@ export class Emulator {
     // Pre-processing: comments, labels, directives
     this.removeComments();
     this.findLabels();
+    this.buildAddressMap();
 
     if (!this.endPointer) {
       this.exception = Strings.END_MISSING;
@@ -281,6 +276,79 @@ export class Emulator {
       default:
         return 16;
     }
+  }
+
+  /**
+   * Build virtual address map from instruction array.
+   * Maps each instruction index to its virtual memory address based on ORG directives.
+   * Directives (ORG, labels, END) get -1 since they don't occupy virtual address space.
+   */
+  private buildAddressMap(): void {
+    const orgRegex = /^org\s+(?:0x|\$)([0-9a-f]+)/i;
+    let currentVirtAddr: number | undefined;
+    let isFirstOrg = true;
+
+    for (let i = 0; i < this.instructions.length; i++) {
+      const instr = this.instructions[i][0];
+      const isDirective = this.instructions[i][2];
+
+      const match = orgRegex.exec(instr);
+      if (match) {
+        const orgAddr = parseInt(match[1], 16);
+
+        if (!isFirstOrg) {
+          this.orgBoundaryIndices.add(i);
+          // Fill gap from previous segment's end to this ORG's base
+          if (currentVirtAddr !== undefined && orgAddr > currentVirtAddr) {
+            for (let addr = currentVirtAddr; addr < orgAddr; addr += 4) {
+              if (!this.virtualToRawPC.has(addr)) {
+                this.virtualToRawPC.set(addr, i * 4);
+              }
+            }
+          }
+        }
+
+        isFirstOrg = false;
+        currentVirtAddr = orgAddr;
+        this.instrVirtualAddr[i] = -1;
+        continue;
+      }
+
+      if (isDirective) {
+        this.instrVirtualAddr[i] = -1;
+        continue;
+      }
+
+      // Real instruction
+      if (currentVirtAddr !== undefined) {
+        this.instrVirtualAddr[i] = currentVirtAddr;
+        this.virtualToRawPC.set(currentVirtAddr, i * 4);
+        currentVirtAddr += 4;
+      } else {
+        this.instrVirtualAddr[i] = i * 4;
+        this.virtualToRawPC.set(i * 4, i * 4);
+      }
+    }
+  }
+
+  /**
+   * Get virtual address for the instruction at the given raw PC index.
+   * Returns the virtual address or the raw PC if no mapping exists.
+   */
+  private getVirtualAddr(instrIndex: number): number {
+    if (instrIndex >= 0 && instrIndex < this.instrVirtualAddr.length) {
+      const vaddr = this.instrVirtualAddr[instrIndex];
+      if (vaddr >= 0) return vaddr;
+    }
+    return instrIndex * 4;
+  }
+
+  /**
+   * Convert a virtual address to a raw PC via the address map.
+   * Returns undefined if the virtual address is not mapped.
+   */
+  private virtualToRaw(virtualAddr: number): number | undefined {
+    return this.virtualToRawPC.get(virtualAddr);
   }
 
   /**
@@ -550,6 +618,10 @@ export class Emulator {
 
     // Skip directives and labels
     if (flag === true) {
+      // Halt at ORG boundary (non-first ORG reached by fall-through)
+      if (this.orgBoundaryIndices.has(instrIdx)) {
+        return true;
+      }
       console.log('Skipping label or directive at line ' + this.line);
       return false;
     }
@@ -600,10 +672,12 @@ export class Emulator {
       const operandTokens = operandStr.split(',').map((s) => s.trim());
       size = this.parseOpSize(instr, false);
 
-      // Logical operations default to LONG when no size suffix is specified
+      // Logical and shift/rotate operations default to LONG when no size suffix is specified
       if (instr.indexOf('.') === -1) {
         const op = operation.toLowerCase();
-        if (op === 'and' || op === 'andi' || op === 'or' || op === 'ori' || op === 'eor' || op === 'eori' || op === 'not') {
+        if (op === 'and' || op === 'andi' || op === 'or' || op === 'ori' || op === 'eor' || op === 'eori' || op === 'not'
+            || op === 'lsl' || op === 'lsr' || op === 'asl' || op === 'asr'
+            || op === 'rol' || op === 'ror' || op === 'roxl' || op === 'roxr') {
           size = CODE_LONG;
         }
       }
@@ -1982,6 +2056,37 @@ export class Emulator {
 
   private jmp(label: string): void {
     label = label.trim().toLowerCase();
+
+    // Check for address register indirect: (An) or (SP)
+    const arMatch = /^\(([as][p0-7])\)$/i.exec(label);
+    if (arMatch) {
+      const regIdx = this.parseRegisters(arMatch[1]);
+      if (regIdx !== undefined) {
+        const targetAddr = this.registers[regIdx] >>> 0;
+        const rawPC = this.virtualToRaw(targetAddr);
+        if (rawPC !== undefined) {
+          this.pc = rawPC;
+        } else {
+          this.pc = this.instructions.length * 4;
+        }
+        return;
+      }
+    }
+
+    // Check for hex address: $XXXX or 0xXXXX
+    if (label.charAt(0) === '$' || label.startsWith('0x')) {
+      const addr = label.charAt(0) === '$'
+        ? parseInt('0x' + label.substring(1), 16)
+        : parseInt(label, 16);
+      const rawPC = this.virtualToRaw(addr);
+      if (rawPC !== undefined) {
+        this.pc = rawPC;
+      } else {
+        this.pc = this.instructions.length * 4;
+      }
+      return;
+    }
+
     const labelKey = Object.keys(this.labels).find((k) => k.toLowerCase() === label);
 
     if (!labelKey || this.labels[labelKey] === undefined) {
@@ -1995,6 +2100,33 @@ export class Emulator {
   private jsr(label: string): void {
     // JSR: Jump to Subroutine - push return address and jump
     label = label.trim().toLowerCase();
+
+    // Get BSR/JSR's own virtual address for the return address
+    const bsrIndex = Math.floor((this.pc - 4) / 4);
+    const virtualAddr = this.getVirtualAddr(bsrIndex);
+
+    // Check for address register indirect: (An) or (SP)
+    const arMatch = /^\(([as][p0-7])\)$/i.exec(label);
+    if (arMatch) {
+      const regIdx = this.parseRegisters(arMatch[1]);
+      if (regIdx !== undefined) {
+        const targetAddr = this.registers[regIdx] >>> 0;
+        const rawPC = this.virtualToRaw(targetAddr);
+
+        // Push return address (BSR's own virtual address) onto stack
+        const stackPtr = this.registers[7]; // A7 is register 7
+        this.memory.setLong(stackPtr - 4, virtualAddr);
+        this.registers[7] = stackPtr - 4;
+
+        if (rawPC !== undefined) {
+          this.pc = rawPC;
+        } else {
+          this.pc = this.instructions.length * 4;
+        }
+        return;
+      }
+    }
+
     const labelKey = Object.keys(this.labels).find((k) => k.toLowerCase() === label);
 
     if (!labelKey || this.labels[labelKey] === undefined) {
@@ -2002,10 +2134,10 @@ export class Emulator {
       return;
     }
 
-    // Push current PC (return address) onto stack using A7 (stack pointer)
-    const stackPtr = this.registers[15]; // A7 is register 15
-    this.memory.setLong(stackPtr - 4, this.pc);
-    this.registers[15] = stackPtr - 4; // Decrement stack pointer
+    // Push return address (JSR's own virtual address) onto stack using A7
+    const stackPtr = this.registers[7]; // A7 is register 7
+    this.memory.setLong(stackPtr - 4, virtualAddr);
+    this.registers[7] = stackPtr - 4;
 
     // Jump to subroutine
     this.pc = this.labels[labelKey] * 4;
@@ -2013,15 +2145,27 @@ export class Emulator {
 
   private rts(): void {
     // Return from subroutine - pop return address from stack
-    const stackPtr = this.registers[15]; // A7 is register 15
-    this.pc = this.memory.getLong(stackPtr);
-    this.registers[15] = stackPtr + 4; // Increment stack pointer
+    const stackPtr = this.registers[7]; // A7 is register 7
+    const pushedAddr = this.memory.getLong(stackPtr);
+
+    // The pushed address is the BSR/JSR's own virtual address.
+    // Add 4 to get the next instruction's virtual address, then convert to raw PC.
+    const returnVirtual = (pushedAddr + 4) >>> 0;
+    const rawPC = this.virtualToRaw(returnVirtual);
+    if (rawPC !== undefined) {
+      this.pc = rawPC;
+    } else {
+      // Return address not mapped - halt execution
+      this.pc = this.instructions.length * 4;
+    }
+
+    this.registers[7] = stackPtr + 4; // Increment stack pointer
     this.lastInstruction = 'RTS';
   }
 
   private rtr(): void {
     // Return and Restore - pop status register and return address from stack
-    const stackPtr = this.registers[15]; // A7 is register 15
+    const stackPtr = this.registers[7]; // A7 is register 7
     
     // Pop status register (word) from stack
     const statusReg = this.memory.getWord(stackPtr);
@@ -2031,7 +2175,7 @@ export class Emulator {
     this.pc = this.memory.getLong(stackPtr + 2);
     
     // Increment stack pointer by 6 (2 bytes for SR + 4 bytes for PC)
-    this.registers[15] = stackPtr + 6;
+    this.registers[7] = stackPtr + 6;
     this.lastInstruction = 'RTR';
   }
 
@@ -2039,7 +2183,7 @@ export class Emulator {
     // Return and Discard - pop return address from stack and add immediate value to stack pointer
     if (op === undefined) return;
     
-    const stackPtr = this.registers[15]; // A7 is register 15
+    const stackPtr = this.registers[7]; // A7 is register 7
     
     // Pop return address from stack
     this.pc = this.memory.getLong(stackPtr);
@@ -2051,7 +2195,7 @@ export class Emulator {
     }
     
     // Update stack pointer: pop return address (4 bytes) + displacement
-    this.registers[15] = stackPtr + 4 + displacement;
+    this.registers[7] = stackPtr + 4 + displacement;
     this.lastInstruction = 'RTD #' + displacement;
   }
 
@@ -2347,6 +2491,21 @@ export class Emulator {
   private bra(label: string): void {
     // BRA: Branch Always
     label = label.trim().toLowerCase();
+
+    // Check for hex address: $XXXX or 0xXXXX
+    if (label.charAt(0) === '$' || label.startsWith('0x')) {
+      const addr = label.charAt(0) === '$'
+        ? parseInt('0x' + label.substring(1), 16)
+        : parseInt(label, 16);
+      const rawPC = this.virtualToRaw(addr);
+      if (rawPC !== undefined) {
+        this.pc = rawPC;
+      } else {
+        this.pc = this.instructions.length * 4;
+      }
+      return;
+    }
+
     const labelKey = Object.keys(this.labels).find((k) => k.toLowerCase() === label);
 
     if (!labelKey || this.labels[labelKey] === undefined) {
@@ -2430,10 +2589,12 @@ export class Emulator {
       return;
     }
 
-    // Push current PC (return address) onto stack using A7 (stack pointer)
-    const stackPtr = this.registers[15]; // A7 is register 15
-    this.memory.setLong(stackPtr - 4, this.pc);
-    this.registers[15] = stackPtr - 4; // Decrement stack pointer
+    // Push BSR's own virtual address onto stack using A7 (register 7)
+    const bsrIndex = Math.floor((this.pc - 4) / 4);
+    const virtualAddr = this.getVirtualAddr(bsrIndex);
+    const stackPtr = this.registers[7]; // A7 is register 7
+    this.memory.setLong(stackPtr - 4, virtualAddr);
+    this.registers[7] = stackPtr - 4;
 
     // Branch to subroutine
     this.pc = this.labels[labelKey] * 4;
@@ -3218,8 +3379,19 @@ export class Emulator {
   // ============== Getters ==============
 
   getPC(): number {
-    // If ORG was specified, return the virtual memory address
-    // Otherwise return the raw PC (instruction counter)
+    // Use the virtual address map if available
+    const instrIdx = Math.floor(this.pc / 4);
+    if (instrIdx >= 0 && instrIdx < this.instrVirtualAddr.length) {
+      const vaddr = this.instrVirtualAddr[instrIdx];
+      if (vaddr >= 0) return vaddr;
+    }
+    // Past end or at a directive: find last real instruction's virtual address + offset
+    for (let j = Math.min(instrIdx, this.instrVirtualAddr.length) - 1; j >= 0; j--) {
+      if (this.instrVirtualAddr[j] >= 0) {
+        return this.instrVirtualAddr[j] + (instrIdx - j) * 4;
+      }
+    }
+    // Fallback to the old logic
     if (this.orgAddress !== undefined) {
       return this.pc + this.orgAddress;
     }
@@ -3369,7 +3541,7 @@ export class Emulator {
 
   private rte(): void {
     // Return from Exception - pop status register and return address from stack
-    const stackPtr = this.registers[15]; // A7 is register 15
+    const stackPtr = this.registers[7]; // A7 is register 7
     
     // Pop status register (word) from stack
     const statusReg = this.memory.getWord(stackPtr);
@@ -3379,7 +3551,7 @@ export class Emulator {
     this.pc = this.memory.getLong(stackPtr + 2);
     
     // Increment stack pointer by 6 (2 bytes for SR + 4 bytes for PC)
-    this.registers[15] = stackPtr + 6;
+    this.registers[7] = stackPtr + 6;
     this.lastInstruction = 'RTE';
   }
 
@@ -3392,7 +3564,7 @@ export class Emulator {
       const vectorNum = op.value & 0x0F;
       
       // Push PC and SR to stack
-      const stackPtr = this.registers[15];
+      const stackPtr = this.registers[7];
       
       // Push current PC to stack
       this.memory.setLong(stackPtr - 4, this.pc);
@@ -3400,7 +3572,7 @@ export class Emulator {
       this.memory.setWord(stackPtr - 6, this.ccr);
       
       // Update stack pointer
-      this.registers[15] = stackPtr - 6;
+      this.registers[7] = stackPtr - 6;
       
       // Set exception flag
       this.exception = `TRAP #${vectorNum}`;
@@ -3417,7 +3589,7 @@ export class Emulator {
     // If V (overflow) flag is set, generate a TRAP #7
     if ((this.ccr & 0x02) !== 0) {
       // Overflow flag is set
-      const stackPtr = this.registers[15];
+      const stackPtr = this.registers[7];
       
       // Push current PC to stack
       this.memory.setLong(stackPtr - 4, this.pc);
@@ -3425,7 +3597,7 @@ export class Emulator {
       this.memory.setWord(stackPtr - 6, this.ccr);
       
       // Update stack pointer
-      this.registers[15] = stackPtr - 6;
+      this.registers[7] = stackPtr - 6;
       
       // Set exception flag
       this.exception = 'TRAPV';
@@ -3474,8 +3646,8 @@ export class Emulator {
 
   private link(op1: Operand, op2: Operand): void {
     // LINK: Link stack frame
-    // LINK A6, #offset
-    // Pushes address register to stack, sets it to current stack pointer, then adjusts stack
+    // LINK An, #displacement
+    // 1. SP - 4 → SP; 2. An → (SP); 3. SP → An; 4. SP + d → SP
     if (op1 === undefined || op2 === undefined) return;
     
     const regNum = op1.value; // Register number
@@ -3490,21 +3662,21 @@ export class Emulator {
     }
     
     // Push current address register value to stack
-    const stackPtr = this.registers[15];
+    const stackPtr = this.registers[7]; // A7 is register 7
     this.memory.setLong(stackPtr - 4, this.registers[regNum]);
     
     // Update address register with current stack pointer (minus 4 for the push)
     this.registers[regNum] = stackPtr - 4;
     
     // Adjust stack pointer by offset
-    this.registers[15] = stackPtr - 4 + offset;
+    this.registers[7] = stackPtr - 4 + offset;
     
     this.lastInstruction = `LINK A${regNum},#${offset}`;
   }
 
   private unlk(op: Operand): void {
     // UNLK: Unlink stack frame
-    // UNLK A6
+    // UNLK An
     // Restores stack pointer from address register, then pops address register
     if (op === undefined) return;
     
@@ -3515,14 +3687,14 @@ export class Emulator {
     }
     
     // Set stack pointer to address register value
-    this.registers[15] = this.registers[regNum];
+    this.registers[7] = this.registers[regNum];
     
     // Pop address register from stack
-    const stackPtr = this.registers[15];
+    const stackPtr = this.registers[7];
     this.registers[regNum] = this.memory.getLong(stackPtr);
     
     // Increment stack pointer
-    this.registers[15] = stackPtr + 4;
+    this.registers[7] = stackPtr + 4;
     
     this.lastInstruction = `UNLK A${regNum}`;
   }

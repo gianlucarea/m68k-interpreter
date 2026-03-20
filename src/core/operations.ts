@@ -378,9 +378,12 @@ export function lslOP(
         op = op << 1;
       }
       res8[0] = op & BYTE_MASK;
-      if (carry) ccr = (ccr | 0x01) >>> 0;
-      else ccr = (ccr & 0xfe) >>> 0;
-      return [res8[0], moveCCR(res8[0], ccr)];
+      let newCCR8 = moveCCR(res8[0], ccr);
+      if (count > 0) {
+        if (carry) newCCR8 = (newCCR8 | 0x11) >>> 0;
+        else newCCR8 = (newCCR8 & 0xee) >>> 0;
+      }
+      return [res8[0], newCCR8];
     }
     case CODE_WORD: {
       const res16 = new Int16Array(1);
@@ -389,18 +392,24 @@ export function lslOP(
         op = op << 1;
       }
       res16[0] = op & WORD_MASK;
-      if (carry) ccr = (ccr | 0x01) >>> 0;
-      else ccr = (ccr & 0xfe) >>> 0;
-      return [res16[0], moveCCR(res16[0], ccr)];
+      let newCCR16 = moveCCR(res16[0], ccr);
+      if (count > 0) {
+        if (carry) newCCR16 = (newCCR16 | 0x11) >>> 0;
+        else newCCR16 = (newCCR16 & 0xee) >>> 0;
+      }
+      return [res16[0], newCCR16];
     }
     case CODE_LONG: {
       for (let i = 0; i < count; i++) {
         carry = (op & MSB_LONG_MASK) >>> 31;
         op = (op << 1) >>> 0;
       }
-      if (carry) ccr = (ccr | 0x01) >>> 0;
-      else ccr = (ccr & 0xfe) >>> 0;
-      return [op, moveCCR(op | 0, ccr)];
+      let newCCR32 = moveCCR(op | 0, ccr);
+      if (count > 0) {
+        if (carry) newCCR32 = (newCCR32 | 0x11) >>> 0;
+        else newCCR32 = (newCCR32 & 0xee) >>> 0;
+      }
+      return [op, newCCR32];
     }
     default:
       throw new Error('Invalid size');
@@ -413,8 +422,63 @@ export function aslOP(
   ccr: number,
   size: number
 ): [number, number] {
-  // ASL (Arithmetic Shift Left) is the same as LSL
-  return lslOP(count, op, ccr, size);
+  // ASL sets V if MSB changes at any time during the shift
+  let carry = 0;
+  let overflow = 0;
+
+  switch (size) {
+    case CODE_BYTE: {
+      const origMSB = (op & MSB_BYTE_MASK) >>> 7;
+      for (let i = 0; i < count; i++) {
+        carry = (op & MSB_BYTE_MASK) >>> 7;
+        op = op << 1;
+        if (((op & MSB_BYTE_MASK) >>> 7) !== origMSB) overflow = 1;
+      }
+      const res8 = new Int8Array(1);
+      res8[0] = op & BYTE_MASK;
+      let newCCR8 = moveCCR(res8[0], ccr);
+      if (count > 0) {
+        if (carry) newCCR8 = (newCCR8 | 0x11) >>> 0;
+        else newCCR8 = (newCCR8 & 0xee) >>> 0;
+      }
+      if (overflow) newCCR8 = (newCCR8 | 0x02) >>> 0;
+      return [res8[0], newCCR8];
+    }
+    case CODE_WORD: {
+      const origMSB16 = (op & MSB_WORD_MASK) >>> 15;
+      for (let i = 0; i < count; i++) {
+        carry = (op & MSB_WORD_MASK) >>> 15;
+        op = op << 1;
+        if (((op & MSB_WORD_MASK) >>> 15) !== origMSB16) overflow = 1;
+      }
+      const res16 = new Int16Array(1);
+      res16[0] = op & WORD_MASK;
+      let newCCR16 = moveCCR(res16[0], ccr);
+      if (count > 0) {
+        if (carry) newCCR16 = (newCCR16 | 0x11) >>> 0;
+        else newCCR16 = (newCCR16 & 0xee) >>> 0;
+      }
+      if (overflow) newCCR16 = (newCCR16 | 0x02) >>> 0;
+      return [res16[0], newCCR16];
+    }
+    case CODE_LONG: {
+      const origMSB32 = (op & MSB_LONG_MASK) >>> 31;
+      for (let i = 0; i < count; i++) {
+        carry = (op & MSB_LONG_MASK) >>> 31;
+        op = (op << 1) >>> 0;
+        if (((op & MSB_LONG_MASK) >>> 31) !== origMSB32) overflow = 1;
+      }
+      let newCCR32 = moveCCR(op | 0, ccr);
+      if (count > 0) {
+        if (carry) newCCR32 = (newCCR32 | 0x11) >>> 0;
+        else newCCR32 = (newCCR32 & 0xee) >>> 0;
+      }
+      if (overflow) newCCR32 = (newCCR32 | 0x02) >>> 0;
+      return [op, newCCR32];
+    }
+    default:
+      throw new Error('Invalid size');
+  }
 }
 
 export function lsrOP(
@@ -433,9 +497,12 @@ export function lsrOP(
         op = (op >>> 1) & ~MSB_BYTE_MASK;
       }
       res8[0] = op & BYTE_MASK;
-      if (carry) ccr = (ccr | 0x01) >>> 0;
-      else ccr = (ccr & 0xfe) >>> 0;
-      return [res8[0], moveCCR(res8[0], ccr)];
+      let newCCR8 = moveCCR(res8[0], ccr);
+      if (count > 0) {
+        if (carry) newCCR8 = (newCCR8 | 0x11) >>> 0;
+        else newCCR8 = (newCCR8 & 0xee) >>> 0;
+      }
+      return [res8[0], newCCR8];
     }
     case CODE_WORD: {
       const res16 = new Int16Array(1);
@@ -444,18 +511,25 @@ export function lsrOP(
         op = (op >>> 1) & ~MSB_WORD_MASK;
       }
       res16[0] = op & WORD_MASK;
-      if (carry) ccr = (ccr | 0x01) >>> 0;
-      else ccr = (ccr & 0xfe) >>> 0;
-      return [res16[0], moveCCR(res16[0], ccr)];
+      let newCCR16 = moveCCR(res16[0], ccr);
+      if (count > 0) {
+        if (carry) newCCR16 = (newCCR16 | 0x11) >>> 0;
+        else newCCR16 = (newCCR16 & 0xee) >>> 0;
+      }
+      return [res16[0], newCCR16];
     }
-    case CODE_LONG:
+    case CODE_LONG: {
       for (let i = 0; i < count; i++) {
         carry = op & 0x01;
         op = op >>> 1;
       }
-      if (carry) ccr = (ccr | 0x01) >>> 0;
-      else ccr = (ccr & 0xfe) >>> 0;
-      return [op, moveCCR(op | 0, ccr)];
+      let newCCR32 = moveCCR(op | 0, ccr);
+      if (count > 0) {
+        if (carry) newCCR32 = (newCCR32 | 0x11) >>> 0;
+        else newCCR32 = (newCCR32 & 0xee) >>> 0;
+      }
+      return [op, newCCR32];
+    }
     default:
       throw new Error('Invalid size');
   }
@@ -479,9 +553,12 @@ export function asrOP(
         op = ((op >>> 1) | signBit8) >>> 0;
       }
       res8[0] = op & BYTE_MASK;
-      if (carry) ccr = (ccr | 0x01) >>> 0;
-      else ccr = (ccr & 0xfe) >>> 0;
-      return [res8[0], moveCCR(res8[0], ccr)];
+      let newCCR8 = moveCCR(res8[0], ccr);
+      if (count > 0) {
+        if (carry) newCCR8 = (newCCR8 | 0x11) >>> 0;
+        else newCCR8 = (newCCR8 & 0xee) >>> 0;
+      }
+      return [res8[0], newCCR8];
     }
     case CODE_WORD: {
       const res16 = new Int16Array(1);
@@ -491,9 +568,12 @@ export function asrOP(
         op = ((op >>> 1) | signBit16) >>> 0;
       }
       res16[0] = op & WORD_MASK;
-      if (carry) ccr = (ccr | 0x01) >>> 0;
-      else ccr = (ccr & 0xfe) >>> 0;
-      return [res16[0], moveCCR(res16[0], ccr)];
+      let newCCR16 = moveCCR(res16[0], ccr);
+      if (count > 0) {
+        if (carry) newCCR16 = (newCCR16 | 0x11) >>> 0;
+        else newCCR16 = (newCCR16 & 0xee) >>> 0;
+      }
+      return [res16[0], newCCR16];
     }
     case CODE_LONG: {
       const signBit32 = (op & MSB_LONG_MASK) >>> 0;
@@ -501,9 +581,14 @@ export function asrOP(
         carry = op & 0x01;
         op = ((op >>> 1) | signBit32) >>> 0;
       }
-      if (carry) ccr = (ccr | 0x01) >>> 0;
-      else ccr = (ccr & 0xfe) >>> 0;
-      return [op, moveCCR(op | 0, ccr)];    }    default:
+      let newCCR32 = moveCCR(op | 0, ccr);
+      if (count > 0) {
+        if (carry) newCCR32 = (newCCR32 | 0x11) >>> 0;
+        else newCCR32 = (newCCR32 & 0xee) >>> 0;
+      }
+      return [op, newCCR32];
+    }
+    default:
       throw new Error('Invalid size');
   }
 }
@@ -514,31 +599,39 @@ export function rolOP(
   ccr: number,
   size: number
 ): [number, number] {
+  let lastBit = 0;
   switch (size) {
     case CODE_BYTE: {
       for (let i = 0; i < count; i++) {
-        const carry = (op & MSB_BYTE_MASK) >>> 7;
-        op = ((op << 1) | carry) & BYTE_MASK;
+        lastBit = (op & MSB_BYTE_MASK) >>> 7;
+        op = ((op << 1) | lastBit) & BYTE_MASK;
       }
       const res8 = new Int8Array(1);
       res8[0] = op & BYTE_MASK;
-      return [op, moveCCR(res8[0], ccr)];
+      let newCCR8 = moveCCR(res8[0], ccr);
+      if (count > 0 && lastBit) newCCR8 = (newCCR8 | 0x01) >>> 0;
+      return [op, newCCR8];
     }
     case CODE_WORD: {
       for (let i = 0; i < count; i++) {
-        const carry = (op & MSB_WORD_MASK) >> 15;
-        op = ((op << 1) | carry) & WORD_MASK;
+        lastBit = (op & MSB_WORD_MASK) >> 15;
+        op = ((op << 1) | lastBit) & WORD_MASK;
       }
       const res16 = new Int16Array(1);
       res16[0] = op & WORD_MASK;
-      return [op, moveCCR(res16[0], ccr)];
+      let newCCR16 = moveCCR(res16[0], ccr);
+      if (count > 0 && lastBit) newCCR16 = (newCCR16 | 0x01) >>> 0;
+      return [op, newCCR16];
     }
-    case CODE_LONG:
+    case CODE_LONG: {
       for (let i = 0; i < count; i++) {
-        const carry = (op & MSB_LONG_MASK) >>> 31;
-        op = ((op << 1) | carry) >>> 0;
+        lastBit = (op & MSB_LONG_MASK) >>> 31;
+        op = ((op << 1) | lastBit) >>> 0;
       }
-      return [op, moveCCR(op | 0, ccr)];
+      let newCCR32 = moveCCR(op | 0, ccr);
+      if (count > 0 && lastBit) newCCR32 = (newCCR32 | 0x01) >>> 0;
+      return [op, newCCR32];
+    }
     default:
       throw new Error('Invalid size');
   }
@@ -550,31 +643,39 @@ export function rorOP(
   ccr: number,
   size: number
 ): [number, number] {
+  let lastBit = 0;
   switch (size) {
     case CODE_BYTE: {
       for (let i = 0; i < count; i++) {
-        const carry = op & 0x01;
-        op = ((op >>> 1) | (carry << 7)) & BYTE_MASK;
+        lastBit = op & 0x01;
+        op = ((op >>> 1) | (lastBit << 7)) & BYTE_MASK;
       }
       const res8 = new Int8Array(1);
       res8[0] = op & BYTE_MASK;
-      return [op, moveCCR(res8[0], ccr)];
+      let newCCR8 = moveCCR(res8[0], ccr);
+      if (count > 0 && lastBit) newCCR8 = (newCCR8 | 0x01) >>> 0;
+      return [op, newCCR8];
     }
     case CODE_WORD: {
       for (let i = 0; i < count; i++) {
-        const carry = op & 0x01;
-        op = ((op >>> 1) | (carry << 15)) & WORD_MASK;
+        lastBit = op & 0x01;
+        op = ((op >>> 1) | (lastBit << 15)) & WORD_MASK;
       }
       const res16 = new Int16Array(1);
       res16[0] = op & WORD_MASK;
-      return [op, moveCCR(res16[0], ccr)];
+      let newCCR16 = moveCCR(res16[0], ccr);
+      if (count > 0 && lastBit) newCCR16 = (newCCR16 | 0x01) >>> 0;
+      return [op, newCCR16];
     }
-    case CODE_LONG:
+    case CODE_LONG: {
       for (let i = 0; i < count; i++) {
-        const carry = op & 0x01;
-        op = ((op >>> 1) | (carry << 31)) >>> 0;
+        lastBit = op & 0x01;
+        op = ((op >>> 1) | (lastBit << 31)) >>> 0;
       }
-      return [op, moveCCR(op | 0, ccr)];
+      let newCCR32 = moveCCR(op | 0, ccr);
+      if (count > 0 && lastBit) newCCR32 = (newCCR32 | 0x01) >>> 0;
+      return [op, newCCR32];
+    }
     default:
       throw new Error('Invalid size');
   }
@@ -602,7 +703,9 @@ export function roxlOP(
       res8[0] = op & BYTE_MASK;
       if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
       else ccr = (ccr & 0xef) >>> 0; // Clear X flag
-      return [op, moveCCR(res8[0], ccr)];
+      let newCCR8 = moveCCR(res8[0], ccr);
+      if (xBit) newCCR8 = (newCCR8 | 0x01) >>> 0; // C = X
+      return [op, newCCR8];
     }
     case CODE_WORD: {
       // 17-bit rotation (16-bit value + X flag)
@@ -615,7 +718,9 @@ export function roxlOP(
       res16[0] = op & WORD_MASK;
       if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
       else ccr = (ccr & 0xef) >>> 0; // Clear X flag
-      return [op, moveCCR(res16[0], ccr)];
+      let newCCR16 = moveCCR(res16[0], ccr);
+      if (xBit) newCCR16 = (newCCR16 | 0x01) >>> 0; // C = X
+      return [op, newCCR16];
     }
     case CODE_LONG: {
       // 33-bit rotation (32-bit value + X flag)
@@ -626,7 +731,9 @@ export function roxlOP(
       }
       if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
       else ccr = (ccr & 0xef) >>> 0; // Clear X flag
-      return [op, moveCCR(op | 0, ccr)];
+      let newCCR32 = moveCCR(op | 0, ccr);
+      if (xBit) newCCR32 = (newCCR32 | 0x01) >>> 0; // C = X
+      return [op, newCCR32];
     }
     default:
       throw new Error('Invalid size');
@@ -655,7 +762,9 @@ export function roxrOP(
       res8[0] = op & BYTE_MASK;
       if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
       else ccr = (ccr & 0xef) >>> 0; // Clear X flag
-      return [op, moveCCR(res8[0], ccr)];
+      let newCCR8 = moveCCR(res8[0], ccr);
+      if (xBit) newCCR8 = (newCCR8 | 0x01) >>> 0; // C = X
+      return [op, newCCR8];
     }
     case CODE_WORD: {
       // 17-bit rotation (16-bit value + X flag)
@@ -668,7 +777,9 @@ export function roxrOP(
       res16[0] = op & WORD_MASK;
       if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
       else ccr = (ccr & 0xef) >>> 0; // Clear X flag
-      return [op, moveCCR(res16[0], ccr)];
+      let newCCR16 = moveCCR(res16[0], ccr);
+      if (xBit) newCCR16 = (newCCR16 | 0x01) >>> 0; // C = X
+      return [op, newCCR16];
     }
     case CODE_LONG: {
       // 33-bit rotation (32-bit value + X flag)
@@ -679,7 +790,9 @@ export function roxrOP(
       }
       if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
       else ccr = (ccr & 0xef) >>> 0; // Clear X flag
-      return [op, moveCCR(op | 0, ccr)];
+      let newCCR32 = moveCCR(op | 0, ccr);
+      if (xBit) newCCR32 = (newCCR32 | 0x01) >>> 0; // C = X
+      return [op, newCCR32];
     }
     default:
       throw new Error('Invalid size');
