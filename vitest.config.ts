@@ -7,9 +7,26 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    pool: 'forks',
     setupFiles: [],
     css: true,
+    coverage: {
+      reporter: ['lcov', 'text', 'html', 'json'],
+      reportsDirectory: './coverage',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'node_modules/',
+        'dist/',
+        'build/',
+        'coverage/',
+        '**/*.d.ts',
+        '**/index.ts',
+      ],
+      all: true,
+      lines: 80,
+      functions: 80,
+      branches: 80,
+      statements: 80,
+    },
   },
   resolve: {
     alias: {
