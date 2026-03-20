@@ -77,7 +77,7 @@ describe('Data Movement Instructions', () => {
       for (let i = 0; i < 50 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[0] >>> 0).toBe(0x00002004);
+      expect(emulator.getRegisters()[1] >>> 0).toBe(0x00002004);
     });
   });
 

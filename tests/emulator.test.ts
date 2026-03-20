@@ -95,10 +95,10 @@ describe('Emulator - Bug Fixes', () => {
     }
 
     const d1 = emulator.getRegisters()[9] >>> 0;
-    const a1 = emulator.getRegisters()[0] >>> 0;
+    const a1 = emulator.getRegisters()[1] >>> 0;
     const errors = emulator.getErrors();
 
-    // A1 (register 0) should be incremented by 4 (from $2000 to $2004)
+    // A1 (register 1) should be incremented by 4 (from $2000 to $2004)
     expect(a1).toBe(0x00002004);
   });
 
@@ -135,7 +135,7 @@ describe('Emulator - Bug Fixes', () => {
     }
 
     // A1 should still be 0x2000 (no post-increment)
-    expect(emulator.getRegisters()[0] >>> 0).toBe(0x00002000);
+    expect(emulator.getRegisters()[1] >>> 0).toBe(0x00002000);
   });
 
   it('Bug 2: ALU should set the CCR Zero flag after SUB.L D1, D1', () => {
@@ -195,8 +195,8 @@ describe('Emulator - Bug Fixes', () => {
       stop = emulator.emulationStep();
     }
 
-    // A1 (register 0) should be incremented by 2 (from $2000 to $2002)
-    expect(emulator.getRegisters()[0] >>> 0).toBe(0x00002002);
+    // A1 (register 1) should be incremented by 2 (from $2000 to $2002)
+    expect(emulator.getRegisters()[1] >>> 0).toBe(0x00002002);
   });
 
   it('Bug 2: ALU should set CCR flags after arithmetic operations', () => {
@@ -240,7 +240,7 @@ describe('Emulator - Bug Fixes', () => {
     }
 
     // After MOVE.L D1, (A1)+, A1 should be $2004
-    expect(emulator.getRegisters()[0] >>> 0).toBe(0x00002004);
+    expect(emulator.getRegisters()[1] >>> 0).toBe(0x00002004);
     
     // After SUB.L D1, D1, D1 should be 0
     expect(emulator.getRegisters()[9] >>> 0).toBe(0x00000000);

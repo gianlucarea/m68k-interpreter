@@ -1630,6 +1630,9 @@ export class Emulator {
   private move(size: number, op1: Operand, op2: Operand): void {
     if (op1 === undefined || op2 === undefined) return;
 
+    // Determine increment size for post-increment/pre-decrement addressing
+    const incrementSize = size === CODE_LONG ? 4 : size === CODE_WORD ? 2 : 1;
+
     let srcValue = 0;
     if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
       srcValue = this.registers[op1.value];
@@ -1638,31 +1641,42 @@ export class Emulator {
     } else if (op1.type === TOKEN_OFFSET) {
       srcValue = this.memory.getLong(op1.value);
     } else if (op1.type === TOKEN_CCR) {
-      // MOVE from CCR: source is CCR register
       srcValue = this.ccr;
     } else if (op1.type === TOKEN_SR) {
-      // MOVE from SR: source is SR register
       srcValue = this.getSR();
+    } else if (op1.type === TOKEN_OFFSET_ADDR) {
+      // Handle source indirect addressing: (An), (An)+, -(An)
+      if (op1.offset === -0x1) {
+        this.registers[op1.value] -= incrementSize;
+      }
+      const addr = this.registers[op1.value];
+      if (size === CODE_LONG) {
+        srcValue = this.memory.getLong(addr);
+      } else if (size === CODE_WORD) {
+        srcValue = this.memory.getWord(addr);
+      } else {
+        srcValue = this.memory.getByte(addr);
+      }
+      if (op1.offset === 0x1) {
+        this.registers[op1.value] += incrementSize;
+      }
     }
-
-    // Determine increment size for post-increment addressing
-    const incrementSize = size === CODE_LONG ? 4 : size === CODE_WORD ? 2 : 1;
 
     if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
       const [result, newCCR] = moveOP(srcValue, this.registers[op2.value], this.ccr, size);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
     } else if (op2.type === TOKEN_CCR) {
-      // MOVE to CCR: destination is CCR register
       this.ccr = (srcValue & 0xFF) >>> 0;
     } else if (op2.type === TOKEN_SR) {
-      // MOVE to SR: destination is SR register
       this.setSR((srcValue & 0xFFFF) >>> 0);
     } else if (op2.type === TOKEN_OFFSET_ADDR) {
       // Handle destination indirect addressing: (An), (An)+, -(An)
+      if (op2.offset === -0x1) {
+        this.registers[op2.value] -= incrementSize;
+      }
       const addr = this.registers[op2.value];
-      
-      // Write to memory
+
       if (size === CODE_LONG) {
         this.memory.setLong(addr, srcValue);
       } else if (size === CODE_WORD) {
@@ -1670,8 +1684,7 @@ export class Emulator {
       } else {
         this.memory.setByte(addr, srcValue & 0xFF);
       }
-      
-      // Handle post-increment: (An)+
+
       if (op2.offset === 0x1) {
         this.registers[op2.value] += incrementSize;
       }
