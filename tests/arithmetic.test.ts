@@ -82,6 +82,42 @@ describe('Integer Arithmetic Instructions', () => {
       }
       expect((emulator.getRegisters()[9] | 0)).toBe(-50);
     });
+
+    it('should add from memory indirect (An) to data register', () => {
+      const code = `
+        ORG $1000
+        MOVE.L  #50, $2000
+        MOVEA.L #$2000, A1
+        MOVEQ   #0, D0
+        ADD.L   (A1), D0
+        END
+      `;
+      const emulator = new Emulator(code);
+      let stop = false;
+      for (let i = 0; i < 30 && !stop; i++) {
+        stop = emulator.emulationStep();
+      }
+      expect(emulator.getRegisters()[8] >>> 0).toBe(0x00000032);
+      expect(emulator.getRegisters()[1] >>> 0).toBe(0x00002000);
+    });
+
+    it('should add from memory with post-increment (An)+ and update A register', () => {
+      const code = `
+        ORG $1000
+        MOVE.L  #50, $2000
+        MOVEA.L #$2000, A1
+        MOVEQ   #0, D0
+        ADD.L   (A1)+, D0
+        END
+      `;
+      const emulator = new Emulator(code);
+      let stop = false;
+      for (let i = 0; i < 30 && !stop; i++) {
+        stop = emulator.emulationStep();
+      }
+      expect(emulator.getRegisters()[8] >>> 0).toBe(0x00000032);
+      expect(emulator.getRegisters()[1] >>> 0).toBe(0x00002004);
+    });
   });
 
   /**

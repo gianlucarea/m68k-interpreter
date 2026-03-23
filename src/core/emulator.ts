@@ -1495,12 +1495,31 @@ export class Emulator {
   private add(size: number, op1: Operand, op2: Operand, isSub: boolean): void {
     if (op1 === undefined || op2 === undefined) return;
 
-    if (op2.type === TOKEN_REG_DATA) {
-      const src =
-        op1.type === TOKEN_REG_ADDR || op1.type === TOKEN_REG_DATA
-          ? this.registers[op1.value]
-          : op1.value;
+    const incrementSize = size === CODE_LONG ? 4 : size === CODE_WORD ? 2 : 1;
 
+    let src = 0;
+    if (op1.type === TOKEN_REG_ADDR || op1.type === TOKEN_REG_DATA) {
+      src = this.registers[op1.value];
+    } else if (op1.type === TOKEN_IMMEDIATE) {
+      src = op1.value;
+    } else if (op1.type === TOKEN_OFFSET) {
+      if (size === CODE_LONG) src = this.memory.getLong(op1.value);
+      else if (size === CODE_WORD) src = this.memory.getWord(op1.value);
+      else src = this.memory.getByte(op1.value);
+    } else if (op1.type === TOKEN_OFFSET_ADDR) {
+      if (op1.offset === -0x1) {
+        this.registers[op1.value] -= incrementSize;
+      }
+      const addr = this.registers[op1.value];
+      if (size === CODE_LONG) src = this.memory.getLong(addr);
+      else if (size === CODE_WORD) src = this.memory.getWord(addr);
+      else src = this.memory.getByte(addr);
+      if (op1.offset === 0x1) {
+        this.registers[op1.value] += incrementSize;
+      }
+    }
+
+    if (op2.type === TOKEN_REG_DATA) {
       const [result, newCCR] = addOP(src, this.registers[op2.value], this.ccr, size, isSub);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
@@ -1762,6 +1781,15 @@ export class Emulator {
       this.ccr = (srcValue & 0xFF) >>> 0;
     } else if (op2.type === TOKEN_SR) {
       this.setSR((srcValue & 0xFFFF) >>> 0);
+    } else if (op2.type === TOKEN_OFFSET) {
+      // Handle destination absolute address: $2000
+      if (size === CODE_LONG) {
+        this.memory.setLong(op2.value, srcValue);
+      } else if (size === CODE_WORD) {
+        this.memory.setWord(op2.value, srcValue & 0xFFFF);
+      } else {
+        this.memory.setByte(op2.value, srcValue & 0xFF);
+      }
     } else if (op2.type === TOKEN_OFFSET_ADDR) {
       // Handle destination indirect addressing: (An), (An)+, -(An)
       if (op2.offset === -0x1) {
@@ -2432,22 +2460,78 @@ export class Emulator {
       }
       this.registers[addrOp.value] = sp;
     } else {
-      // Fallback: try as simple register-to-register or register-to-address
-      const op1 = this.parseOperand(token1);
-      const op2 = this.parseOperand(token2);
-      if (!op1 || !op2) return;
+      // Determine direction by checking which token is a register list
+      const isToken1RegList = /[-/]/.test(token1) && token1.indexOf('(') === -1;
+      const isToken2RegList = /[-/]/.test(token2) && token2.indexOf('(') === -1;
 
-      let srcValue = 0;
-      if (op1.type === TOKEN_REG_DATA || op1.type === TOKEN_REG_ADDR) {
-        srcValue = this.registers[op1.value];
-      } else if (op1.type === TOKEN_IMMEDIATE) {
-        srcValue = op1.value;
-      }
+      if (isToken1RegList || (!isToken2RegList && token2.indexOf('(') !== -1)) {
+        // Registers -> memory: MOVEM.L D0-D2, (A0)
+        const regList = this.parseRegisterList(token1);
+        const addrOp = this.parseOperand(token2);
+        if (!addrOp) return;
 
-      if (op2.type === TOKEN_REG_DATA || op2.type === TOKEN_REG_ADDR) {
-        const [result, newCCR] = moveOP(srcValue, this.registers[op2.value], this.ccr, CODE_LONG);
-        this.registers[op2.value] = result;
-        this.ccr = newCCR;
+        let addr: number;
+        if (addrOp.type === TOKEN_OFFSET_ADDR) {
+          addr = this.registers[addrOp.value];
+          if (addrOp.offset !== undefined && addrOp.offset !== 0x1 && addrOp.offset !== -0x1) {
+            addr += addrOp.offset;
+          }
+        } else if (addrOp.type === TOKEN_OFFSET) {
+          addr = addrOp.value;
+        } else {
+          this.errors.push('MOVEM: destination must be address register indirect' + Strings.AT_LINE + this.line);
+          return;
+        }
+
+        const sorted = [...regList].sort((a, b) => {
+          const orderA = a >= 8 ? a - 8 : a + 8;
+          const orderB = b >= 8 ? b - 8 : b + 8;
+          return orderA - orderB;
+        });
+        for (const regIdx of sorted) {
+          if (size === CODE_LONG) {
+            this.memory.setLong(addr, this.registers[regIdx]);
+          } else {
+            this.memory.setWord(addr, this.registers[regIdx] & 0xFFFF);
+          }
+          addr += bytesPer;
+        }
+      } else if (isToken2RegList || token1.indexOf('(') !== -1) {
+        // Memory -> registers: MOVEM.L (A0), D0-D2
+        const regList = this.parseRegisterList(token2);
+        const addrOp = this.parseOperand(token1);
+        if (!addrOp) return;
+
+        let addr: number;
+        if (addrOp.type === TOKEN_OFFSET_ADDR) {
+          addr = this.registers[addrOp.value];
+          if (addrOp.offset !== undefined && addrOp.offset !== 0x1 && addrOp.offset !== -0x1) {
+            addr += addrOp.offset;
+          }
+        } else if (addrOp.type === TOKEN_OFFSET) {
+          addr = addrOp.value;
+        } else {
+          this.errors.push('MOVEM: source must be address register indirect' + Strings.AT_LINE + this.line);
+          return;
+        }
+
+        const sorted = [...regList].sort((a, b) => {
+          const orderA = a >= 8 ? a - 8 : a + 8;
+          const orderB = b >= 8 ? b - 8 : b + 8;
+          return orderA - orderB;
+        });
+        for (const regIdx of sorted) {
+          if (size === CODE_LONG) {
+            this.registers[regIdx] = this.memory.getLong(addr);
+          } else {
+            let val = this.memory.getWord(addr);
+            if (regIdx <= 7 && (val & 0x8000)) {
+              val = val | 0xFFFF0000;
+            }
+            this.registers[regIdx] = val;
+          }
+          addr += bytesPer;
+        }
       }
     }
   }
