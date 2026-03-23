@@ -329,4 +329,72 @@ describe('Data Movement Instructions', () => {
       expect(sp).toBe(0x00002FFC);
     });
   });
+
+  /**
+   * MOVEM instruction - Move multiple registers
+   */
+  describe('MOVEM', () => {
+    it('should store registers to memory with range syntax (D0-D2)', () => {
+      const code = `
+        ORG $1000
+        MOVE.L #$11, D0
+        MOVE.L #$22, D1
+        MOVE.L #$33, D2
+        MOVEA.L #$3000, A0
+        MOVEM.L D0-D2, (A0)
+        END
+      `;
+      const emulator = new Emulator(code);
+      let stop = false;
+      for (let i = 0; i < 30 && !stop; i++) {
+        stop = emulator.emulationStep();
+      }
+      expect(emulator.getErrors().filter(e => e.includes('Unknown'))).toEqual([]);
+      expect(emulator.readLong(0x3000)).toBe(0x11);
+      expect(emulator.readLong(0x3004)).toBe(0x22);
+      expect(emulator.readLong(0x3008)).toBe(0x33);
+    });
+
+    it('should store registers to memory with slash syntax (D0/D1/D2)', () => {
+      const code = `
+        ORG $1000
+        MOVE.L #$AA, D0
+        MOVE.L #$BB, D1
+        MOVE.L #$CC, D2
+        MOVEA.L #$3000, A0
+        MOVEM.L D0/D1/D2, (A0)
+        END
+      `;
+      const emulator = new Emulator(code);
+      let stop = false;
+      for (let i = 0; i < 30 && !stop; i++) {
+        stop = emulator.emulationStep();
+      }
+      expect(emulator.getErrors().filter(e => e.includes('Unknown'))).toEqual([]);
+      expect(emulator.readLong(0x3000)).toBe(0xAA);
+      expect(emulator.readLong(0x3004)).toBe(0xBB);
+      expect(emulator.readLong(0x3008)).toBe(0xCC);
+    });
+
+    it('should load registers from memory with range syntax', () => {
+      const code = `
+        ORG $1000
+        MOVE.L #$11, $3000
+        MOVE.L #$22, $3004
+        MOVE.L #$33, $3008
+        MOVEA.L #$3000, A0
+        MOVEM.L (A0), D0-D2
+        END
+      `;
+      const emulator = new Emulator(code);
+      let stop = false;
+      for (let i = 0; i < 30 && !stop; i++) {
+        stop = emulator.emulationStep();
+      }
+      expect(emulator.getErrors().filter(e => e.includes('Unknown'))).toEqual([]);
+      expect(emulator.getRegisters()[8] >>> 0).toBe(0x11);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0x22);
+      expect(emulator.getRegisters()[10] >>> 0).toBe(0x33);
+    });
+  });
 });
