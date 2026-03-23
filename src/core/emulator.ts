@@ -1495,12 +1495,31 @@ export class Emulator {
   private add(size: number, op1: Operand, op2: Operand, isSub: boolean): void {
     if (op1 === undefined || op2 === undefined) return;
 
-    if (op2.type === TOKEN_REG_DATA) {
-      const src =
-        op1.type === TOKEN_REG_ADDR || op1.type === TOKEN_REG_DATA
-          ? this.registers[op1.value]
-          : op1.value;
+    const incrementSize = size === CODE_LONG ? 4 : size === CODE_WORD ? 2 : 1;
 
+    let src = 0;
+    if (op1.type === TOKEN_REG_ADDR || op1.type === TOKEN_REG_DATA) {
+      src = this.registers[op1.value];
+    } else if (op1.type === TOKEN_IMMEDIATE) {
+      src = op1.value;
+    } else if (op1.type === TOKEN_OFFSET) {
+      if (size === CODE_LONG) src = this.memory.getLong(op1.value);
+      else if (size === CODE_WORD) src = this.memory.getWord(op1.value);
+      else src = this.memory.getByte(op1.value);
+    } else if (op1.type === TOKEN_OFFSET_ADDR) {
+      if (op1.offset === -0x1) {
+        this.registers[op1.value] -= incrementSize;
+      }
+      const addr = this.registers[op1.value];
+      if (size === CODE_LONG) src = this.memory.getLong(addr);
+      else if (size === CODE_WORD) src = this.memory.getWord(addr);
+      else src = this.memory.getByte(addr);
+      if (op1.offset === 0x1) {
+        this.registers[op1.value] += incrementSize;
+      }
+    }
+
+    if (op2.type === TOKEN_REG_DATA) {
       const [result, newCCR] = addOP(src, this.registers[op2.value], this.ccr, size, isSub);
       this.registers[op2.value] = result;
       this.ccr = newCCR;
@@ -1762,6 +1781,15 @@ export class Emulator {
       this.ccr = (srcValue & 0xFF) >>> 0;
     } else if (op2.type === TOKEN_SR) {
       this.setSR((srcValue & 0xFFFF) >>> 0);
+    } else if (op2.type === TOKEN_OFFSET) {
+      // Handle destination absolute address: $2000
+      if (size === CODE_LONG) {
+        this.memory.setLong(op2.value, srcValue);
+      } else if (size === CODE_WORD) {
+        this.memory.setWord(op2.value, srcValue & 0xFFFF);
+      } else {
+        this.memory.setByte(op2.value, srcValue & 0xFF);
+      }
     } else if (op2.type === TOKEN_OFFSET_ADDR) {
       // Handle destination indirect addressing: (An), (An)+, -(An)
       if (op2.offset === -0x1) {
