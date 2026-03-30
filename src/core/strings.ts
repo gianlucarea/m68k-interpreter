@@ -45,6 +45,12 @@ export class Strings {
   static readonly BLE_OFFSET_TOO_LONG = 'Offset too long for BLE';
   static readonly BLT_OFFSET_TOO_LONG = 'Offset too long for BLT';
 
+  // Data definition errors
+  static readonly INVALID_DC_VALUE = 'Invalid DC value: ';
+  static readonly INVALID_DS_COUNT = 'Invalid DS count: ';
+  static readonly INVALID_DCB_SYNTAX = 'Invalid DCB syntax (expected count,value): ';
+  static readonly INVALID_DCB_VALUE = 'Invalid DCB value: ';
+
   // Misc
   static readonly LAST_INSTRUCTION_DEFAULT_TEXT = 'Most recent instruction will be shown here.';
   static readonly AT_LINE = ' at line: ';

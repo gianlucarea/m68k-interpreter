@@ -52,9 +52,13 @@ const TOKEN_CCR = 6;
 const TOKEN_SR = 7;
 
 // Directive regexes
-const DC_REGEX = /^[_a-zA-Z][_a-zA-Z0-9]*:\s+dc\.[wbl]\s+("[a-zA-Z0-9]+"|([0-9]+,)*[0-9]+)$/gmi;
-const ORG_REGEX = /^org\s+(?:0x|\$)([0-9]+)/gmi;
+const ORG_REGEX = /^org\s+(?:0x|\$)([0-9a-f]+)/gmi;
 const END_REGEX = /^end\s*([_a-zA-Z][_a-zA-Z0-9]*)?$/gmi;
+
+// Data directive patterns (applied to lowercased instruction, after optional label: prefix)
+const DC_PATTERN = /^dc\.[bwl]\s+/i;
+const DS_PATTERN = /^ds\.[bwl]\s+/i;
+const DCB_PATTERN = /^dcb\.[bwl]\s+/i;
 
 interface Operand {
   value: number;
@@ -81,9 +85,9 @@ export class Emulator {
   
   // State
   private labels: Record<string, number> = {};
+  private dataAddresses: Record<string, number> = {}; // label → memory address for DC/DS/DCB data
   private endPointer: [number, number] | undefined;
   private orgAddress: number | undefined; // The actual ORG address (before memory placeholder increments)
-  private orgOffset: number | undefined;
   private lastInstruction: string = Strings.LAST_INSTRUCTION_DEFAULT_TEXT;
   private exception: string | undefined;
   private errors: string[] = [];
@@ -177,48 +181,147 @@ export class Emulator {
   }
 
   /**
-   * Find and process labels, directives (ORG, END, DC), and EQU definitions
+   * Parse a value token into a number. Supports:
+   * $FF (hex), %10101010 (binary), 42 (decimal), 'A' (ASCII char)
+   */
+  private parseValue(token: string): number | undefined {
+    token = token.trim();
+    if (token.length === 0) return undefined;
+
+    // Strip immediate prefix if present
+    if (token.charAt(0) === '#') {
+      token = token.substring(1);
+    }
+
+    // Hex: $FF or 0xFF
+    if (token.charAt(0) === '$') {
+      const val = parseInt(token.substring(1), 16);
+      return isNaN(val) ? undefined : val;
+    }
+    if (token.toLowerCase().startsWith('0x')) {
+      const val = parseInt(token.substring(2), 16);
+      return isNaN(val) ? undefined : val;
+    }
+
+    // Binary: %10101010
+    if (token.charAt(0) === '%') {
+      const val = parseInt(token.substring(1), 2);
+      return isNaN(val) ? undefined : val;
+    }
+
+    // Single ASCII char: 'A'
+    if (token.length === 3 && token.charAt(0) === "'" && token.charAt(2) === "'") {
+      return token.charCodeAt(1);
+    }
+
+    // Decimal
+    if (/^-?\d+$/.test(token)) {
+      return parseInt(token, 10);
+    }
+
+    // Label reference (resolve from dataAddresses or labels)
+    if (/^[_a-zA-Z][_a-zA-Z0-9]*$/.test(token)) {
+      const lowerToken = token.toLowerCase();
+      const dataKey = Object.keys(this.dataAddresses).find((k) => k.toLowerCase() === lowerToken);
+      if (dataKey !== undefined) return this.dataAddresses[dataKey];
+      const labelKey = Object.keys(this.labels).find((k) => k.toLowerCase() === lowerToken);
+      if (labelKey !== undefined) return this.labels[labelKey];
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Convert a size code to byte count (1, 2, or 4)
+   */
+  private sizeToBytes(size: number): number {
+    switch (size) {
+      case CODE_LONG:
+        return 4;
+      case CODE_WORD:
+        return 2;
+      case CODE_BYTE:
+        return 1;
+      default:
+        return 2;
+    }
+  }
+
+  /**
+   * Write a value to memory at the given address with the given size code.
+   */
+  private writeDataToMemory(address: number, value: number, size: number): void {
+    switch (size) {
+      case CODE_LONG:
+        this.memory.setLong(address, value);
+        break;
+      case CODE_WORD:
+        this.memory.setWord(address, value);
+        break;
+      case CODE_BYTE:
+        this.memory.setByte(address, value);
+        break;
+    }
+  }
+
+  /**
+   * Extract an optional label prefix from an instruction line.
+   * Returns [label | undefined, remainder after 'label:' stripped].
+   */
+  private extractLabel(instr: string): [string | undefined, string] {
+    const colonIdx = instr.indexOf(':');
+    if (colonIdx === -1) return [undefined, instr];
+    const beforeColon = instr.substring(0, colonIdx).trim();
+    // Validate label name
+    if (/^[_a-zA-Z][_a-zA-Z0-9]*$/.test(beforeColon)) {
+      return [beforeColon, instr.substring(colonIdx + 1).trim()];
+    }
+    return [undefined, instr];
+  }
+
+  /**
+   * Find and process labels, directives (ORG, END, DC, DS, DCB), and EQU definitions.
+   * Uses two passes: first collects labels/addresses, second writes DC data to memory.
    */
   private findLabels(): void {
+    // ── Pass 1: collect ORG, END, labels, and compute data addresses ──
+    // Track orgOffset locally for address computation
+    let localOrgOffset: number | undefined;
+
     for (let i = 0; i < this.instructions.length; i++) {
-      const instr = this.instructions[i][0].toLowerCase();
+      const instr = this.instructions[i][0];
+      const instrLower = instr.toLowerCase();
       const lineNum = this.instructions[i][1];
 
       // Check for ORG directive
-      let match = ORG_REGEX.exec(instr);
+      let match = ORG_REGEX.exec(instrLower);
       if (match) {
-        this.orgAddress = parseInt(match[1], 16); // Save the actual ORG address
-        this.orgOffset = this.orgAddress;
-        this.instructions[i][2] = true; // Mark as directive
-        this.memory.set(this.orgOffset++, lineNum, CODE_BYTE);
-        this.memory.set(this.orgOffset++, lineNum, CODE_BYTE);
+        this.orgAddress = parseInt(match[1], 16);
+        localOrgOffset = this.orgAddress;
+        this.instructions[i][2] = true;
         ORG_REGEX.lastIndex = 0;
         continue;
       }
 
       // Check for END directive
-      match = END_REGEX.exec(instr);
+      match = END_REGEX.exec(instrLower);
       if (match) {
         if (this.endPointer !== undefined) {
           this.exception = Strings.DUPLICATE_END + Strings.AT_LINE + lineNum;
           return;
         }
-
         this.endPointer = [i + 1, lineNum];
         this.instructions[i][2] = true;
-        this.memory.set(this.orgOffset ?? 0, lineNum, CODE_BYTE);
-        this.memory.set((this.orgOffset ?? 0) + 1, lineNum, CODE_BYTE);
-
         // Remove all instructions after END
         this.instructions.splice(i + 1, this.instructions.length - i - 1);
         END_REGEX.lastIndex = 0;
         continue;
       }
 
-      // Check for labels (ends with :)
-      if (instr.charAt(instr.length - 1) === ':') {
-        const label = instr.substring(0, instr.indexOf(':'));
-        if (this.labels[label] !== undefined) {
+      // Check for plain label (ends with : and nothing else)
+      if (instrLower.charAt(instrLower.length - 1) === ':' && instrLower.indexOf(' ') === -1) {
+        const label = instrLower.substring(0, instrLower.indexOf(':'));
+        if (this.labels[label] !== undefined || this.dataAddresses[label] !== undefined) {
           this.exception = Strings.DUPLICATE_LABEL + label;
           return;
         }
@@ -227,57 +330,243 @@ export class Emulator {
         continue;
       }
 
-      // Check for DC.X directive
-      match = DC_REGEX.exec(instr);
-      if (match != null) {
-        const label = instr.substring(0, instr.indexOf(':'));
-        if (this.labels[label] !== undefined) {
-          this.exception = Strings.DUPLICATE_LABEL + label;
-          return;
-        }
+      // Extract optional label prefix for data directives
+      const [label, remainder] = this.extractLabel(instrLower);
 
-        const tmp = instr.substring(instr.indexOf(':') + 1, instr.length - 1).trim();
-        const size = this.parseOpSize(tmp, false);
-        const isString = tmp.indexOf('"') !== -1;
+      // ── DC directive ──
+      if (DC_PATTERN.test(remainder)) {
+        const size = this.parseOpSize(remainder, true);
+        const sizeBytes = this.sizeToBytes(size);
+        const dataStr = remainder.replace(/^dc\.[bwl]\s+/i, '');
+        const startAddr = localOrgOffset ?? 0;
 
-        if (!isString) {
-          const parts = tmp.split(' ');
-          const dataParts = parts[1].split(',');
-          const list: number[] = dataParts.map((p) => parseInt(p));
-
+        if (label) {
+          if (this.labels[label] !== undefined || this.dataAddresses[label] !== undefined) {
+            this.exception = Strings.DUPLICATE_LABEL + label;
+            return;
+          }
+          this.dataAddresses[label] = startAddr;
           this.labels[label] = i;
-          this.instructions[i] = [label + ':', lineNum, true];
+        }
 
-          // Splice elements pushing following lines forward
-          for (let t = 0, j = i + 1; t < list.length; j++, t++) {
-            this.instructions.splice(j, 0, [String(list[t]), lineNum, true]);
+        // Calculate how much space this DC occupies
+        const isString = dataStr.indexOf('"') !== -1 || (dataStr.indexOf("'") !== -1 && dataStr.length > 3);
+        if (isString && size === CODE_BYTE) {
+          // String: extract chars between quotes
+          const strMatch = dataStr.match(/["']([^"']*)["']/);
+          const str = strMatch ? strMatch[1] : '';
+          // Check for trailing values after string, e.g. "Hello",0
+          const afterQuote = dataStr.substring(dataStr.lastIndexOf(dataStr.indexOf('"') !== -1 ? '"' : "'") + 1);
+          const trailingParts = afterQuote.split(',').filter((p) => p.trim().length > 0);
+          const totalBytes = str.length + trailingParts.length;
+          if (localOrgOffset !== undefined) localOrgOffset += totalBytes;
+        } else {
+          const parts = dataStr.split(',');
+          if (localOrgOffset !== undefined) localOrgOffset += parts.length * sizeBytes;
+        }
+
+        this.instructions[i][2] = true;
+        continue;
+      }
+
+      // ── DS directive ──
+      if (DS_PATTERN.test(remainder)) {
+        const size = this.parseOpSize(remainder, true);
+        const sizeBytes = this.sizeToBytes(size);
+        const countStr = remainder.replace(/^ds\.[bwl]\s+/i, '').trim();
+        const count = parseInt(countStr, 10);
+        const startAddr = localOrgOffset ?? 0;
+
+        if (label) {
+          if (this.labels[label] !== undefined || this.dataAddresses[label] !== undefined) {
+            this.exception = Strings.DUPLICATE_LABEL + label;
+            return;
           }
+          this.dataAddresses[label] = startAddr;
+          this.labels[label] = i;
+        }
 
-          const offset = 2 + (list.length * this.typeToSize(size)) / 8;
-          for (let t = 0; t < offset; t++) {
-            this.memory.set((this.orgOffset ?? 0) + t, lineNum, CODE_BYTE);
+        if (!isNaN(count) && count >= 0) {
+          if (localOrgOffset !== undefined) localOrgOffset += count * sizeBytes;
+        }
+
+        this.instructions[i][2] = true;
+        continue;
+      }
+
+      // ── DCB directive ──
+      if (DCB_PATTERN.test(remainder)) {
+        const size = this.parseOpSize(remainder, true);
+        const sizeBytes = this.sizeToBytes(size);
+        const argsStr = remainder.replace(/^dcb\.[bwl]\s+/i, '').trim();
+        const startAddr = localOrgOffset ?? 0;
+
+        if (label) {
+          if (this.labels[label] !== undefined || this.dataAddresses[label] !== undefined) {
+            this.exception = Strings.DUPLICATE_LABEL + label;
+            return;
+          }
+          this.dataAddresses[label] = startAddr;
+          this.labels[label] = i;
+        }
+
+        // Parse count,value
+        const commaIdx = argsStr.indexOf(',');
+        if (commaIdx !== -1) {
+          const count = parseInt(argsStr.substring(0, commaIdx).trim(), 10);
+          if (!isNaN(count) && count >= 0) {
+            if (localOrgOffset !== undefined) localOrgOffset += count * sizeBytes;
           }
         }
-        DC_REGEX.lastIndex = 0;
+
+        this.instructions[i][2] = true;
+        continue;
+      }
+
+      // Regular instruction: advance orgOffset by 4 (instruction size)
+      if (localOrgOffset !== undefined && !this.instructions[i][2]) {
+        localOrgOffset += 4;
+      }
+    }
+
+    // ── Pass 2: write data to memory for DC, DS, DCB ──
+    let memOffset: number | undefined;
+
+    for (let i = 0; i < this.instructions.length; i++) {
+      const instr = this.instructions[i][0];
+      const instrLower = instr.toLowerCase();
+      const lineNum = this.instructions[i][1];
+
+      // Track ORG for memory offset
+      const orgMatch = /^org\s+(?:0x|\$)([0-9a-f]+)/i.exec(instrLower);
+      if (orgMatch) {
+        memOffset = parseInt(orgMatch[1], 16);
+        continue;
+      }
+
+      // Skip non-directives but advance memOffset for regular instructions
+      if (!this.instructions[i][2]) {
+        if (memOffset !== undefined) memOffset += 4;
+        continue;
+      }
+
+      const [, remainderLower] = this.extractLabel(instrLower);
+      const [, remainderOriginal] = this.extractLabel(instr);
+
+      // ── DC: write values to memory ──
+      if (DC_PATTERN.test(remainderLower)) {
+        const size = this.parseOpSize(remainderLower, true);
+        const sizeBytes = this.sizeToBytes(size);
+        const dataStr = remainderOriginal.replace(/^dc\.[bwl]\s+/i, '');
+        const addr = memOffset ?? 0;
+        let offset = 0;
+
+        const isString = dataStr.indexOf('"') !== -1 || (dataStr.indexOf("'") !== -1 && dataStr.length > 3);
+        if (isString && size === CODE_BYTE) {
+          // Parse string content
+          const quoteChar = dataStr.indexOf('"') !== -1 ? '"' : "'";
+          const firstQuote = dataStr.indexOf(quoteChar);
+          const lastQuote = dataStr.indexOf(quoteChar, firstQuote + 1);
+          const str = dataStr.substring(firstQuote + 1, lastQuote);
+
+          // Write each character as a byte
+          for (let c = 0; c < str.length; c++) {
+            this.memory.setByte(addr + offset, str.charCodeAt(c));
+            offset++;
+          }
+
+          // Handle trailing values after string, e.g. "Hello",0
+          const afterQuote = dataStr.substring(lastQuote + 1);
+          const trailingParts = afterQuote.split(',').filter((p) => p.trim().length > 0);
+          for (const part of trailingParts) {
+            const val = this.parseValue(part);
+            if (val !== undefined) {
+              this.memory.setByte(addr + offset, val);
+              offset++;
+            } else {
+              this.errors.push(Strings.INVALID_DC_VALUE + part.trim() + Strings.AT_LINE + lineNum);
+            }
+          }
+        } else {
+          // Numeric value list
+          const parts = dataStr.split(',');
+          for (const part of parts) {
+            const val = this.parseValue(part);
+            if (val !== undefined) {
+              this.writeDataToMemory(addr + offset, val, size);
+              offset += sizeBytes;
+            } else {
+              this.errors.push(Strings.INVALID_DC_VALUE + part.trim() + Strings.AT_LINE + lineNum);
+            }
+          }
+        }
+
+        if (memOffset !== undefined) memOffset += offset;
+        continue;
+      }
+
+      // ── DS: reserve zero-initialized space ──
+      if (DS_PATTERN.test(remainderLower)) {
+        const size = this.parseOpSize(remainderLower, true);
+        const sizeBytes = this.sizeToBytes(size);
+        const countStr = remainderLower.replace(/^ds\.[bwl]\s+/i, '').trim();
+        const count = parseInt(countStr, 10);
+
+        if (isNaN(count) || count < 0) {
+          this.errors.push(Strings.INVALID_DS_COUNT + countStr + Strings.AT_LINE + lineNum);
+          continue;
+        }
+
+        // Memory already returns 0 for unset addresses, but explicitly zero-fill
+        // so addresses appear in the memory map
+        const addr = memOffset ?? 0;
+        const totalBytes = count * sizeBytes;
+        for (let b = 0; b < totalBytes; b++) {
+          this.memory.setByte(addr + b, 0);
+        }
+
+        if (memOffset !== undefined) memOffset += totalBytes;
+        continue;
+      }
+
+      // ── DCB: fill memory with repeated value ──
+      if (DCB_PATTERN.test(remainderLower)) {
+        const size = this.parseOpSize(remainderLower, true);
+        const sizeBytes = this.sizeToBytes(size);
+        const argsStr = remainderOriginal.replace(/^dcb\.[bwl]\s+/i, '').trim();
+        const commaIdx = argsStr.indexOf(',');
+
+        if (commaIdx === -1) {
+          this.errors.push(Strings.INVALID_DCB_SYNTAX + argsStr + Strings.AT_LINE + lineNum);
+          continue;
+        }
+
+        const countStr = argsStr.substring(0, commaIdx).trim();
+        const valueStr = argsStr.substring(commaIdx + 1).trim();
+        const count = parseInt(countStr, 10);
+        const fillValue = this.parseValue(valueStr);
+
+        if (isNaN(count) || count < 0) {
+          this.errors.push(Strings.INVALID_DCB_SYNTAX + countStr + Strings.AT_LINE + lineNum);
+          continue;
+        }
+        if (fillValue === undefined) {
+          this.errors.push(Strings.INVALID_DCB_VALUE + valueStr + Strings.AT_LINE + lineNum);
+          continue;
+        }
+
+        const addr = memOffset ?? 0;
+        for (let n = 0; n < count; n++) {
+          this.writeDataToMemory(addr + n * sizeBytes, fillValue, size);
+        }
+
+        if (memOffset !== undefined) memOffset += count * sizeBytes;
+        continue;
       }
     }
   }
 
-  /**
-   * Convert size code to byte count
-   */
-  private typeToSize(size: number): number {
-    switch (size) {
-      case CODE_LONG:
-        return 32;
-      case CODE_WORD:
-        return 16;
-      case CODE_BYTE:
-        return 8;
-      default:
-        return 16;
-    }
-  }
+
 
   /**
    * Build virtual address map from instruction array.
@@ -563,6 +852,15 @@ export class Emulator {
 
     // Check for label
     if (/^[_a-zA-Z][_a-zA-Z0-9]*$/.test(token)) {
+      // Check if this label refers to a data address (DC/DS/DCB)
+      const lowerToken = token.toLowerCase();
+      const dataKey = Object.keys(this.dataAddresses).find((k) => k.toLowerCase() === lowerToken);
+      if (dataKey !== undefined) {
+        res.value = this.dataAddresses[dataKey];
+        res.type = TOKEN_OFFSET;
+        res.label = token;
+        return res;
+      }
       res.value = 0; // Will be resolved later based on label position
       res.type = TOKEN_LABEL;
       res.label = token; // Store the label name
@@ -1750,7 +2048,13 @@ export class Emulator {
     } else if (op1.type === TOKEN_IMMEDIATE) {
       srcValue = op1.value;
     } else if (op1.type === TOKEN_OFFSET) {
-      srcValue = this.memory.getLong(op1.value);
+      if (size === CODE_LONG) {
+        srcValue = this.memory.getLong(op1.value);
+      } else if (size === CODE_WORD) {
+        srcValue = this.memory.getWord(op1.value);
+      } else {
+        srcValue = this.memory.getByte(op1.value);
+      }
     } else if (op1.type === TOKEN_CCR) {
       srcValue = this.ccr;
     } else if (op1.type === TOKEN_SR) {
@@ -3513,6 +3817,10 @@ export class Emulator {
 
   readLong(address: number): number {
     return this.memory.getLong(address);
+  }
+
+  getDataAddresses(): Record<string, number> {
+    return { ...this.dataAddresses };
   }
 
   getCCR(): number {
