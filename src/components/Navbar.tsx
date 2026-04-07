@@ -6,10 +6,10 @@ import {
   faRedo,
   faStop,
   faLightbulb,
-  faRotateLeft,
   faQuestionCircle,
   faFlag,
   faMemory,
+  faRefresh,
 } from '@fortawesome/free-solid-svg-icons';
 import GitHubButton from 'react-github-btn';
 import { useEmulatorStore } from '@/stores/emulatorStore';
@@ -98,7 +98,7 @@ const Navbar: React.FC<NavbarProps> = ({
           <FontAwesomeIcon icon={faUndo} size="lg" />
         </button>
         <button className="btn-command" onClick={onResetEditor} title="Reset editor">
-          <FontAwesomeIcon icon={faRotateLeft} size="lg" />
+          <FontAwesomeIcon icon={faRefresh} size="lg" />
         </button>
         <div className="examples-menu" ref={menuRef}>
           <button
