@@ -61,4 +61,8 @@ todo.md
 
 plan.md
 article.md
-examples/
+examples/ultimate_test.asm
+examples/logic_shift_bit.asm
+examples/data_movement.asm
+examples/arithmetic2.asm
+examples/arithmetic.asm
