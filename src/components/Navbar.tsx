@@ -5,6 +5,8 @@ import {
   faUndo,
   faRedo,
   faStop,
+  faLightbulb,
+  faRotateLeft,
   faQuestionCircle,
   faFlag,
   faMemory,
@@ -15,10 +17,43 @@ import { useEmulatorStore } from '@/stores/emulatorStore';
 interface NavbarProps {
   onToggleMemory: () => void;
   showMemory: boolean;
+  examples: Array<{ id: string; label: string; content: string }>;
+  onSelectExample: (content: string) => void;
+  onResetEditor: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onToggleMemory, showMemory }) => {
+const Navbar: React.FC<NavbarProps> = ({
+  onToggleMemory,
+  showMemory,
+  examples,
+  onSelectExample,
+  onResetEditor,
+}) => {
   const { reset } = useEmulatorStore();
+  const [isExampleMenuOpen, setIsExampleMenuOpen] = React.useState<boolean>(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent): void => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsExampleMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        setIsExampleMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
 
   const handleRun = (): void => {
     // Trigger run in emulator
@@ -42,6 +77,11 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleMemory, showMemory }) => {
     window.dispatchEvent(new CustomEvent('emulator:showflags'));
   };
 
+  const handleExampleSelect = (content: string): void => {
+    onSelectExample(content);
+    setIsExampleMenuOpen(false);
+  };
+
   return (
     <nav className="navbar">
       <div className="navbar-commands">
@@ -57,6 +97,34 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleMemory, showMemory }) => {
         <button className="btn-command" onClick={handleUndo} title="Undo">
           <FontAwesomeIcon icon={faUndo} size="lg" />
         </button>
+        <button className="btn-command" onClick={onResetEditor} title="Reset editor">
+          <FontAwesomeIcon icon={faRotateLeft} size="lg" />
+        </button>
+        <div className="examples-menu" ref={menuRef}>
+          <button
+            className="btn-command examples-toggle"
+            onClick={() => setIsExampleMenuOpen((prev) => !prev)}
+            title="Load example"
+            aria-expanded={isExampleMenuOpen}
+            aria-haspopup="menu"
+          >
+            <FontAwesomeIcon icon={faLightbulb} size="lg" />
+          </button>
+          {isExampleMenuOpen && (
+            <div className="examples-dropdown" role="menu" aria-label="Example list">
+              {examples.map((example) => (
+                <button
+                  key={example.id}
+                  className="examples-option"
+                  onClick={() => handleExampleSelect(example.content)}
+                  role="menuitem"
+                >
+                  {example.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <h1 className="navbar-title">

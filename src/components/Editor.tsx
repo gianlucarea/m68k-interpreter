@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-const Editor: React.FC = () => {
-  const [code, setCode] = useState<string>(`ORG $1000
-  * Write your M68K assembly code here
-  * Your code goes here
-END`);
+interface EditorProps {
+  code: string;
+  onCodeChange: (code: string) => void;
+}
 
+const Editor: React.FC<EditorProps> = ({ code, onCodeChange }) => {
   const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
-    setCode(e.target.value);
-    // Store code globally for emulator access
-    (window as unknown as Record<string, string>).editorCode = e.target.value;
+    onCodeChange(e.target.value);
   };
 
   React.useEffect(() => {
