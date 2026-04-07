@@ -58,7 +58,7 @@
     "prettier": "^3.1.1",
     "terser": "^5.46.0",
     "typescript": "^5.3.3",
-    "vite": "^7.3.1",
+    "vite": "^7.3.2",
     "vitest": "^4.0.0"
   },
   "overrides": {
