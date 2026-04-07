@@ -198,6 +198,48 @@ button {
   transform: translateY(0);
 }
 
+.examples-menu {
+  position: relative;
+}
+
+.examples-toggle {
+  white-space: nowrap;
+}
+
+.examples-dropdown {
+  position: absolute;
+  top: calc(100% + var(--spacing-xs));
+  left: 0;
+  min-width: 220px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 30;
+  overflow: hidden;
+}
+
+.examples-option {
+  width: 100%;
+  background: transparent;
+  color: var(--text-color);
+  text-align: left;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 14px;
+}
+
+.examples-option:last-child {
+  border-bottom: none;
+}
+
+.examples-option:hover,
+.examples-option:focus-visible {
+  background: var(--background-color);
+  outline: none;
+}
+
 .btn-download {
   padding: var(--spacing-sm) var(--spacing-md);
   background-color: var(--success-color);
