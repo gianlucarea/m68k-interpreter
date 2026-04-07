@@ -2064,7 +2064,10 @@ export class Emulator {
       if (op1.offset === -0x1) {
         this.registers[op1.value] -= incrementSize;
       }
-      const addr = this.registers[op1.value];
+      let addr = this.registers[op1.value];
+      if (op1.offset !== undefined && op1.offset !== -0x1 && op1.offset !== 0x1) {
+        addr += op1.offset;
+      }
       if (size === CODE_LONG) {
         srcValue = this.memory.getLong(addr);
       } else if (size === CODE_WORD) {
@@ -2099,7 +2102,10 @@ export class Emulator {
       if (op2.offset === -0x1) {
         this.registers[op2.value] -= incrementSize;
       }
-      const addr = this.registers[op2.value];
+      let addr = this.registers[op2.value];
+      if (op2.offset !== undefined && op2.offset !== -0x1 && op2.offset !== 0x1) {
+        addr += op2.offset;
+      }
 
       if (size === CODE_LONG) {
         this.memory.setLong(addr, srcValue);
