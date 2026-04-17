@@ -325,6 +325,24 @@ textarea {
   border: 1px solid var(--border-color);
 }
 
+.editor-ace {
+  flex: 1;
+  min-height: 260px;
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.editor-ace .ace_gutter {
+  background: #eef1f5;
+  color: #5a6470;
+}
+
+.editor-ace .ace_scroller {
+  background: #f8f9fa;
+}
+
 /* ============================================
    Registers Component
    ============================================ */
@@ -677,6 +695,10 @@ textarea {
 
   .registers-table input {
     font-size: 11px;
+  }
+
+  .editor-ace {
+    min-height: 220px;
   }
 }
 
