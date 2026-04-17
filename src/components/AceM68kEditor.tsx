@@ -1,6 +1,6 @@
 import React from 'react';
 import ace from 'ace-builds/src-noconflict/ace';
-import 'ace-builds/src-noconflict/theme-textmate';
+import 'ace-builds/src-noconflict/theme-github';
 import { registerM68kMode } from '@/editor/m68kAceMode';
 
 interface AceM68kEditorProps {
@@ -40,7 +40,7 @@ const AceM68kEditor: React.FC<AceM68kEditorProps> = ({ value, onChange }) => {
 
     const editor = aceRuntime.edit(hostRef.current, {
       mode: 'ace/mode/m68k',
-      theme: 'ace/theme/textmate',
+      theme: 'ace/theme/github',
       fontSize: 13,
       showGutter: true,
       showPrintMargin: false,
