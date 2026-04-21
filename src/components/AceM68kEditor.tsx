@@ -1,11 +1,13 @@
 import React from 'react';
 import ace from 'ace-builds/src-noconflict/ace';
 import 'ace-builds/src-noconflict/theme-github';
+import 'ace-builds/src-noconflict/theme-dracula';
 import { registerM68kMode } from '@/editor/m68kAceMode';
 
 interface AceM68kEditorProps {
   value: string;
   onChange: (code: string) => void;
+  theme: 'light' | 'dark';
 }
 
 interface AceEditorInstance {
@@ -19,6 +21,7 @@ interface AceEditorInstance {
   getCursorPosition: () => { row: number; column: number };
   moveCursorToPosition: (position: { row: number; column: number }) => void;
   clearSelection: () => void;
+  setTheme: (themePath: string) => void;
   destroy: () => void;
 }
 
@@ -26,7 +29,7 @@ interface AceRuntime {
   edit: (element: HTMLElement, options: Record<string, unknown>) => unknown;
 }
 
-const AceM68kEditor: React.FC<AceM68kEditorProps> = ({ value, onChange }) => {
+const AceM68kEditor: React.FC<AceM68kEditorProps> = ({ value, onChange, theme }) => {
   const hostRef = React.useRef<HTMLDivElement | null>(null);
   const editorRef = React.useRef<AceEditorInstance | null>(null);
 
@@ -63,6 +66,15 @@ const AceM68kEditor: React.FC<AceM68kEditorProps> = ({ value, onChange }) => {
       editorRef.current = null;
     };
   }, [onChange]);
+
+  React.useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) {
+      return;
+    }
+
+    editor.setTheme(theme === 'dark' ? 'ace/theme/dracula' : 'ace/theme/github');
+  }, [theme]);
 
   React.useEffect(() => {
     const editor = editorRef.current;

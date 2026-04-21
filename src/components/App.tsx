@@ -1,7 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import Navbar from './Navbar';
-import Editor from './Editor';
 import Registers from './Registers';
 import Output from './Output';
 import Memory from './Memory';
@@ -28,9 +27,21 @@ const formatExampleLabel = (fileName: string): string =>
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
 
+  const Editor = React.lazy(async () => import('./Editor'));
+
+type AppTheme = 'light' | 'dark';
+
+const THEME_STORAGE_KEY = 'm68k-theme';
+
+const getInitialTheme = (): AppTheme => {
+  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+  return storedTheme === 'dark' ? 'dark' : 'light';
+};
+
 const App: React.FC = () => {
   const [showRegisters, setShowRegisters] = useState<boolean>(true);
   const [editorCode, setEditorCode] = useState<string>(INITIAL_EDITOR_CODE);
+  const [theme, setTheme] = useState<AppTheme>(getInitialTheme);
   const { showFlags } = useEmulatorStore();
 
   const examples = useMemo<ExampleOption[]>(() => {
@@ -67,6 +78,15 @@ const App: React.FC = () => {
     setEditorCode(INITIAL_EDITOR_CODE);
   };
 
+  const toggleTheme = (): void => {
+    setTheme((previousTheme) => (previousTheme === 'dark' ? 'light' : 'dark'));
+  };
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
+
   return (
     <div className="app-container">
       <Navbar
@@ -75,10 +95,14 @@ const App: React.FC = () => {
         examples={examples}
         onSelectExample={handleExampleSelect}
         onResetEditor={handleResetEditor}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
       <main className="main-content">
         <div className="editor-registers-section">
-          <Editor code={editorCode} onCodeChange={setEditorCode} />
+          <Suspense fallback={<div className="editor-loading">Loading editor...</div>}>
+            <Editor code={editorCode} onCodeChange={setEditorCode} theme={theme} />
+          </Suspense>
           <Output />
         </div>
         <div className="output-memory-section">

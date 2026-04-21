@@ -15,8 +15,26 @@ export default defineConfig({
     minify: 'terser',
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
+        manualChunks(id) {
+          if (id.includes('node_modules/ace-builds')) {
+            return 'ace-editor';
+          }
+
+          if (id.includes('node_modules/@fortawesome')) {
+            return 'fontawesome';
+          }
+
+          if (id.includes('node_modules/react-github-btn')) {
+            return 'github-button';
+          }
+
+          if (id.includes('node_modules/zustand')) {
+            return 'state';
+          }
+
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'vendor';
+          }
         },
       },
     },

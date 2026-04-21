@@ -3,19 +3,24 @@
    ============================================ */
 
 :root {
-  --primary-color: #007bff;
-  --secondary-color: #6c757d;
-  --background-color: #f5f5f5;
-  --surface-color: #ffffff;
-  --text-color: #212529;
-  --text-secondary: #6c757d;
-  --border-color: #dee2e6;
-  --success-color: #28a745;
-  --danger-color: #dc3545;
-  --warning-color: #ffc107;
-  --info-color: #17a2b8;
-  --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --primary-color: #6953b6;
+  --secondary-color: #6272a4;
+  --background-color: #f4f0ff;
+  --surface-color: #fdfcff;
+  --surface-alt-color: #ebe6ff;
+  --text-color: #2f2a4a;
+  --text-secondary: #5c5e85;
+  --border-color: #d8cff8;
+  --success-color: #2d9f72;
+  --danger-color: #d24f75;
+  --warning-color: #c08a1b;
+  --info-color: #377ec2;
+  --flag-set-bg: #e7f6ec;
+  --flag-clear-bg: #fdecee;
+  --flag-set-text: #1f7a44;
+  --flag-clear-text: #b73939;
+  --shadow: 0 10px 24px rgba(42, 28, 82, 0.08);
+  --shadow-lg: 0 16px 32px rgba(42, 28, 82, 0.15);
 
   --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
     'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
@@ -29,6 +34,27 @@
 
   --border-radius: 6px;
   --transition: all 0.3s ease;
+}
+
+:root[data-theme='dark'] {
+  --primary-color: #bd93f9;
+  --secondary-color: #6272a4;
+  --background-color: #282a36;
+  --surface-color: #313445;
+  --surface-alt-color: #383a59;
+  --text-color: #f8f8f2;
+  --text-secondary: #c5c8e0;
+  --border-color: #4b4f72;
+  --success-color: #50fa7b;
+  --danger-color: #ff5555;
+  --warning-color: #ffb86c;
+  --info-color: #8be9fd;
+  --flag-set-bg: #224435;
+  --flag-clear-bg: #4c2d36;
+  --flag-set-text: #8af6ad;
+  --flag-clear-text: #ff9db0;
+  --shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 16px 34px rgba(0, 0, 0, 0.42);
 }
 
 * {
@@ -188,7 +214,7 @@ button {
 
 .btn-command:hover,
 .btn-tool:hover {
-  background-color: #0056b3;
+  filter: brightness(0.92);
   transform: translateY(-1px);
   box-shadow: var(--shadow-lg);
 }
@@ -236,7 +262,7 @@ button {
 
 .examples-option:hover,
 .examples-option:focus-visible {
-  background: var(--background-color);
+  background: var(--surface-alt-color);
   outline: none;
 }
 
@@ -265,6 +291,8 @@ select {
   padding: var(--spacing-sm);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
+  background-color: var(--surface-color);
+  color: var(--text-color);
   font-family: inherit;
   font-size: 14px;
   transition: var(--transition);
@@ -276,7 +304,7 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 28%, transparent);
 }
 
 textarea {
@@ -321,7 +349,7 @@ textarea {
   flex: 1;
   font-size: 13px;
   line-height: 1.6;
-  background-color: #f8f9fa;
+  background-color: var(--surface-alt-color);
   border: 1px solid var(--border-color);
 }
 
@@ -335,12 +363,24 @@ textarea {
 }
 
 .editor-ace .ace_gutter {
-  background: #eef1f5;
-  color: #5a6470;
+  background: color-mix(in srgb, var(--surface-alt-color) 85%, var(--surface-color));
+  color: var(--text-secondary);
 }
 
 .editor-ace .ace_scroller {
-  background: #f8f9fa;
+  background: var(--surface-alt-color);
+}
+
+.editor-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--surface-alt-color);
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 /* ============================================
@@ -395,7 +435,7 @@ textarea {
 }
 
 .registers-table thead {
-  background-color: #f8f9fa;
+  background-color: var(--surface-alt-color);
   border-bottom: 2px solid var(--border-color);
   position: sticky;
   top: 0;
@@ -414,7 +454,7 @@ textarea {
 }
 
 .registers-table tr:hover {
-  background-color: #f8f9fa;
+  background-color: var(--surface-alt-color);
 }
 
 .registers-table input {
@@ -454,7 +494,7 @@ textarea {
 
 .last-instruction {
   padding: var(--spacing-md);
-  background-color: #f8f9fa;
+  background-color: color-mix(in srgb, var(--info-color) 16%, var(--surface-color));
   border-left: 4px solid var(--info-color);
   border-radius: 4px;
 }
@@ -484,7 +524,7 @@ textarea {
 
 .errors-section {
   padding: var(--spacing-md);
-  background-color: #fff3cd;
+  background-color: color-mix(in srgb, var(--warning-color) 20%, var(--surface-color));
   border-left: 4px solid var(--warning-color);
   border-radius: 4px;
 }
@@ -503,12 +543,12 @@ textarea {
 .error-list li {
   padding: 4px 0;
   font-size: 12px;
-  color: #856404;
+  color: var(--text-color);
 }
 
 .exception-section {
   padding: var(--spacing-md);
-  background-color: #f8d7da;
+  background-color: color-mix(in srgb, var(--danger-color) 20%, var(--surface-color));
   border-left: 4px solid var(--danger-color);
   border-radius: 4px;
 }
@@ -522,14 +562,14 @@ textarea {
   margin: 0;
   font-family: var(--font-monospace);
   font-size: 12px;
-  color: #721c24;
+  color: var(--text-color);
 }
 
 .execution-status {
   display: flex;
   justify-content: center;
   padding: var(--spacing-md);
-  background-color: #f0f0f0;
+  background-color: var(--surface-alt-color);
   border-radius: 4px;
 }
 
@@ -590,7 +630,7 @@ textarea {
 }
 
 .memory-table thead {
-  background-color: #f8f9fa;
+  background-color: var(--surface-alt-color);
   border-bottom: 2px solid var(--border-color);
   position: sticky;
   top: 0;
@@ -607,15 +647,15 @@ textarea {
   padding: 4px 6px;
   text-align: center;
   border: 1px solid var(--border-color);
-  background-color: white;
+  background-color: var(--surface-color);
 }
 
 .memory-table tbody tr:hover {
-  background-color: #f8f9fa;
+  background-color: var(--surface-alt-color);
 }
 
 .addr-cell {
-  background-color: #f8f9fa;
+  background-color: var(--surface-alt-color);
   font-weight: 600;
   border-right: 2px solid var(--border-color);
 }
@@ -626,7 +666,7 @@ textarea {
 }
 
 .mem-cell:hover {
-  background-color: #e7f3ff;
+  background-color: color-mix(in srgb, var(--primary-color) 18%, var(--surface-color));
   color: var(--primary-color);
 }
 
@@ -785,11 +825,11 @@ textarea {
 }
 
 .flags-container .registers-table tr.flag-set {
-  background-color: #e8f5e9;
+  background-color: var(--flag-set-bg);
 }
 
 .flags-container .registers-table tr.flag-clear {
-  background-color: #ffebee;
+  background-color: var(--flag-clear-bg);
 }
 
 .flag-name {
@@ -804,19 +844,19 @@ textarea {
 }
 
 .flags-container tr.flag-set .flag-value {
-  color: #2e7d32;
+  color: var(--flag-set-text);
 }
 
 .flags-container tr.flag-clear .flag-value {
-  color: #c62828;
+  color: var(--flag-clear-text);
 }
 
 .ccr-hex {
-  background-color: #f5f5f5;
+  background-color: var(--surface-alt-color);
   padding: var(--spacing-md);
   border-radius: var(--border-radius);
   text-align: center;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-monospace);
   border: 1px solid var(--border-color);
 }
 

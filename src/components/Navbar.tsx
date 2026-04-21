@@ -10,9 +10,13 @@ import {
   faFlag,
   faMemory,
   faRefresh,
+  faMoon,
+  faSun,
 } from '@fortawesome/free-solid-svg-icons';
 import GitHubButton from 'react-github-btn';
 import { useEmulatorStore } from '@/stores/emulatorStore';
+
+type AppTheme = 'light' | 'dark';
 
 interface NavbarProps {
   onToggleMemory: () => void;
@@ -20,6 +24,8 @@ interface NavbarProps {
   examples: Array<{ id: string; label: string; content: string }>;
   onSelectExample: (content: string) => void;
   onResetEditor: () => void;
+  theme: AppTheme;
+  onToggleTheme: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -28,6 +34,8 @@ const Navbar: React.FC<NavbarProps> = ({
   examples,
   onSelectExample,
   onResetEditor,
+  theme,
+  onToggleTheme,
 }) => {
   const { reset } = useEmulatorStore();
   const [isExampleMenuOpen, setIsExampleMenuOpen] = React.useState<boolean>(false);
@@ -132,7 +140,11 @@ const Navbar: React.FC<NavbarProps> = ({
         <div className="navbar-github-btn">
           <GitHubButton
             href="https://github.com/gianlucarea/m68k-interpreter"
-            data-color-scheme="no-preference: light; light: light; dark: dark;"
+            data-color-scheme={
+              theme === 'dark'
+                ? 'no-preference: dark; light: dark; dark: dark;'
+                : 'no-preference: light; light: light; dark: light;'
+            }
             data-icon="octicon-star"
             data-size="large"
             data-show-count="true"
@@ -144,6 +156,14 @@ const Navbar: React.FC<NavbarProps> = ({
       </h1>
 
       <div className="navbar-tools">
+        <button
+          className="btn-tool"
+          title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          onClick={onToggleTheme}
+          aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+        >
+          <FontAwesomeIcon icon={theme === 'dark' ? faSun : faMoon} size="lg" />
+        </button>
         <button className="btn-tool" id="showFlag" title="Show flags" onClick={handleShowFlags}>
           <FontAwesomeIcon icon={faFlag} size="lg" />
         </button>
