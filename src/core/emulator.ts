@@ -3271,8 +3271,8 @@ export class Emulator {
     }
   }
 
-  private dbf(op: Operand, _label: string): void {
-    // DBF: Decrement and Branch Never (always decrement, never branch)
+private dbf(op: Operand, label: string): void {
+    // DBF (ou DBRA): Decrement and Branch if False
     if (op === undefined || op.type !== TOKEN_REG_DATA) {
       this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
       return;
@@ -3282,25 +3282,17 @@ export class Emulator {
     let value = this.registers[regIndex] & 0xFFFF;
     value = (value - 1) & 0xFFFF;
     this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
-    
-    // Never branch, just decrement
-  }
 
-  private dbt(op: Operand, label: string): void {
-    // DBT: Decrement and Branch Always (always decrement and branch if Dn != -1)
-    if (op === undefined || op.type !== TOKEN_REG_DATA) {
-      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
-      return;
-    }
-    
-    const regIndex = op.value;
-    let value = this.registers[regIndex] & 0xFFFF;
-    value = (value - 1) & 0xFFFF;
-    this.registers[regIndex] = (this.registers[regIndex] & 0xFFFF0000) | value;
-    
-    // Always branch if counter != -1 (0xFFFF)
     if (value !== 0xFFFF) {
       this.bra(label);
+    }
+  }
+
+  private dbt(op: Operand, _label: string): void {
+    // DBT: Decrement and Branch if True
+    if (op === undefined || op.type !== TOKEN_REG_DATA) {
+      this.errors.push('operand must be a data register ' + Strings.AT_LINE + this.line);
+      return;
     }
   }
 
