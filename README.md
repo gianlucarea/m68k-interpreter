@@ -1,20 +1,45 @@
 # m68k-interpreter
 
-A Motorola 68000 assembly emulator that runs entirely in the browser.  
-Write, step through, and debug m68k assembly — no installation needed.
+**Rebuilt a Motorola 68000 emulator with 50+ instructions — runs entirely in the browser, no install.**
+
+A fully-featured m68k assembly IDE for learning computer architecture. Write, step through, debug, and inspect register state — all without leaving your browser.
 
 **[→ Live demo](https://gianlucarea.dev/m68k-interpreter/)**
 
 [![CI Pipeline](https://github.com/gianlucarea/m68k-interpreter/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/gianlucarea/m68k-interpreter/actions)
 [![codecov](https://codecov.io/gh/gianlucarea/m68k-interpreter/branch/main/graph/badge.svg)](https://codecov.io/gh/gianlucarea/m68k-interpreter)
 
----
+## Quick Start
 
-## Why this exists
+```bash
+git clone https://github.com/gianlucarea/m68k-interpreter.git
+cd m68k-interpreter
+npm install
+npm run dev
+```
 
-[Easy68K](http://www.easy68k.com/) is the standard tool for learning m68k assembly in university courses. It's Windows-only, requires installation, and hasn't been updated in years. This runs in any browser, on any OS, with zero setup.
+Then open [http://localhost:3000](http://localhost:3000) and start coding.
 
----
+## Demo
+
+![m68k-interpreter interface](./demo.gif)
+
+*Step through assembly code with live register inspection, memory viewer, and detailed error reporting.*
+
+## Table of Contents
+
+- [Why This Exists](#why-this-exists)
+- [Features](#features)
+- [Architecture & Design](#architecture--design)
+- [Supported Instructions](#supported-instructions)
+- [Examples](#examples)
+- [For Educators](#for-educators)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Why This Exists
+
+[Easy68K](http://www.easy68k.com/) is the standard tool for learning m68k assembly in university courses. It's Windows-only, requires installation, and hasn't been updated in years. This runs in any browser, on any OS, with zero setup — ideal for educators and students.
 
 ## Features
 
@@ -35,8 +60,6 @@ Write, step through, and debug m68k assembly — no installation needed.
 **Program control & branching** — `BRA` `BSR` `Bcc` (`BHI` `BLS` `BCC` `BCS` `BNE` `BEQ` `BVC` `BVS` `BPL` `BMI` `BGE` `BLT` `BGT` `BLE`) `DBcc` (`DBHI` `DBLS` `DBCC` `DBCS` `DBNE` `DBEQ` `DBVC` `DBVS` `DBPL` `DBMI` `DBGE` `DBLT` `DBGT` `DBLE` `DBF` `DBT`) `Scc` (`SHI` `SLS` `SCC` `SCS` `SNE` `SEQ` `SVC` `SVS` `SPL` `SMI` `SGE` `SLT` `SGT` `SLE` `SF` `ST`) `JMP` `JSR` `RTS` `RTR` `RTD`  
 **System control & exceptions** — `RESET` `NOP` `STOP` `RTE` `TRAP` `TRAPV` `CHK` `LINK` `UNLK` `MOVE to SR` `MOVE from SR` `ORI to SR` `ANDI to SR` `EORI to SR` `TAS`
 
----
-<!-- 
 ## Examples
 
 The [`examples/`](./examples) folder contains annotated programs to get started:
@@ -51,43 +74,39 @@ The [`examples/`](./examples) folder contains annotated programs to get started:
 | `loop_counter.asm` | DBRA countdown loop |
 
 Each file is commented line by line — useful if you are following a computer architecture course.
---- 
--->
 
-## Built with
-
-React 18 · TypeScript · Vite 5 · Zustand · Vitest
-
----
-
-## Run locally
-
-```bash
-git clone https://github.com/gianlucarea/m68k-interpreter.git
-cd m68k-interpreter
-npm install
-npm run dev
-```
+## Development
 
 ```bash
 npm run build        # production build
 npm run test         # run tests
+npm run test:ui      # vitest UI
+npm run test:coverage # coverage report
 npm run lint:fix     # lint and format
+npm run type-check   # check TypeScript
 ```
 
----
+## Architecture & Design
 
-## For educators
+**Tech Stack:** React 18, TypeScript, Vite 5, Zustand (state), Vitest
+
+**Key Design Decisions:**
+
+- **Zero-Dependency CPU Core:** Instead of using an external emulation library, the entire m68k CPU and instruction set is hand-implemented in TypeScript. This keeps the bundle lean and gives full transparency into how the emulator works — valuable for education.
+
+- **Register State Management:** Zustand manages CPU state (registers, memory, program counter, flags). React re-renders only changed registers, keeping the UI responsive even with large memory states.
+
+- **Instruction-by-Instruction Execution:** Full undo/redo history powered by immutable state snapshots. Each step is reversible, making debugging and learning faster.
+
+- **Custom Parser:** Hand-rolled m68k assembly parser with precise error reporting and line context — no external grammar tools.
+
+## For Educators
 
 If you teach a course that uses Easy68K, this works as a drop-in browser-based alternative — no student setup required. If you use it in your course and want it listed here, open an issue or send an email.
-
----
 
 ## Acknowledgments
 
 Special thanks to [MarkeyJester's Motorola 68000 Beginner's Tutorial](https://mrjester.hapisan.com/04_MC68/Index.html) — an excellent reference for instruction behavior, cycle times, and assembly fundamentals that informed this implementation.
-
----
 
 ## Contributing
 
