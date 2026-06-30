@@ -26,6 +26,7 @@ ADD_VALUES:
     RTS
 
 STACK_DONE:
-    BRA     STACK_DONE
+    BRA     END
 
+END:
     END     START
