@@ -4,6 +4,8 @@
 
 A fully-featured m68k assembly IDE for learning computer architecture. Write, step through, debug, and inspect register state — all without leaving your browser.
 
+**NOTE:** This project will be in maintenance mode during the summer of 2026 as I focus on other projects and learning paths. While I may continue to make small improvements, the project will not be actively developed until September 2026, when I hope to return to it and fix any remaining bugs. If you are interested in contributing, please reach out, open a [GitHub issue](https://github.com/gianlucarea/m68k-interpreter/issues) or submit a pull request.
+
 **[→ Live demo](https://gianlucarea.dev/m68k-interpreter/)**
 
 [![CI Pipeline](https://github.com/gianlucarea/m68k-interpreter/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/gianlucarea/m68k-interpreter/actions)
