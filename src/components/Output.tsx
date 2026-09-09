@@ -9,9 +9,14 @@ const Output: React.FC = () => {
   return (
     <div className="output-container">
       <div className="output-section">
-        <div className="last-instruction">
+        <div className="instruction-box">
           <h4>Last Instruction</h4>
           <p>{executionState.lastInstruction}</p>
+        </div>
+
+        <div className="instruction-box">
+          <h4>Next Instruction</h4>
+          <p>{executionState.nextInstruction ?? '—'}</p>
         </div>
 
         <div className="delay-control">

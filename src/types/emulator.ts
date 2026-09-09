@@ -46,6 +46,7 @@ export interface ExecutionState {
   ended: boolean;
   stopped: boolean;
   lastInstruction: string;
+  nextInstruction: string | null;
   exception: string | null;
   errors: string[];
   currentLine: number;
@@ -91,6 +92,7 @@ export interface Emulator {
   reset(): void;
   undo(): void;
   getLastInstruction(): string;
+  getNextInstruction(): string | null;
   getErrors(): string[];
   getException(): string | null;
 }
