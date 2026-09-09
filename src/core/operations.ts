@@ -14,146 +14,62 @@ export const MSB_BYTE_MASK = 0x80;
 export const MSB_WORD_MASK = 0x8000;
 export const MSB_LONG_MASK = 0x80000000;
 
-function addCCR(
-  positive: boolean,
-  negative: boolean,
-  fullRes: number,
-  result: number,
+function arithmeticOP(
+  src: number,
+  dest: number,
   ccr: number,
-  mask: number
-): number {
-  // Overflow
-  if (positive && result < 0) ccr = (ccr | 0x02) >>> 0;
-  // Positive + positive can't be negative
-  else if (negative && result > 0) ccr = (ccr | 0x02) >>> 0;
-  // Negative + negative can't be positive
-  else ccr = (ccr & 0xfd) >>> 0;
-
-  // Carry
-  if (((fullRes & ~mask) >>> 0) !== 0) ccr = (ccr | 0x01) >>> 0;
-  else ccr = (ccr & 0xfe) >>> 0;
-
-  // Zero
-  if (result === 0) ccr = (ccr | 0x04) >>> 0;
-  else ccr = (ccr & 0xfb) >>> 0;
-
-  // Negative
-  if (result < 0) ccr = (ccr | 0x08) >>> 0;
-  else ccr = (ccr & 0xf7) >>> 0;
-
-  // Extended
-  if (((fullRes & ~mask) >>> 0) !== 0) ccr = (ccr | 0x10) >>> 0;
-  else ccr = (ccr & 0xef) >>> 0;
-
-  return ccr;
-}
-
-function addWord(src: number, dest: number, ccr: number, isSub: boolean): [number, number] {
-  let aux = dest;
-
-  // need signed 16 bits dest and src for positive and negative testing
-  const dest16 = new Int16Array(1);
-  dest16[0] = dest & WORD_MASK;
-  const src16 = new Int16Array(1);
-  src16[0] = src & WORD_MASK;
-
-  const positive = dest16[0] > 0 && src16[0] >= 0;
-  const negative = dest16[0] < 0 && src16[0] < 0;
-
-  aux = (aux & ~WORD_MASK) >>> 0; // Save the 16 leftmost bits of the register
-  dest = (dest & WORD_MASK) >>> 0; // Extract the 16 rightmost bits from destination
-
-  if (isSub) dest -= (src & WORD_MASK) >>> 0;
-  else dest += (src & WORD_MASK) >>> 0;
-
-  // Force 16 bit signed type on the 16 rightmost bits of the result
-  const result = new Int16Array(1);
-  result[0] = dest & WORD_MASK;
-
-  // Update CCR
-  ccr = addCCR(positive, negative, dest, result[0], ccr, WORD_MASK);
-
-  dest = (dest & WORD_MASK) >>> 0; // Trim again to 16
-  aux += dest; // Sum it to aux that contained the 16 leftmost bits of dest (32 bit sum)
-  return [aux, ccr];
-}
-
-function addByte(src: number, dest: number, ccr: number, isSub: boolean): [number, number] {
-  let aux = dest;
-
-  // need signed 8 bits dest and src for positive and negative testing
-  const dest8 = new Int8Array(1);
-  dest8[0] = dest & BYTE_MASK;
-  const src8 = new Int8Array(1);
-  src8[0] = src & BYTE_MASK;
-
-  const positive = dest8[0] > 0 && src8[0] > 0;
-  const negative = dest8[0] < 0 && src8[0] < 0;
-
-  aux = (aux & ~BYTE_MASK) >>> 0; // Save the 8 leftmost bits
-  dest = (dest & BYTE_MASK) >>> 0; // Extract 8 rightmost bits
-
-  if (isSub) dest -= (src & BYTE_MASK) >>> 0;
-  else dest += (src & BYTE_MASK) >>> 0;
-
-  // Force 8 bit signed type on the result
-  const result = new Int8Array(1);
-  result[0] = dest & BYTE_MASK;
-
-  // Update CCR
-  ccr = addCCR(positive, negative, dest, result[0], ccr, BYTE_MASK);
-
-  dest = (dest & BYTE_MASK) >>> 0; // Trim again to 8
-  aux += dest;
-  return [aux, ccr];
-}
-
-function addLong(src: number, dest: number, ccr: number, isSub: boolean): [number, number] {
-  const positive = (dest | 0) > 0 && (src | 0) > 0;
-  const negative = (dest | 0) < 0 && (src | 0) < 0;
-
-  if (isSub) dest -= src;
-  else dest += src;
-
-  const carry = dest > 0xffffffff;
-  dest = dest | 0;
-
-  if (positive && dest < 0) ccr = (ccr | 0x02) >>> 0;
-  // Positive + positive can't be negative
-  else if (negative && dest > 0) ccr = (ccr | 0x02) >>> 0;
-  // Negative + negative can't be positive
-  else ccr = (ccr & 0xfd) >>> 0;
-
-  // Carry
-  if (carry) ccr = (ccr | 0x01) >>> 0;
-  else ccr = (ccr & 0xfe) >>> 0;
-
-  // Zero
-  if (dest === 0) ccr = (ccr | 0x04) >>> 0;
-  else ccr = (ccr & 0xfb) >>> 0;
-
-  // Negative
-  if (dest < 0) ccr = (ccr | 0x08) >>> 0;
-  else ccr = (ccr & 0xf7) >>> 0;
-
-  // Extended
-  if (carry) ccr = (ccr | 0x10) >>> 0;
-  else ccr = (ccr & 0xef) >>> 0;
-
-  return [dest, ccr];
-}
-
-export function addOP(src: number, dest: number, ccr: number, size: number, isSub: boolean): [number, number] {
+  size: number,
+  isSub: boolean,
+  extended = false
+): [number, number] {
+  let mask: number;
+  let signBit: number;
   switch (size) {
-    case CODE_LONG:
-      return addLong(src, dest, ccr, isSub);
-    case CODE_WORD:
-      return addWord(src, dest, ccr, isSub);
     case CODE_BYTE:
-      return addByte(src, dest, ccr, isSub);
+      mask = BYTE_MASK;
+      signBit = MSB_BYTE_MASK;
+      break;
+    case CODE_WORD:
+      mask = WORD_MASK;
+      signBit = MSB_WORD_MASK;
+      break;
+    case CODE_LONG:
+      mask = LONG_MASK;
+      signBit = MSB_LONG_MASK;
+      break;
     default:
       throw new Error('Invalid size');
   }
+
+  const source = (src & mask) >>> 0;
+  const destination = (dest & mask) >>> 0;
+  const extend = extended ? (ccr >>> 4) & 1 : 0;
+  // Keep the full unsigned arithmetic result until carry/borrow is determined.
+  const fullResult = isSub
+    ? destination - source - extend
+    : destination + source + extend;
+  const result = (fullResult & mask) >>> 0;
+  const carry = isSub ? fullResult < 0 : fullResult > mask;
+  const overflow = isSub
+    ? ((destination ^ source) & (destination ^ result) & signBit) !== 0
+    : (~(destination ^ source) & (destination ^ result) & signBit) !== 0;
+  // Extended arithmetic only clears Z, allowing multi-precision zero detection.
+  const zero = result === 0 && (!extended || (ccr & 0x04) !== 0);
+  const newCCR = ((ccr & ~0x1f)
+    | (carry ? 0x11 : 0)
+    | (overflow ? 0x02 : 0)
+    | (zero ? 0x04 : 0)
+    | ((result & signBit) !== 0 ? 0x08 : 0)) >>> 0;
+
+  // Preserve the existing signed long / unsigned partial-register return convention.
+  const value = size === CODE_LONG
+    ? result | 0
+    : ((dest & ~mask) | result) >>> 0;
+  return [value, newCCR];
+}
+
+export function addOP(src: number, dest: number, ccr: number, size: number, isSub: boolean): [number, number] {
+  return arithmeticOP(src, dest, ccr, size, isSub);
 }
 
 function moveCCR(res: number, ccr: number): number {
@@ -355,7 +271,7 @@ export function extOP(size: number, op: number, ccr: number): [number, number] {
 
 export function cmpOP(src: number, dest: number, ccr: number, size: number): number {
   const [, newCCR] = addOP(src, dest, ccr, size, true);
-  return newCCR;
+  return ((newCCR & ~0x10) | (ccr & 0x10)) >>> 0;
 }
 
 export function tstOP(op: number, ccr: number, _size: number): number {
@@ -958,33 +874,15 @@ export function divuOP(size: number, src: number, dest: number, ccr: number): [n
 }
 
 export function addxOP(src: number, dest: number, ccr: number, size: number): [number, number] {
-  // ADDX: Add Extended (with X bit)
-  // X bit (bit 4) carries over for multi-precision arithmetic
-  const xBit = (ccr & 0x10) >> 4;
-  
-  // Add with X bit
-  const [result, newCCR] = addOP(src + xBit, dest, ccr, size, false);
-  return [result, newCCR];
+  return arithmeticOP(src, dest, ccr, size, false, true);
 }
 
 export function subxOP(src: number, dest: number, ccr: number, size: number): [number, number] {
-  // SUBX: Subtract Extended (with X bit)
-  // X bit (bit 4) carries over for multi-precision arithmetic
-  const xBit = (ccr & 0x10) >> 4;
-  
-  // Subtract with X bit
-  const [result, newCCR] = addOP(src + xBit, dest, ccr, size, true);
-  return [result, newCCR];
+  return arithmeticOP(src, dest, ccr, size, true, true);
 }
 
 export function negxOP(size: number, op: number, ccr: number): [number, number] {
-  // NEGX: Negate Extended (with X bit)
-  // X bit (bit 4) carries over for multi-precision arithmetic
-  const xBit = (ccr & 0x10) >> 4;
-  
-  // Negate with X bit: 0 - op - X
-  const [result, newCCR] = addOP(op + xBit, 0, ccr, size, true);
-  return [result, newCCR];
+  return arithmeticOP(op, 0, ccr, size, true, true);
 }
 
 export function cmpmOP(src: number, dest: number, ccr: number, size: number): number {
