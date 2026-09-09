@@ -488,23 +488,23 @@ textarea {
 
 .output-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: var(--spacing-md);
 }
 
-.last-instruction {
+.instruction-box {
   padding: var(--spacing-md);
   background-color: color-mix(in srgb, var(--info-color) 16%, var(--surface-color));
   border-left: 4px solid var(--info-color);
   border-radius: 4px;
 }
 
-.last-instruction h4 {
+.instruction-box h4 {
   margin: 0 0 var(--spacing-sm) 0;
   color: var(--info-color);
 }
 
-.last-instruction p {
+.instruction-box p {
   margin: 0;
   font-family: var(--font-monospace);
   font-size: 12px;

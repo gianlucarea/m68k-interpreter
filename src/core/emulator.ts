@@ -3878,6 +3878,18 @@ private dbf(op: Operand, label: string): void {
     return this.lastInstruction;
   }
 
+  /** Preview the next CPU instruction without advancing execution. */
+  getNextInstruction(): string | null {
+    if (this.exception || !this.checkPC(this.pc)) return null;
+
+    for (let index = this.pc / 4; index < this.instructions.length; index++) {
+      if (this.orgBoundaryIndices.has(index)) return null;
+      const [instruction, line, isDirective] = this.instructions[index];
+      if (!isDirective) return this.clonedInstructions[line - 1] || instruction;
+    }
+    return null;
+  }
+
   getErrors(): string[] {
     return this.errors;
   }

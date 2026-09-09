@@ -52,8 +52,11 @@ export const useEmulatorEvents = () => {
         x: emulator.getXFlag(),
       });
 
-      // Update last instruction
-      setExecutionState({ lastInstruction: emulator.getLastInstruction() });
+      // Update instruction displays
+      setExecutionState({
+        lastInstruction: emulator.getLastInstruction(),
+        nextInstruction: emulator.getNextInstruction(),
+      });
 
       // Handle errors
       const errors = emulator.getErrors();
@@ -65,6 +68,7 @@ export const useEmulatorEvents = () => {
       const code = window.editorCode || '';
       if (!code.trim()) {
         setExecutionState({ 
+          nextInstruction: null,
           lastInstruction: 'Error: No code to execute',
           exception: 'No code provided',
         });
@@ -79,6 +83,7 @@ export const useEmulatorEvents = () => {
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
         setExecutionState({ 
+          nextInstruction: null,
           lastInstruction: message,
           exception: message,
         });
@@ -92,6 +97,7 @@ export const useEmulatorEvents = () => {
 
         if (emulatorRef.current.getException()) {
           setExecutionState({ 
+            nextInstruction: null,
             lastInstruction: emulatorRef.current.getException(),
             exception: emulatorRef.current.getException(),
           });
@@ -108,7 +114,7 @@ export const useEmulatorEvents = () => {
             updateStoreFromEmulator(emulatorRef.current);
 
             if (finished) {
-              setExecutionState({ ended: true, started: false });
+              setExecutionState({ ended: true, started: false, nextInstruction: null });
               if (emulatorRef.current.getException()) {
                 setExecutionState({ exception: emulatorRef.current.getException() });
               }
@@ -128,6 +134,7 @@ export const useEmulatorEvents = () => {
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error during emulation';
         setExecutionState({
+          nextInstruction: null,
           lastInstruction: message,
           exception: message,
         });
@@ -140,6 +147,7 @@ export const useEmulatorEvents = () => {
         const code = window.editorCode || '';
         if (!code.trim()) {
           setExecutionState({ 
+            nextInstruction: null,
             lastInstruction: 'Error: No code to step through',
             exception: 'No code provided',
           });
@@ -151,6 +159,7 @@ export const useEmulatorEvents = () => {
           setEmulatorInstance(emulatorRef.current);
           if (emulatorRef.current.getException()) {
             setExecutionState({ 
+              nextInstruction: null,
               lastInstruction: emulatorRef.current.getException(),
               exception: emulatorRef.current.getException(),
             });
@@ -160,6 +169,7 @@ export const useEmulatorEvents = () => {
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to create emulator';
           setExecutionState({ 
+            nextInstruction: null,
             lastInstruction: `Error: ${message}`,
             exception: message,
           });
@@ -171,7 +181,7 @@ export const useEmulatorEvents = () => {
       updateStoreFromEmulator(emulatorRef.current);
 
       if (finished) {
-        setExecutionState({ ended: true });
+        setExecutionState({ ended: true, nextInstruction: null });
         if (emulatorRef.current.getException()) {
           setExecutionState({ exception: emulatorRef.current.getException() });
         }
@@ -199,6 +209,7 @@ export const useEmulatorEvents = () => {
         started: false, 
         ended: false, 
         stopped: false,
+        nextInstruction: null,
         lastInstruction: 'Ready',
         exception: null,
         errors: [],

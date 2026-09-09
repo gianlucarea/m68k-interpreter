@@ -74,6 +74,7 @@ const initialExecutionState: ExecutionState = {
   ended: false,
   stopped: false,
   lastInstruction: 'Ready',
+  nextInstruction: null,
   exception: null,
   errors: [],
   currentLine: 0,
