@@ -1,17 +1,20 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileDownload } from '@fortawesome/free-solid-svg-icons';
+import { useChangedValues } from '@/hooks/useChangedValues';
 import { useEmulatorStore } from '@/stores/emulatorStore';
 
 const Registers: React.FC = () => {
   const { registers, setRegisterInEmulator } = useEmulatorStore();
+
+  const changed = useChangedValues({ ...registers });
 
   const formatHex = (value: number, width: number): string =>
     `0x${(value >>> 0).toString(16).padStart(width, '0')}`;
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    registerName: string,
+    registerName: string
   ): void => {
     const value = parseInt(e.target.value, 10);
     if (!isNaN(value)) {
@@ -25,7 +28,10 @@ const Registers: React.FC = () => {
       .join('\n');
 
     const element = document.createElement('a');
-    element.setAttribute('href', `data:text/plain;charset=utf-8,${encodeURIComponent(registerData)}`);
+    element.setAttribute(
+      'href',
+      `data:text/plain;charset=utf-8,${encodeURIComponent(registerData)}`
+    );
     element.setAttribute('download', 'registers.txt');
     element.style.display = 'none';
 
@@ -40,9 +46,12 @@ const Registers: React.FC = () => {
   return (
     <div className="registers-container">
       <div className="registers-header">
-        <h3>Register Set</h3>
+        <div>
+          <h3>Register set</h3>
+          <p className="panel-description">The machine, at a glance.</p>
+        </div>
         <button className="btn-download" onClick={handleDownload} title="Download registers">
-          <FontAwesomeIcon icon={faFileDownload} size="lg" />
+          <FontAwesomeIcon icon={faFileDownload} /> <span>Export</span>
         </button>
       </div>
 
@@ -50,12 +59,17 @@ const Registers: React.FC = () => {
         {/* Data and Address Registers - Side by Side */}
         <div className="registers-row">
           <table className="registers-table">
+            <colgroup>
+              <col className="register-name-column" />
+              <col />
+              <col className="register-hex-column" />
+            </colgroup>
             <thead>
               <tr>
-                <th colSpan={3}>Data Registers (D0-D7)</th>
+                <th colSpan={3}>Data registers</th>
               </tr>
               <tr>
-                <th>Register</th>
+                <th aria-label="Register">Reg</th>
                 <th>Decimal</th>
                 <th>Hex</th>
               </tr>
@@ -64,11 +78,12 @@ const Registers: React.FC = () => {
               {dataRegisters.map((regName) => {
                 const value = registers[regName as keyof typeof registers] ?? 0;
                 return (
-                  <tr key={regName}>
-                    <td className="reg-name">{regName}</td>
+                  <tr key={regName} className={changed.has(regName) ? 'value-changed' : ''}>
+                    <td className="reg-name">{regName.toUpperCase()}</td>
                     <td>
                       <input
                         type="number"
+                        aria-label={`${regName.toUpperCase()} decimal value`}
                         value={value}
                         onChange={(e) => handleInputChange(e, regName)}
                       />
@@ -81,12 +96,17 @@ const Registers: React.FC = () => {
           </table>
 
           <table className="registers-table">
+            <colgroup>
+              <col className="register-name-column" />
+              <col />
+              <col className="register-hex-column" />
+            </colgroup>
             <thead>
               <tr>
-                <th colSpan={3}>Address Registers (A0-A7)</th>
+                <th colSpan={3}>Address registers</th>
               </tr>
               <tr>
-                <th>Register</th>
+                <th aria-label="Register">Reg</th>
                 <th>Decimal</th>
                 <th>Hex</th>
               </tr>
@@ -95,11 +115,12 @@ const Registers: React.FC = () => {
               {addressRegisters.map((regName) => {
                 const value = registers[regName as keyof typeof registers] ?? 0;
                 return (
-                  <tr key={regName}>
-                    <td className="reg-name">{regName}</td>
+                  <tr key={regName} className={changed.has(regName) ? 'value-changed' : ''}>
+                    <td className="reg-name">{regName.toUpperCase()}</td>
                     <td>
                       <input
                         type="number"
+                        aria-label={`${regName.toUpperCase()} decimal value`}
                         value={value}
                         onChange={(e) => handleInputChange(e, regName)}
                       />
@@ -114,23 +135,28 @@ const Registers: React.FC = () => {
 
         {/* Control Registers */}
         <table className="registers-table">
+          <colgroup>
+            <col className="register-name-column" />
+            <col />
+            <col className="register-hex-column" />
+          </colgroup>
           <thead>
             <tr>
               <th colSpan={3}>Control Registers</th>
             </tr>
             <tr>
-              <th>Register</th>
+              <th aria-label="Register">Reg</th>
               <th>Decimal</th>
               <th>Hex</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
+            <tr className={changed.has('pc') ? 'value-changed' : ''}>
               <td className="reg-name">PC</td>
               <td>{registers.pc}</td>
               <td>{formatHex(registers.pc, 8)}</td>
             </tr>
-            <tr>
+            <tr className={changed.has('ccr') ? 'value-changed' : ''}>
               <td className="reg-name">CCR</td>
               <td>{registers.ccr}</td>
               <td>{formatHex(registers.ccr, 2)}</td>

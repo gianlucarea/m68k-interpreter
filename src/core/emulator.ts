@@ -1522,6 +1522,10 @@ export class Emulator {
     return (this.ccr & 0x10) >>> 4;
   }
 
+  isStopped(): boolean {
+    return this.stopped;
+  }
+
   getLastInstruction(): string {
     return this.lastInstruction;
   }

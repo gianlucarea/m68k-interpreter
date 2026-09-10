@@ -3,391 +3,33 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#0b0e11" />
     <meta name="description" content="M68K Interpreter Help" />
     <title>Help - M68K Interpreter</title>
     <script>
       (() => {
-        const theme = localStorage.getItem('m68k-theme');
-        document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+        try { document.documentElement.dataset.theme = localStorage.getItem('m68k-theme') === 'light' ? 'light' : 'dark'; } catch { document.documentElement.dataset.theme = 'dark'; }
       })();
     </script>
-    <style>
-      :root {
-        --primary-color: #6953b6;
-        --primary-color-rgb: 105, 83, 182;
-        --background-color: #f4f0ff;
-        --surface-color: #fdfcff;
-        --bg-color: #f1ecff;
-        --text-color: #2f2a4a;
-        --text-secondary: #5c5e85;
-        --border-color: #d8cff8;
-        --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
-          'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-        --font-monospace: 'Courier New', 'Courier', monospace;
-        --spacing-xs: 4px;
-        --spacing-sm: 8px;
-        --spacing-md: 16px;
-        --spacing-lg: 24px;
-        --spacing-xl: 32px;
-        --border-radius: 6px;
-      }
-
-      :root[data-theme='dark'] {
-        --primary-color: #bd93f9;
-        --primary-color-rgb: 189, 147, 249;
-        --background-color: #282a36;
-        --surface-color: #313445;
-        --bg-color: #383a59;
-        --text-color: #f8f8f2;
-        --text-secondary: #c5c8e0;
-        --border-color: #4b4f72;
-      }
-
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: var(--font-family);
-        color: var(--text-color);
-        background: linear-gradient(135deg, var(--background-color) 0%, var(--surface-color) 100%);
-        padding: 0;
-        margin: 0;
-      }
-
-      .help-wrapper {
-        max-width: 1200px;
-        margin: 0 auto;
-      }
-
-      .main-content {
-        display: block;
-        padding: var(--spacing-xl);
-      }
-
-      .header-section {
-        text-align: center;
-        margin-bottom: var(--spacing-xl);
-        padding-bottom: var(--spacing-xl);
-        border-bottom: 2px solid var(--border-color);
-      }
-
-      .help-title {
-        font-size: 48px;
-        font-weight: 800;
-        color: var(--primary-color);
-        margin: 0 0 var(--spacing-md) 0;
-      }
-
-      .help-subtitle {
-        font-size: 18px;
-        color: var(--text-secondary);
-        margin: 0;
-      }
-
-      .section {
-        margin-bottom: var(--spacing-xl);
-        scroll-margin-top: 100px;
-      }
-
-      .section-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: var(--text-color);
-        margin-bottom: var(--spacing-lg);
-        padding-bottom: var(--spacing-md);
-        border-bottom: 3px solid var(--primary-color);
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-md);
-      }
-
-      .section-icon {
-        font-size: 32px;
-      }
-
-      .quick-action-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: var(--spacing-md);
-        margin-bottom: var(--spacing-xl);
-      }
-
-      .action-card {
-        background: var(--surface-color);
-        border: 2px solid var(--border-color);
-        border-radius: var(--border-radius);
-        padding: var(--spacing-lg);
-        text-align: center;
-        transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .action-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: rgba(var(--primary-color-rgb), 0.05);
-        transition: left 300ms cubic-bezier(0.4, 0, 0.2, 1);
-      }
-
-      .action-card:hover {
-        border-color: var(--primary-color);
-        box-shadow: 0 8px 24px rgba(var(--primary-color-rgb), 0.15);
-        transform: translateY(-4px);
-      }
-
-      .action-card:hover::before {
-        left: 100%;
-      }
-
-      .action-card-icon {
-        font-size: 40px;
-        margin-bottom: var(--spacing-md);
-        display: block;
-      }
-
-      .action-card h3 {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--text-color);
-        margin: 0 0 var(--spacing-sm) 0;
-      }
-
-      .action-card p {
-        font-size: 14px;
-        color: var(--text-secondary);
-        margin: 0;
-        line-height: 1.6;
-      }
-
-      .instruction-section {
-        margin-bottom: var(--spacing-lg);
-      }
-
-      .instruction-card {
-        background: var(--surface-color);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        transition: all 300ms ease;
-      }
-
-      .instruction-card:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-        border-color: var(--primary-color);
-      }
-
-      .instruction-header {
-        background: linear-gradient(
-          135deg,
-          color-mix(in srgb, var(--primary-color) 85%, #ffffff) 0%,
-          var(--primary-color) 100%
-        );
-        color: #ffffff;
-        padding: var(--spacing-lg);
-        font-size: 18px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        margin: 0;
-        border-radius: var(--border-radius) var(--border-radius) 0 0;
-      }
-
-      :root[data-theme='dark'] .instruction-card,
-      :root[data-theme='dark'] .tip-card {
-        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
-      }
-
-      .instruction-list {
-        list-style: none;
-        padding: var(--spacing-md);
-        margin: 0;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: var(--spacing-md);
-      }
-
-      .instruction-item {
-        padding: var(--spacing-md);
-        background: var(--bg-color);
-        border: 1px solid var(--border-color);
-        border-radius: calc(var(--border-radius) - 4px);
-        transition: background-color 200ms ease, border-color 200ms ease;
-      }
-
-      .instruction-item:hover {
-        background-color: rgba(var(--primary-color-rgb), 0.04);
-        border-color: var(--primary-color);
-      }
-
-      .instruction-name {
-        display: block;
-        font-weight: 700;
-        color: var(--primary-color);
-        font-size: 15px;
-        margin-bottom: var(--spacing-sm);
-        font-family: var(--font-monospace);
-        letter-spacing: 0.5px;
-      }
-
-      .instruction-desc {
-        font-size: 13px;
-        color: var(--text-secondary);
-        line-height: 1.7;
-        margin: 0;
-      }
-
-      .tips-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: var(--spacing-md);
-      }
-
-      .tip-card {
-        background: var(--surface-color);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        padding: var(--spacing-lg);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        transition: all 300ms ease;
-        border-left: 4px solid var(--primary-color);
-      }
-
-      .tip-card:hover {
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        transform: translateY(-2px);
-      }
-
-      .tip-card h3 {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--text-color);
-        margin: 0 0 var(--spacing-md) 0;
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-      }
-
-      .tip-card p {
-        font-size: 14px;
-        color: var(--text-secondary);
-        line-height: 1.7;
-        margin: 0;
-      }
-
-      .back-to-top {
-        position: fixed;
-        bottom: var(--spacing-lg);
-        right: var(--spacing-lg);
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: var(--primary-color);
-        color: white;
-        border: none;
-        cursor: pointer;
-        font-size: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        transition: all 300ms ease;
-        opacity: 0;
-        pointer-events: none;
-      }
-
-      .back-to-top.visible {
-        opacity: 1;
-        pointer-events: all;
-      }
-
-      .back-to-top:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-      }
-
-      @media (max-width: 768px) {
-        .main-content {
-          padding: var(--spacing-md);
-        }
-
-        .help-title {
-          font-size: 36px;
-        }
-
-        .section-title {
-          font-size: 22px;
-        }
-
-        .quick-action-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
-
-        .instruction-list {
-          grid-template-columns: repeat(2, 1fr);
-        }
-
-        .instruction-header {
-          font-size: 18px;
-          padding: var(--spacing-md);
-        }
-
-        .tips-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .main-content {
-          padding: var(--spacing-sm);
-        }
-
-        .help-title {
-          font-size: 28px;
-        }
-
-        .quick-action-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .instruction-list {
-          grid-template-columns: 1fr;
-        }
-
-        .action-card {
-          padding: var(--spacing-md);
-        }
-
-        .action-card-icon {
-          font-size: 32px;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="./workspace-theme.css" />
+    <link rel="stylesheet" href="./help.css" />
   </head>
   <body>
+    <nav class="docs-nav" aria-label="Documentation navigation"><a class="docs-brand" href="./"><span>⌘</span> M68K <small>/ DOCS</small></a><a class="return-link" href="./">← Back to workspace</a></nav>
     <div class="help-wrapper">
       <main class="main-content">
         <div class="header-section">
-          <h1 class="help-title">M68K Interpreter</h1>
-          <p class="help-subtitle">Complete guide to using the M68K assembly language emulator</p>
+          <span class="eyebrow">THE M68K FIELD GUIDE</span><h1 class="help-title">Get closer to the machine.</h1>
+          <p class="help-subtitle">Your reference for writing, running, and understanding M68K assembly.</p><nav class="docs-sections" aria-label="Guide sections"><a href="#quick-start">01 / Quick start</a><a href="#instructions">02 / Instruction set</a><a href="#helpful">03 / Tips & tricks</a></nav>
         </div>
 
         <section class="section" id="quick-start">
-          <h2 class="section-title"><span class="section-icon">⚡</span>Quick Start</h2>
+          <h2 class="section-title"><span class="section-icon">01</span>Quick Start</h2>
           <div class="quick-action-grid">
             <div class="action-card">
               <span class="action-card-icon">▶</span>
               <h3>Execute</h3>
-              <p>Run the entire program from the current position</p>
+              <p>Run the current source from the beginning</p>
             </div>
             <div class="action-card">
               <span class="action-card-icon">⏹</span>
@@ -408,7 +50,7 @@
         </section>
 
         <section class="section" id="instructions">
-          <h2 class="section-title"><span class="section-icon">📚</span>Instruction Set Reference</h2>
+          <h2 class="section-title"><span class="section-icon">02</span>Instruction Set Reference</h2>
 
           <div class="instruction-section" id="data-movement">
             <div class="instruction-card">
@@ -804,29 +446,28 @@
         </section>
 
         <section class="section" id="helpful">
-          <h2 class="section-title"><span class="section-icon">💡</span>Tips & Tricks</h2>
+          <h2 class="section-title"><span class="section-icon">03</span>Tips & Tricks</h2>
           <div class="tips-grid">
             <div class="tip-card">
-              <h3>⏱ Time Delay</h3>
-              <p>You can add delays in your M68K assembly code using simple loops or dedicated delay routines. This is useful for controlling execution timing and creating pauses between operations. Perfect for simulating real-world timing behavior in your emulator testing.</p>
+              <h3>Execution delay</h3>
+              <p>Use Delay (s) in the execution console to slow down automatic execution and watch values change. Use Step to advance one instruction at a time and Undo to inspect the previous state.</p>
             </div>
             <div class="tip-card">
-              <h3>🔧 Toggle Advanced Registers</h3>
-              <p>Enable the advanced register display to view detailed register states beyond standard data and address registers. This includes condition codes, status register flags, and internal emulator state. Essential for debugging complex programs that depend on specific flag conditions.</p>
+              <h3>Inspect CPU state</h3>
+              <p>Switch between Registers, Memory, and Flags in the inspector. Edit decimal register values directly, inspect memory at a hexadecimal address, or watch the five condition-code bits after an operation.</p>
             </div>
           </div>
         </section>
       </main>
     </div>
 
-    <button class="back-to-top" id="backToTop" title="Back to top">↑</button>
+    <button class="back-to-top" id="backToTop" tabindex="-1" title="Back to top">↑</button>
 
     <script>
       const backToTopBtn = document.getElementById('backToTop');
 
       const applyTheme = () => {
-        const theme = localStorage.getItem('m68k-theme');
-        document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+        try { document.documentElement.dataset.theme = localStorage.getItem('m68k-theme') === 'light' ? 'light' : 'dark'; } catch { document.documentElement.dataset.theme = 'dark'; }
       };
 
       window.addEventListener('storage', (event) => {
@@ -838,13 +479,15 @@
       window.addEventListener('scroll', () => {
         if (window.pageYOffset > 300) {
           backToTopBtn.classList.add('visible');
+          backToTopBtn.tabIndex = 0;
         } else {
           backToTopBtn.classList.remove('visible');
+          backToTopBtn.tabIndex = -1;
         }
       });
 
       backToTopBtn.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
       });
     </script>
   </body>

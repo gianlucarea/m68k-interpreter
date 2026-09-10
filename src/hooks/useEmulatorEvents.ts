@@ -10,11 +10,23 @@ declare global {
 }
 
 export const useEmulatorEvents = () => {
-  const { reset, setRegister, setMemory, setFlags, setExecutionState, setEmulatorInstance, toggleShowFlags, delay } = useEmulatorStore();
+  const {
+    reset,
+    setRegister,
+    setMemory,
+    setFlags,
+    setExecutionState,
+    setEmulatorInstance,
+    toggleShowFlags,
+  } = useEmulatorStore();
   const emulatorRef = useRef<Emulator | null>(null);
   const executionLoopRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    const cancelLoop = (): void => {
+      if (executionLoopRef.current) clearTimeout(executionLoopRef.current);
+      executionLoopRef.current = null;
+    };
     const updateStoreFromEmulator = (emulator: Emulator): void => {
       if (!emulator) return;
 
@@ -60,14 +72,14 @@ export const useEmulatorEvents = () => {
 
       // Handle errors
       const errors = emulator.getErrors();
-      if (errors.length > 0) {
-        setExecutionState({ errors });
-      }
+      setExecutionState({ errors, exception: emulator.getException() ?? null });
     };
     const handleRun = (): void => {
+      cancelLoop();
+      setExecutionState({ started: false, ended: false, stopped: false });
       const code = window.editorCode || '';
       if (!code.trim()) {
-        setExecutionState({ 
+        setExecutionState({
           nextInstruction: null,
           lastInstruction: 'Error: No code to execute',
           exception: 'No code provided',
@@ -82,7 +94,7 @@ export const useEmulatorEvents = () => {
         initializeAndRun(code);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
-        setExecutionState({ 
+        setExecutionState({
           nextInstruction: null,
           lastInstruction: message,
           exception: message,
@@ -96,7 +108,7 @@ export const useEmulatorEvents = () => {
         setEmulatorInstance(emulatorRef.current);
 
         if (emulatorRef.current.getException()) {
-          setExecutionState({ 
+          setExecutionState({
             nextInstruction: null,
             lastInstruction: emulatorRef.current.getException(),
             exception: emulatorRef.current.getException(),
@@ -114,7 +126,12 @@ export const useEmulatorEvents = () => {
             updateStoreFromEmulator(emulatorRef.current);
 
             if (finished) {
-              setExecutionState({ ended: true, started: false, nextInstruction: null });
+              setExecutionState({
+                ended: true,
+                started: false,
+                stopped: emulatorRef.current.isStopped(),
+                nextInstruction: null,
+              });
               if (emulatorRef.current.getException()) {
                 setExecutionState({ exception: emulatorRef.current.getException() });
               }
@@ -124,7 +141,7 @@ export const useEmulatorEvents = () => {
               }
             } else {
               // Schedule the next step with user-configured delay (convert seconds to ms, minimum 50ms)
-              const executionDelay = Math.max(delay * 1000, 50);
+              const executionDelay = Math.max(useEmulatorStore.getState().delay * 1000, 50);
               executionLoopRef.current = setTimeout(executionLoop, executionDelay);
             }
           }
@@ -142,11 +159,12 @@ export const useEmulatorEvents = () => {
     };
 
     const handleStep = (): void => {
+      cancelLoop();
       if (!emulatorRef.current) {
         // Try to initialize if not already initialized
         const code = window.editorCode || '';
         if (!code.trim()) {
-          setExecutionState({ 
+          setExecutionState({
             nextInstruction: null,
             lastInstruction: 'Error: No code to step through',
             exception: 'No code provided',
@@ -158,7 +176,7 @@ export const useEmulatorEvents = () => {
           emulatorRef.current = new Emulator(code);
           setEmulatorInstance(emulatorRef.current);
           if (emulatorRef.current.getException()) {
-            setExecutionState({ 
+            setExecutionState({
               nextInstruction: null,
               lastInstruction: emulatorRef.current.getException(),
               exception: emulatorRef.current.getException(),
@@ -168,7 +186,7 @@ export const useEmulatorEvents = () => {
           setExecutionState({ started: true, ended: false, stopped: false });
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to create emulator';
-          setExecutionState({ 
+          setExecutionState({
             nextInstruction: null,
             lastInstruction: `Error: ${message}`,
             exception: message,
@@ -179,6 +197,11 @@ export const useEmulatorEvents = () => {
 
       const finished = emulatorRef.current.emulationStep();
       updateStoreFromEmulator(emulatorRef.current);
+      setExecutionState({
+        started: !finished,
+        ended: finished,
+        stopped: !finished || emulatorRef.current.isStopped(),
+      });
 
       if (finished) {
         setExecutionState({ ended: true, nextInstruction: null });
@@ -189,9 +212,11 @@ export const useEmulatorEvents = () => {
     };
 
     const handleUndo = (): void => {
+      cancelLoop();
       if (emulatorRef.current) {
         emulatorRef.current.undoFromStack();
         updateStoreFromEmulator(emulatorRef.current);
+        setExecutionState({ started: true, ended: false, stopped: true });
       }
     };
 
@@ -205,9 +230,9 @@ export const useEmulatorEvents = () => {
       reset();
       emulatorRef.current = null;
       setEmulatorInstance(null);
-      setExecutionState({ 
-        started: false, 
-        ended: false, 
+      setExecutionState({
+        started: false,
+        ended: false,
         stopped: false,
         nextInstruction: null,
         lastInstruction: 'Ready',
@@ -233,11 +258,19 @@ export const useEmulatorEvents = () => {
       window.removeEventListener('emulator:undo', handleUndo);
       window.removeEventListener('emulator:reset', handleReset);
       window.removeEventListener('emulator:showflags', handleShowFlags);
-      
+
       // Cleanup any pending execution
       if (executionLoopRef.current) {
         clearTimeout(executionLoopRef.current);
       }
     };
-  }, [reset, setRegister, setMemory, setFlags, setExecutionState, setEmulatorInstance, toggleShowFlags, delay]);
+  }, [
+    reset,
+    setRegister,
+    setMemory,
+    setFlags,
+    setExecutionState,
+    setEmulatorInstance,
+    toggleShowFlags,
+  ]);
 };

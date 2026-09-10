@@ -1,10 +1,19 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#0b0e11" />
+    <script>
+      try {
+        document.documentElement.dataset.theme =
+          localStorage.getItem('m68k-theme') === 'light' ? 'light' : 'dark';
+      } catch {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    </script>
+    <link rel="stylesheet" href="/workspace-theme.css" />
     <meta
       name="description"
       content="M68K Interpreter - A web-based Motorola 68000 assembly emulator"
