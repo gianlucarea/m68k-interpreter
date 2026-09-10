@@ -18,7 +18,7 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
         stop = emulator.emulationStep();
       }
       const ccr = emulator.getCCR();
-      expect((ccr & 0x1F) >>> 0).toBe(0x1F);
+      expect((ccr & 0x1f) >>> 0).toBe(0x1f);
     });
 
     it('should set individual CCR flags', () => {
@@ -47,7 +47,7 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
         stop = emulator.emulationStep();
       }
       const ccr = emulator.getCCR();
-      expect((ccr & 0x1F) >>> 0).toBe(0x00);
+      expect((ccr & 0x1f) >>> 0).toBe(0x00);
     });
 
     it('should set carry and zero flags', () => {
@@ -100,8 +100,8 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
       for (let i = 0; i < 30 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      const d0Value = emulator.getRegisters()[8] & 0xFF;
-      expect(d0Value >>> 0).toBe(0x1F);
+      const d0Value = emulator.getRegisters()[8] & 0xff;
+      expect(d0Value >>> 0).toBe(0x1f);
     });
 
     it('should read current CCR flags', () => {
@@ -133,8 +133,8 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
       for (let i = 0; i < 30 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      const d0Value = emulator.getRegisters()[8] & 0x1F;
-      expect(d0Value >>> 0).toBe(0x0C);
+      const d0Value = emulator.getRegisters()[8] & 0x1f;
+      expect(d0Value >>> 0).toBe(0x0c);
     });
   });
 
@@ -155,7 +155,7 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
         stop = emulator.emulationStep();
       }
       const ccr = emulator.getCCR();
-      expect((ccr & 0x1F) >>> 0).toBe(0x0F);
+      expect((ccr & 0x1f) >>> 0).toBe(0x0f);
     });
 
     it('should clear specific CCR flags', () => {
@@ -186,7 +186,7 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
         stop = emulator.emulationStep();
       }
       const ccr = emulator.getCCR();
-      expect((ccr & 0x1F) >>> 0).toBe(0x00);
+      expect((ccr & 0x1f) >>> 0).toBe(0x00);
     });
 
     it('should selectively clear flags', () => {
@@ -223,7 +223,7 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
         stop = emulator.emulationStep();
       }
       const ccr = emulator.getCCR();
-      expect((ccr & 0x1F) >>> 0).toBe(0x0F);
+      expect((ccr & 0x1f) >>> 0).toBe(0x0f);
     });
 
     it('should set carry flag', () => {
@@ -254,7 +254,7 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
         stop = emulator.emulationStep();
       }
       const ccr = emulator.getCCR();
-      expect((ccr & 0x1F) >>> 0).toBe(0x1F);
+      expect((ccr & 0x1f) >>> 0).toBe(0x1f);
     });
 
     it('should preserve already set flags', () => {
@@ -291,7 +291,7 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
         stop = emulator.emulationStep();
       }
       const ccr = emulator.getCCR();
-      expect((ccr & 0x0F) >>> 0).toBe(0x00);
+      expect((ccr & 0x0f) >>> 0).toBe(0x00);
     });
 
     it('should toggle CCR flags', () => {
@@ -322,7 +322,7 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
         stop = emulator.emulationStep();
       }
       const ccr = emulator.getCCR();
-      expect((ccr & 0x1F) >>> 0).toBe(0x1F);
+      expect((ccr & 0x1f) >>> 0).toBe(0x1f);
     });
   });
 
@@ -342,7 +342,7 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
         stop = emulator.emulationStep();
       }
       const sr = emulator.getSR();
-      expect((sr & 0xFFFF) >>> 0).toBe(0x2700);
+      expect((sr & 0xffff) >>> 0).toBe(0x2700);
     });
 
     it('should set interrupt mask in SR', () => {
@@ -437,8 +437,8 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
     it('should OR immediate with SR', () => {
       const code = `
         ORG $1000
-        MOVE #$0000, SR
-        ORI #$2700, SR
+        MOVE #$2000, SR
+        ORI #$0700, SR
         END
       `;
       const emulator = new Emulator(code);
@@ -525,7 +525,7 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
       expect(((sr >> 13) & 0x01) >>> 0).toBe(0x00);
     });
 
-    it('should toggle supervisor bit', () => {
+    it('should raise a privilege exception when toggling SR in user mode', () => {
       const code = `
         ORG $1000
         MOVE #$0000, SR
@@ -539,6 +539,7 @@ describe('CCR/SR (Condition Code Register / Status Register) Instructions', () =
       }
       const sr = emulator.getSR();
       expect(((sr >> 13) & 0x01) >>> 0).toBe(0x01);
+      expect(emulator.getException()).toBe('Privilege violation');
     });
   });
 });

@@ -24,7 +24,7 @@ Then open [http://localhost:3000](http://localhost:3000) and start coding.
 
 ![m68k-interpreter interface](./demo.gif)
 
-*Step through assembly code with live register inspection, memory viewer, and detailed error reporting.*
+_Step through assembly code with live register inspection, memory viewer, and detailed error reporting._
 
 ## Table of Contents
 
@@ -60,18 +60,25 @@ Then open [http://localhost:3000](http://localhost:3000) and start coding.
 **Program control & branching** — `BRA` `BSR` `Bcc` (`BHI` `BLS` `BCC` `BCS` `BNE` `BEQ` `BVC` `BVS` `BPL` `BMI` `BGE` `BLT` `BGT` `BLE`) `DBcc` (`DBHI` `DBLS` `DBCC` `DBCS` `DBNE` `DBEQ` `DBVC` `DBVS` `DBPL` `DBMI` `DBGE` `DBLT` `DBGT` `DBLE` `DBF` `DBT`) `Scc` (`SHI` `SLS` `SCC` `SCS` `SNE` `SEQ` `SVC` `SVS` `SPL` `SMI` `SGE` `SLT` `SGT` `SLE` `SF` `ST`) `JMP` `JSR` `RTS` `RTR` `RTD`  
 **System control & exceptions** — `RESET` `NOP` `STOP` `RTE` `TRAP` `TRAPV` `CHK` `LINK` `UNLK` `MOVE to SR` `MOVE from SR` `ORI to SR` `ANDI to SR` `EORI to SR` `TAS`
 
+### Instruction compatibility
+
+See the [instruction audit](docs/instruction-audit.md) for all 115 implemented mnemonics, pinned references, regression coverage, and interpreter limitations.
+
+General arithmetic, logical, and register shift instructions default to **word** size. Use `.L` explicitly for longword operations. Invalid sizes, operand combinations, and immediate ranges produce a line-specific error before operand side effects. `MOVEQ` accepts signed literals from −128 to 127; immediate quick/shift counts are 1–8. Memory shifts use a single word operand and shift once.
+
+Calls push the next virtual instruction address; `RTS` and manual stack-pop/jump returns use the same address. The interpreter retains four-byte virtual instructions, a single modeled stack pointer, and halt-on-exception behavior. It does not emulate instruction encoding, hardware interrupts, separate supervisor/user stacks, or physical bus behavior. `RTD`, `MOVE from CCR`, and custom flag-preserving `MODE` remain available as extensions.
+
 ## Examples
 
 The [`examples/`](./examples) folder contains annotated programs to get started:
 
-| File | What it demonstrates |
-| --- | --- |
-| `fibonacci.asm` | Loops, D registers, branching |
-| `factorial.asm` | Recursion via JSR/RTS, stack discipline |
-| `bubble_sort.asm` | Nested loops, memory addressing, CMPI |
-| `stack_ops.asm` | MOVE to/from stack pointer, subroutine conventions |
-| `hello_world.asm` | Basic MOVE and output |
-| `loop_counter.asm` | DBRA countdown loop |
+| File               | What it demonstrates                               |
+| ------------------ | -------------------------------------------------- |
+| `fibonacci.asm`    | Loops, D registers, branching                      |
+| `factorial.asm`    | Iterative multiplication and conditional branches  |
+| `bubble_sort.asm`  | Nested loops, memory addressing, comparisons       |
+| `stack_ops.asm`    | MOVE to/from stack pointer, subroutine conventions |
+| `loop_counter.asm` | SUBQ/BNE countdown loop and accumulation           |
 
 Each file is commented line by line — useful if you are following a computer architecture course.
 

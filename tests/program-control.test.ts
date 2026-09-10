@@ -131,7 +131,7 @@ describe('Program Control & Flow Instructions', () => {
         stop = emulator.emulationStep();
       }
       const returnAddr = emulator.getRegisters()[8] >>> 0;
-      expect(returnAddr).toBe(0x00001004);
+      expect(returnAddr).toBe(0x00001008);
     });
 
     it('should handle nested subroutine calls', () => {
@@ -239,7 +239,7 @@ describe('Program Control & Flow Instructions', () => {
       for (let i = 0; i < 50 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect((emulator.getRegisters()[8] | 0)).toBe(-5);
+      expect(emulator.getRegisters()[8] | 0).toBe(-5);
     });
 
     it('BPL should branch when negative flag is clear', () => {
@@ -281,7 +281,7 @@ describe('Program Control & Flow Instructions', () => {
       for (let i = 0; i < 50 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect((emulator.getRegisters()[8] | 0)).toBe(-50);
+      expect(emulator.getRegisters()[8] | 0).toBe(-50);
     });
   });
 
@@ -401,7 +401,7 @@ describe('Program Control & Flow Instructions', () => {
         stop = emulator.emulationStep();
       }
       const returnAddr = emulator.getRegisters()[8] >>> 0;
-      expect(returnAddr).toBe(0x00001004);
+      expect(returnAddr).toBe(0x00001008);
     });
 
     it('should work with address register addressing', () => {
@@ -589,7 +589,7 @@ describe('Program Control & Flow Instructions', () => {
       for (let i = 0; i < 30 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[6] >>> 0).toBe(0x00002FFC);
+      expect(emulator.getRegisters()[6] >>> 0).toBe(0x00002ffc);
     });
 
     it('should push old A6 on stack via LINK', () => {
@@ -622,7 +622,7 @@ describe('Program Control & Flow Instructions', () => {
       for (let i = 0; i < 30 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[8] >>> 0).toBe(0x00002FDC);
+      expect(emulator.getRegisters()[8] >>> 0).toBe(0x00002fdc);
     });
 
     it('should set A6 to point to old A6 location', () => {
@@ -638,7 +638,7 @@ describe('Program Control & Flow Instructions', () => {
       for (let i = 0; i < 30 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[8] >>> 0).toBe(0x00002FFC);
+      expect(emulator.getRegisters()[8] >>> 0).toBe(0x00002ffc);
     });
   });
 
