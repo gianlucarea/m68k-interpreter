@@ -1,12 +1,9 @@
 import React, { Suspense, useMemo, useState } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import Navbar from './Navbar';
-import Registers from './Registers';
+import Inspector from './Inspector';
 import Output from './Output';
-import Memory from './Memory';
-import Flags from './Flags';
 import { useEmulatorEvents } from '@/hooks/useEmulatorEvents';
-import { useEmulatorStore } from '@/stores/emulatorStore';
 import '../styles/main.css';
 
 interface ExampleOption {
@@ -16,8 +13,13 @@ interface ExampleOption {
 }
 
 const INITIAL_EDITOR_CODE = `ORG $1000
-  * Write your M68K assembly code here
-  * Your code goes here
+  * Your next idea starts here.
+  * Load an example or write M68K assembly.
+
+  MOVEQ #42, D0
+  MOVEQ #8, D1
+  ADD.L D1, D0
+
 END`;
 
 const formatExampleLabel = (fileName: string): string =>
@@ -27,22 +29,24 @@ const formatExampleLabel = (fileName: string): string =>
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
 
-  const Editor = React.lazy(async () => import('./Editor'));
+const Editor = React.lazy(async () => import('./Editor'));
 
 type AppTheme = 'light' | 'dark';
 
 const THEME_STORAGE_KEY = 'm68k-theme';
 
 const getInitialTheme = (): AppTheme => {
-  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-  return storedTheme === 'dark' ? 'dark' : 'light';
+  try {
+    return window.localStorage.getItem(THEME_STORAGE_KEY) === 'light' ? 'light' : 'dark';
+  } catch {
+    return 'dark';
+  }
 };
 
 const App: React.FC = () => {
-  const [showRegisters, setShowRegisters] = useState<boolean>(true);
+  const [fileName, setFileName] = useState('main.asm');
   const [editorCode, setEditorCode] = useState<string>(INITIAL_EDITOR_CODE);
   const [theme, setTheme] = useState<AppTheme>(getInitialTheme);
-  const { showFlags } = useEmulatorStore();
 
   const examples = useMemo<ExampleOption[]>(() => {
     const modules = import.meta.glob('../../examples/*.asm', {
@@ -66,16 +70,16 @@ const App: React.FC = () => {
   // Set up emulator event listeners
   useEmulatorEvents();
 
-  const toggleRegisters = (): void => {
-    setShowRegisters(!showRegisters);
-  };
-
-  const handleExampleSelect = (content: string): void => {
+  const handleExampleSelect = (content: string, name: string): void => {
+    window.dispatchEvent(new CustomEvent('emulator:reset'));
+    setFileName(name);
     setEditorCode(content);
   };
 
   const handleResetEditor = (): void => {
+    window.dispatchEvent(new CustomEvent('emulator:reset'));
     setEditorCode(INITIAL_EDITOR_CODE);
+    setFileName('main.asm');
   };
 
   const toggleTheme = (): void => {
@@ -84,31 +88,58 @@ const App: React.FC = () => {
 
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      /* Theme still works when storage is unavailable. */
+    }
   }, [theme]);
 
   return (
     <div className="app-container">
+      <a className="skip-link" href="#workspace">
+        Skip to workspace
+      </a>
       <Navbar
-        onToggleMemory={toggleRegisters}
-        showMemory={showRegisters}
         examples={examples}
         onSelectExample={handleExampleSelect}
-        onResetEditor={handleResetEditor}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
-      <main className="main-content">
+      <div className="workspace-heading">
+        <div>
+          <span className="eyebrow">THE 68K WORKSPACE</span>
+          <h2>
+            Think in code. <span>See the machine.</span>
+          </h2>
+        </div>
+        <span className="architecture-badge">
+          <span className="signal-dot" /> IN-BROWSER EMULATION
+        </span>
+      </div>
+      <main className="main-content" id="workspace" tabIndex={-1}>
         <div className="editor-registers-section">
           <Suspense fallback={<div className="editor-loading">Loading editor...</div>}>
-            <Editor code={editorCode} onCodeChange={setEditorCode} theme={theme} />
+            <Editor
+              code={editorCode}
+              onCodeChange={setEditorCode}
+              theme={theme}
+              fileName={fileName}
+              onResetEditor={handleResetEditor}
+            />
           </Suspense>
           <Output />
         </div>
-        <div className="output-memory-section">
-          {showFlags ? <Flags /> : showRegisters ? <Registers /> : <Memory />}
-        </div>
+        <Inspector />
       </main>
+      <footer className="app-footer">
+        <span>
+          <span className="footer-symbol">⌘</span> Built for curious minds.
+        </span>
+        <span>
+          M68K ASSEMBLY <span className="footer-separator">/</span> LOCAL EXECUTION
+        </span>
+      </footer>
       <Analytics />
     </div>
   );

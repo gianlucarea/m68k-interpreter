@@ -11,6 +11,7 @@ interface AceM68kEditorProps {
 }
 
 interface AceEditorInstance {
+  renderer: { setScrollMargin: (top: number, bottom: number) => void };
   session: {
     setUseWrapMode: (useWrapMode: boolean) => void;
     setTabSize: (tabSize: number) => void;
@@ -22,6 +23,7 @@ interface AceEditorInstance {
   moveCursorToPosition: (position: { row: number; column: number }) => void;
   clearSelection: () => void;
   setTheme: (themePath: string) => void;
+  resize: () => void;
   destroy: () => void;
 }
 
@@ -44,13 +46,15 @@ const AceM68kEditor: React.FC<AceM68kEditorProps> = ({ value, onChange, theme })
     const editor = aceRuntime.edit(hostRef.current, {
       mode: 'ace/mode/m68k',
       theme: 'ace/theme/github',
-      fontSize: 13,
+      fontSize: 14,
+      fontFamily: '"SFMono-Regular", Consolas, "Liberation Mono", monospace',
       showGutter: true,
       showPrintMargin: false,
       highlightActiveLine: true,
       useWorker: false,
     }) as AceEditorInstance;
 
+    editor.renderer.setScrollMargin(12, 12);
     editor.session.setUseWrapMode(true);
     editor.session.setTabSize(2);
     editor.session.setValue('');
@@ -60,8 +64,11 @@ const AceM68kEditor: React.FC<AceM68kEditorProps> = ({ value, onChange, theme })
     });
 
     editorRef.current = editor;
+    const observer = new ResizeObserver(() => editor.resize());
+    observer.observe(hostRef.current);
 
     return () => {
+      observer.disconnect();
       editor.destroy();
       editorRef.current = null;
     };

@@ -6,8 +6,28 @@ import { useEmulatorStore } from '@/stores/emulatorStore';
 const Output: React.FC = () => {
   const { executionState, delay, setDelay } = useEmulatorStore();
 
+  const status =
+    executionState.exception || executionState.errors.length
+      ? 'Error'
+      : executionState.stopped
+        ? 'Stopped'
+        : executionState.ended
+          ? 'Completed'
+          : executionState.started
+            ? 'Running'
+            : 'Ready';
+
   return (
-    <div className="output-container">
+    <section className="output-container" aria-label="Execution console">
+      <div className="console-heading">
+        <h3>
+          <span className="console-prompt">›_</span> Execution console
+        </h3>
+        <span role="status" className={`status-indicator status-${status.toLowerCase()}`}>
+          <span className="signal-dot" />
+          {status}
+        </span>
+      </div>
       <div className="output-section">
         <div className="instruction-box">
           <h4>Last Instruction</h4>
@@ -55,12 +75,13 @@ const Output: React.FC = () => {
         </div>
       )}
 
-      <div className="execution-status">
-        <span className={`status-indicator ${executionState.started ? 'active' : ''}`}>
-          {executionState.ended ? '✓ Ended' : executionState.started ? '⏳ Running' : '⏸ Ready'}
-        </span>
-      </div>
-    </div>
+      {!executionState.started && !executionState.ended && status === 'Ready' && (
+        <p className="console-hint">
+          <span>↳</span> Ready when you are. Run your program or step through one instruction at a
+          time.
+        </p>
+      )}
+    </section>
   );
 };
 
