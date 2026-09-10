@@ -10,7 +10,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000001, D1
-        ASL #3, D1
+        ASL.L #3, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -26,7 +26,7 @@ describe('Shift & Rotate Operations Instructions', () => {
         ORG $1000
         MOVE.L #$00000001, D1
         MOVE.L #4, D0
-        ASL D0, D1
+        ASL.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -41,7 +41,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$80000000, D1
-        ASL #1, D1
+        ASL.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -56,7 +56,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000000, D1
-        ASL #1, D1
+        ASL.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -71,7 +71,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$40000000, D1
-        ASL #1, D1
+        ASL.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -91,7 +91,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000010, D1
-        ASR #2, D1
+        ASR.L #2, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -106,7 +106,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$80000000, D1
-        ASR #1, D1
+        ASR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -114,14 +114,14 @@ describe('Shift & Rotate Operations Instructions', () => {
       for (let i = 0; i < 20 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0xC0000000);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0xc0000000);
     });
 
     it('should set carry flag when bit is shifted out', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000001, D1
-        ASR #1, D1
+        ASR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -136,7 +136,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000000, D1
-        ASR #1, D1
+        ASR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -152,7 +152,7 @@ describe('Shift & Rotate Operations Instructions', () => {
         ORG $1000
         MOVE.L #$00000100, D1
         MOVE.L #3, D0
-        ASR D0, D1
+        ASR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -172,7 +172,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$FFFFFFFF, D1
-        LSL #1, D1
+        LSL.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -180,14 +180,14 @@ describe('Shift & Rotate Operations Instructions', () => {
       for (let i = 0; i < 20 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0xFFFFFFFE);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0xfffffffe);
     });
 
     it('should set carry flag', () => {
       const code = `
         ORG $1000
         MOVE.L #$80000000, D1
-        LSL #1, D1
+        LSL.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -202,7 +202,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000000, D1
-        LSL #1, D1
+        LSL.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -217,7 +217,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$80000000, D1
-        LSL #1, D1
+        LSL.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -237,7 +237,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$FFFFFFFF, D1
-        LSR #1, D1
+        LSR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -245,14 +245,14 @@ describe('Shift & Rotate Operations Instructions', () => {
       for (let i = 0; i < 20 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0x7FFFFFFF);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0x7fffffff);
     });
 
     it('should set carry flag when bit is shifted out', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000001, D1
-        LSR #1, D1
+        LSR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -267,7 +267,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000000, D1
-        LSR #1, D1
+        LSR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -283,7 +283,7 @@ describe('Shift & Rotate Operations Instructions', () => {
         ORG $1000
         MOVE.L #$00000100, D1
         MOVE.L #2, D0
-        LSR D0, D1
+        LSR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -298,7 +298,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000001, D1
-        LSR #1, D1
+        LSR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -318,7 +318,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000001, D1
-        ROL #1, D1
+        ROL.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -333,7 +333,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$80000000, D1
-        ROL #1, D1
+        ROL.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -348,7 +348,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$80000000, D1
-        ROL #1, D1
+        ROL.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -364,7 +364,7 @@ describe('Shift & Rotate Operations Instructions', () => {
         ORG $1000
         MOVE.L #$00000001, D1
         MOVE.L #8, D0
-        ROL D0, D1
+        ROL.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -384,7 +384,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000002, D1
-        ROR #1, D1
+        ROR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -399,7 +399,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000001, D1
-        ROR #1, D1
+        ROR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -414,7 +414,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000001, D1
-        ROR #1, D1
+        ROR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -430,7 +430,7 @@ describe('Shift & Rotate Operations Instructions', () => {
         ORG $1000
         MOVE.L #$00000100, D1
         MOVE.L #8, D0
-        ROR D0, D1
+        ROR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -445,7 +445,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000001, D1
-        ROR #1, D1
+        ROR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -465,7 +465,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000001, D1
-        ROXL #1, D1
+        ROXL.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -481,8 +481,8 @@ describe('Shift & Rotate Operations Instructions', () => {
         ORG $1000
         MOVE.L #$00000000, D1
         MOVE.L #$80000000, D0
-        OR D0, D1
-        ROXL #1, D1
+        OR.L D0, D1
+        ROXL.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -498,7 +498,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$80000000, D1
-        ROXL #1, D1
+        ROXL.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -514,7 +514,7 @@ describe('Shift & Rotate Operations Instructions', () => {
         ORG $1000
         MOVE.L #$00000001, D1
         MOVE.L #2, D0
-        ROXL D0, D1
+        ROXL.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -534,7 +534,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000002, D1
-        ROXR #1, D1
+        ROXR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -549,7 +549,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000001, D1
-        ROXR #1, D1
+        ROXR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -564,7 +564,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000001, D1
-        ROXR #1, D1
+        ROXR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -580,7 +580,7 @@ describe('Shift & Rotate Operations Instructions', () => {
         ORG $1000
         MOVE.L #$00000100, D1
         MOVE.L #8, D0
-        ROXR D0, D1
+        ROXR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -595,7 +595,7 @@ describe('Shift & Rotate Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000001, D1
-        ROXR #1, D1
+        ROXR.L #1, D1
         END
       `;
       const emulator = new Emulator(code);

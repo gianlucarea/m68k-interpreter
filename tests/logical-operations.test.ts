@@ -11,7 +11,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$FF00FF00, D0
         MOVE.L #$00FF00FF, D1
-        AND D0, D1
+        AND.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -27,7 +27,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$FFFFFFFF, D0
         MOVE.L #$12345678, D1
-        AND D0, D1
+        AND.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -43,7 +43,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$FF00FF00, D0
         MOVE.L #$00FF00FF, D1
-        AND D0, D1
+        AND.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -59,7 +59,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$FF00FF00, D0
         MOVE.L #$00FF00FF, D1
-        AND D0, D1
+        AND.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -75,7 +75,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$F0000000, D0
         MOVE.L #$F0000000, D1
-        AND D0, D1
+        AND.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -95,7 +95,7 @@ describe('Logical Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$FFFFFFFF, D1
-        ANDI #$0F0F0F0F, D1
+        ANDI.L #$0F0F0F0F, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -103,14 +103,14 @@ describe('Logical Operations Instructions', () => {
       for (let i = 0; i < 20 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0x0F0F0F0F);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0x0f0f0f0f);
     });
 
     it('should mask specific bits', () => {
       const code = `
         ORG $1000
         MOVE.L #$12345678, D1
-        ANDI #$00FF0000, D1
+        ANDI.L #$00FF0000, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -125,7 +125,7 @@ describe('Logical Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$FF00FF00, D1
-        ANDI #$00FF00FF, D1
+        ANDI.L #$00FF00FF, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -146,7 +146,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$FF00FF00, D0
         MOVE.L #$00FF00FF, D1
-        OR D0, D1
+        OR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -154,7 +154,7 @@ describe('Logical Operations Instructions', () => {
       for (let i = 0; i < 30 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0xFFFFFFFF);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0xffffffff);
     });
 
     it('should combine set bits from both operands', () => {
@@ -162,7 +162,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$F0F0F0F0, D0
         MOVE.L #$0F0F0F0F, D1
-        OR D0, D1
+        OR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -170,7 +170,7 @@ describe('Logical Operations Instructions', () => {
       for (let i = 0; i < 30 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0xFFFFFFFF);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0xffffffff);
     });
 
     it('should set negative flag for negative result', () => {
@@ -178,7 +178,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$F0000000, D0
         MOVE.L #$0F000000, D1
-        OR D0, D1
+        OR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -194,7 +194,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$00000000, D0
         MOVE.L #$00000000, D1
-        OR D0, D1
+        OR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -210,7 +210,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$FF00FF00, D0
         MOVE.L #$00FF00FF, D1
-        OR D0, D1
+        OR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -230,7 +230,7 @@ describe('Logical Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$F0F0F0F0, D1
-        ORI #$0F0F0F0F, D1
+        ORI.L #$0F0F0F0F, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -238,14 +238,14 @@ describe('Logical Operations Instructions', () => {
       for (let i = 0; i < 20 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0xFFFFFFFF);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0xffffffff);
     });
 
     it('should set specific bits', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000000, D1
-        ORI #$FF000000, D1
+        ORI.L #$FF000000, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -253,14 +253,14 @@ describe('Logical Operations Instructions', () => {
       for (let i = 0; i < 20 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0xFF000000);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0xff000000);
     });
 
     it('should set negative flag with negative result', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000000, D1
-        ORI #$F0000000, D1
+        ORI.L #$F0000000, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -281,7 +281,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$FF00FF00, D0
         MOVE.L #$FF00FF00, D1
-        EOR D0, D1
+        EOR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -297,7 +297,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$AAAAAAAA, D0
         MOVE.L #$55555555, D1
-        EOR D0, D1
+        EOR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -305,7 +305,7 @@ describe('Logical Operations Instructions', () => {
       for (let i = 0; i < 30 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0xFFFFFFFF);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0xffffffff);
     });
 
     it('should set zero flag when operands are equal', () => {
@@ -313,7 +313,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$12345678, D0
         MOVE.L #$12345678, D1
-        EOR D0, D1
+        EOR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -329,7 +329,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$FFFFFFFF, D0
         MOVE.L #$FF00FF00, D1
-        EOR D0, D1
+        EOR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -337,7 +337,7 @@ describe('Logical Operations Instructions', () => {
       for (let i = 0; i < 30 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0x00FF00FF);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0x00ff00ff);
     });
 
     it('should clear carry flag', () => {
@@ -345,7 +345,7 @@ describe('Logical Operations Instructions', () => {
         ORG $1000
         MOVE.L #$FF00FF00, D0
         MOVE.L #$00FF00FF, D1
-        EOR D0, D1
+        EOR.L D0, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -365,7 +365,7 @@ describe('Logical Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$FFFFFFFF, D1
-        EORI #$00FF00FF, D1
+        EORI.L #$00FF00FF, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -373,14 +373,14 @@ describe('Logical Operations Instructions', () => {
       for (let i = 0; i < 20 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0xFF00FF00);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0xff00ff00);
     });
 
     it('should toggle bits with immediate', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000000, D1
-        EORI #$FFFFFFFF, D1
+        EORI.L #$FFFFFFFF, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -388,14 +388,14 @@ describe('Logical Operations Instructions', () => {
       for (let i = 0; i < 20 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0xFFFFFFFF);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0xffffffff);
     });
 
     it('should set negative flag for negative result', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000000, D1
-        EORI #$F0000000, D1
+        EORI.L #$F0000000, D1
         END
       `;
       const emulator = new Emulator(code);
@@ -415,7 +415,7 @@ describe('Logical Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000000, D1
-        NOT D1
+        NOT.L D1
         END
       `;
       const emulator = new Emulator(code);
@@ -423,14 +423,14 @@ describe('Logical Operations Instructions', () => {
       for (let i = 0; i < 20 && !stop; i++) {
         stop = emulator.emulationStep();
       }
-      expect(emulator.getRegisters()[9] >>> 0).toBe(0xFFFFFFFF);
+      expect(emulator.getRegisters()[9] >>> 0).toBe(0xffffffff);
     });
 
     it('should complement all bits of a value', () => {
       const code = `
         ORG $1000
         MOVE.L #$FFFFFFFF, D1
-        NOT D1
+        NOT.L D1
         END
       `;
       const emulator = new Emulator(code);
@@ -445,7 +445,7 @@ describe('Logical Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$00000000, D1
-        NOT D1
+        NOT.L D1
         END
       `;
       const emulator = new Emulator(code);
@@ -460,7 +460,7 @@ describe('Logical Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$FFFFFFFF, D1
-        NOT D1
+        NOT.L D1
         END
       `;
       const emulator = new Emulator(code);
@@ -475,7 +475,7 @@ describe('Logical Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$AAAAAAAA, D1
-        NOT D1
+        NOT.L D1
         END
       `;
       const emulator = new Emulator(code);
@@ -490,7 +490,7 @@ describe('Logical Operations Instructions', () => {
       const code = `
         ORG $1000
         MOVE.L #$FFFFFFFF, D1
-        NOT D1
+        NOT.L D1
         END
       `;
       const emulator = new Emulator(code);

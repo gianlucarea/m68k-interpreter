@@ -3,7 +3,14 @@
  * Maintains a stack of execution states for undo functionality
  */
 
-export interface UndoFrame {
+export interface UndoState {
+  sr: number;
+  exception?: string;
+  stopped: boolean;
+  lastBranchTarget?: number;
+}
+
+export interface UndoFrame extends UndoState {
   pc: number;
   ccr: number;
   registers: Int32Array;
@@ -16,8 +23,18 @@ export interface UndoFrame {
 export class Undo {
   private stack: UndoFrame[] = [];
 
-  push(pc: number, ccr: number, registers: Int32Array, memory: Record<number, number>, errors: string[], lastInstruction: string, line: number): void {
+  push(
+    pc: number,
+    ccr: number,
+    registers: Int32Array,
+    memory: Record<number, number>,
+    errors: string[],
+    lastInstruction: string,
+    line: number,
+    state: UndoState
+  ): void {
     this.stack.push({
+      ...state,
       pc,
       ccr,
       registers: new Int32Array(registers),

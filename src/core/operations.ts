@@ -1,892 +1,218 @@
-/**
- * Arithmetic and logical operations for M68K emulator
- * Handles ADD, SUB, MOVE, AND, OR, and other instruction operations
- */
-
+/** Sized 68000 ALU operations. Results preserve untouched data-register bits. */
 export const CODE_LONG = 2;
 export const CODE_WORD = 1;
 export const CODE_BYTE = 0;
-
-export const BYTE_MASK = 0x000000ff;
-export const WORD_MASK = 0x0000ffff;
+export const BYTE_MASK = 0xff;
+export const WORD_MASK = 0xffff;
 export const LONG_MASK = 0xffffffff;
 export const MSB_BYTE_MASK = 0x80;
 export const MSB_WORD_MASK = 0x8000;
 export const MSB_LONG_MASK = 0x80000000;
 
+export function width(size: number): number {
+  if (size !== CODE_BYTE && size !== CODE_WORD && size !== CODE_LONG)
+    throw new Error('Invalid size');
+  return 8 * (1 << size);
+}
+export function maskFor(size: number): number {
+  return 2 ** width(size) - 1;
+}
+export function unsigned(value: number, size: number): number {
+  return (value & maskFor(size)) >>> 0;
+}
+export function signed(value: number, size: number): number {
+  const shift = 32 - width(size);
+  return (value << shift) >> shift;
+}
+export function merge(value: number, original: number, size: number): number {
+  const result = (original & ~maskFor(size)) | (value & maskFor(size));
+  return size === CODE_LONG ? result : result >>> 0;
+}
+export function logicCCR(value: number, ccr: number, size: number): number {
+  const result = unsigned(value, size);
+  return ((ccr & ~0x0f) | (result === 0 ? 4 : 0) | (signed(result, size) < 0 ? 8 : 0)) >>> 0;
+}
 function arithmeticOP(
   src: number,
   dest: number,
   ccr: number,
   size: number,
-  isSub: boolean,
+  subtract: boolean,
   extended = false
 ): [number, number] {
-  let mask: number;
-  let signBit: number;
-  switch (size) {
-    case CODE_BYTE:
-      mask = BYTE_MASK;
-      signBit = MSB_BYTE_MASK;
-      break;
-    case CODE_WORD:
-      mask = WORD_MASK;
-      signBit = MSB_WORD_MASK;
-      break;
-    case CODE_LONG:
-      mask = LONG_MASK;
-      signBit = MSB_LONG_MASK;
-      break;
-    default:
-      throw new Error('Invalid size');
-  }
-
-  const source = (src & mask) >>> 0;
-  const destination = (dest & mask) >>> 0;
-  const extend = extended ? (ccr >>> 4) & 1 : 0;
-  // Keep the full unsigned arithmetic result until carry/borrow is determined.
-  const fullResult = isSub
-    ? destination - source - extend
-    : destination + source + extend;
-  const result = (fullResult & mask) >>> 0;
-  const carry = isSub ? fullResult < 0 : fullResult > mask;
-  const overflow = isSub
-    ? ((destination ^ source) & (destination ^ result) & signBit) !== 0
-    : (~(destination ^ source) & (destination ^ result) & signBit) !== 0;
-  // Extended arithmetic only clears Z, allowing multi-precision zero detection.
-  const zero = result === 0 && (!extended || (ccr & 0x04) !== 0);
-  const newCCR = ((ccr & ~0x1f)
-    | (carry ? 0x11 : 0)
-    | (overflow ? 0x02 : 0)
-    | (zero ? 0x04 : 0)
-    | ((result & signBit) !== 0 ? 0x08 : 0)) >>> 0;
-
-  // Preserve the existing signed long / unsigned partial-register return convention.
-  const value = size === CODE_LONG
-    ? result | 0
-    : ((dest & ~mask) | result) >>> 0;
-  return [value, newCCR];
+  const source = unsigned(src, size),
+    destination = unsigned(dest, size);
+  const x = extended ? (ccr >>> 4) & 1 : 0;
+  const full = subtract ? destination - source - x : destination + source + x;
+  const result = unsigned(full, size);
+  const carry = subtract ? full < 0 : full > maskFor(size);
+  const sign = 2 ** (width(size) - 1);
+  const overflow = subtract
+    ? ((destination ^ source) & (destination ^ result) & sign) !== 0
+    : (~(destination ^ source) & (destination ^ result) & sign) !== 0;
+  const zero = result === 0 && (!extended || (ccr & 4) !== 0);
+  return [
+    merge(result, dest, size),
+    ((ccr & ~0x1f) |
+      (carry ? 0x11 : 0) |
+      (overflow ? 2 : 0) |
+      (zero ? 4 : 0) |
+      (result & sign ? 8 : 0)) >>>
+      0,
+  ];
 }
-
-export function addOP(src: number, dest: number, ccr: number, size: number, isSub: boolean): [number, number] {
+export function addOP(
+  src: number,
+  dest: number,
+  ccr: number,
+  size: number,
+  isSub: boolean
+): [number, number] {
   return arithmeticOP(src, dest, ccr, size, isSub);
 }
-
-function moveCCR(res: number, ccr: number): number {
-  // Setting carry and overflow bits to 0
-  ccr = (ccr & 0xfc) >>> 0;
-
-  // Zero
-  if (res === 0) ccr = (ccr | 0x04) >>> 0;
-  else ccr = (ccr & 0xfb) >>> 0;
-
-  // Negative
-  if (res < 0) ccr = (ccr | 0x08) >>> 0;
-  else ccr = (ccr & 0xf7) >>> 0;
-
-  return ccr;
-}
-
-export function moveOP(src: number, dest: number, ccr: number, size: number): [number, number] {
-  switch (size) {
-    case CODE_LONG:
-      return [src | 0, moveCCR(src | 0, ccr)];
-    case CODE_WORD: {
-      const aux = ((dest & ~WORD_MASK) | (src & WORD_MASK)) | 0;
-      const aux16 = new Int16Array(1);
-      aux16[0] = aux & WORD_MASK; // Evaluate CCR as signed 16-bit result
-
-      return [aux, moveCCR(aux16[0], ccr)];
-    }
-    case CODE_BYTE: {
-      const aux = ((dest & ~BYTE_MASK) | (src & BYTE_MASK)) | 0;
-      const aux8 = new Int8Array(1);
-      aux8[0] = aux & BYTE_MASK; // Evaluate CCR as signed 8-bit result
-
-      return [aux, moveCCR(aux8[0], ccr)];
-    }
-    default:
-      throw new Error('Invalid size');
-  }
-}
-
-export function swapOP(op: number, ccr: number): [number, number] {
-  let tmp = op << 16; // Move first 16 bits to most significant positions
-  op = op >> 16; // Move last 16 bits to least significant positions
-  tmp += op; // Combine register
-  return [tmp, moveCCR(tmp | 0, ccr)]; // Same behaviour as move
-}
-
-export function exgOP(op1: number, op2: number): [number, number] {
-  return [op2, op1];
-}
-
-export function clrOP(size: number, op: number, ccr: number): [number, number] {
-  ccr = (ccr & 0x10) >>> 0; // Reset every bit but the Extended bit
-  ccr = (ccr | 0x04) >>> 0; // Set zero bit to 1
-
-  switch (size) {
-    case CODE_BYTE:
-      return [op & ~BYTE_MASK, ccr];
-    case CODE_WORD:
-      return [op & ~WORD_MASK, ccr];
-    case CODE_LONG:
-      return [0x00000000, ccr];
-    default:
-      throw new Error('Invalid size');
-  }
-}
-
-export function notOP(size: number, op: number, ccr: number): [number, number] {
-  let res: number;
-
-  switch (size) {
-    case CODE_BYTE: {
-      res = ((op & ~BYTE_MASK) + (~op & BYTE_MASK)) >>> 0;
-      const res8 = new Int8Array(1);
-      res8[0] = res & BYTE_MASK; // Force the result to 8 bit signed for CCR
-      return [res, moveCCR(res8[0], ccr)]; // Same ccr behaviour as move
-    }
-    case CODE_WORD: {
-      res = ((op & ~WORD_MASK) + (~op & WORD_MASK)) >>> 0;
-      const res16 = new Int16Array(1);
-      res16[0] = res & WORD_MASK; // Force the result to 16 bit signed for CCR
-      return [res, moveCCR(res16[0], ccr)]; // Same ccr behaviour as move
-    }
-    case CODE_LONG: {
-      res = (~op) >>> 0;
-      return [res, moveCCR(res | 0, ccr)]; // Same ccr behaviour as move
-    }
-    default:
-      throw new Error('Invalid size');
-  }
-}
-
-export function andOP(size: number, op1: number, op2: number, ccr: number): [number, number] {
-  let res: number;
-
-  switch (size) {
-    case CODE_BYTE: {
-      res = ((op1 & BYTE_MASK) & (op2 & BYTE_MASK)) >>> 0;
-      res = (op1 & ~BYTE_MASK) + res;
-      const res8 = new Int8Array(1);
-      res8[0] = res & BYTE_MASK;
-      return [res, moveCCR(res8[0], ccr)];
-    }
-    case CODE_WORD: {
-      res = ((op1 & WORD_MASK) & (op2 & WORD_MASK)) >>> 0;
-      res = (op1 & ~WORD_MASK) + res;
-      const res16 = new Int16Array(1);
-      res16[0] = res & WORD_MASK;
-      return [res, moveCCR(res16[0], ccr)];
-    }
-    case CODE_LONG:
-      res = (op1 & op2) >>> 0;
-      return [res, moveCCR(res | 0, ccr)];
-    default:
-      throw new Error('Invalid size');
-  }
-}
-
-export function orOP(size: number, op1: number, op2: number, ccr: number): [number, number] {
-  let res: number;
-
-  switch (size) {
-    case CODE_BYTE: {
-      res = ((op1 & BYTE_MASK) | (op2 & BYTE_MASK)) >>> 0;
-      res = (op1 & ~BYTE_MASK) + res;
-      const res8 = new Int8Array(1);
-      res8[0] = res & BYTE_MASK;
-      return [res, moveCCR(res8[0], ccr)];
-    }
-    case CODE_WORD: {
-      res = ((op1 & WORD_MASK) | (op2 & WORD_MASK)) >>> 0;
-      res = (op1 & ~WORD_MASK) + res;
-      const res16 = new Int16Array(1);
-      res16[0] = res & WORD_MASK;
-      return [res, moveCCR(res16[0], ccr)];
-    }
-    case CODE_LONG:
-      res = (op1 | op2) >>> 0;
-      return [res, moveCCR(res | 0, ccr)];
-    default:
-      throw new Error('Invalid size');
-  }
-}
-
-export function eorOP(size: number, op1: number, op2: number, ccr: number): [number, number] {
-  let res: number;
-
-  switch (size) {
-    case CODE_BYTE: {
-      res = ((op1 & BYTE_MASK) ^ (op2 & BYTE_MASK)) >>> 0;
-      res = (op1 & ~BYTE_MASK) + res;
-      const res8 = new Int8Array(1);
-      res8[0] = res & BYTE_MASK;
-      return [res, moveCCR(res8[0], ccr)];
-    }
-    case CODE_WORD: {
-      res = ((op1 & WORD_MASK) ^ (op2 & WORD_MASK)) >>> 0;
-      res = (op1 & ~WORD_MASK) + res;
-      const res16 = new Int16Array(1);
-      res16[0] = res & WORD_MASK;
-      return [res, moveCCR(res16[0], ccr)];
-    }
-    case CODE_LONG:
-      res = (op1 ^ op2) >>> 0;
-      return [res, moveCCR(res | 0, ccr)];
-    default:
-      throw new Error('Invalid size');
-  }
-}
-
-export function negOP(size: number, op: number, ccr: number): [number, number] {
-  return addOP(op, 0, ccr, size, true);
-}
-
-export function extOP(size: number, op: number, ccr: number): [number, number] {
-  let res: number;
-
-  switch (size) {
-    case CODE_WORD: {
-      // Extend byte to word
-      const res8 = new Int8Array(1);
-      res8[0] = op & BYTE_MASK;
-      res = (op & ~BYTE_MASK) + (res8[0] & WORD_MASK);
-      const res16 = new Int16Array(1);
-      res16[0] = res & WORD_MASK;
-      return [res, moveCCR(res16[0], ccr)];
-    }
-    case CODE_LONG: {
-      // Extend word to long
-      const resW = new Int16Array(1);
-      resW[0] = op & WORD_MASK;
-      res = resW[0]; // Sign-extend word to long
-      return [res, moveCCR(res | 0, ccr)];
-    }
-    default:
-      throw new Error('Invalid size for EXT');
-  }
-}
-
-export function cmpOP(src: number, dest: number, ccr: number, size: number): number {
-  const [, newCCR] = addOP(src, dest, ccr, size, true);
-  return ((newCCR & ~0x10) | (ccr & 0x10)) >>> 0;
-}
-
-export function tstOP(op: number, ccr: number, _size: number): number {
-  return moveCCR(op, ccr);
-}
-
-export function lslOP(
-  count: number,
-  op: number,
-  ccr: number,
-  size: number
-): [number, number] {
-  let carry = 0;
-
-  switch (size) {
-    case CODE_BYTE: {
-      const res8 = new Int8Array(1);
-      for (let i = 0; i < count; i++) {
-        carry = (op & MSB_BYTE_MASK) >>> 7;
-        op = op << 1;
-      }
-      res8[0] = op & BYTE_MASK;
-      let newCCR8 = moveCCR(res8[0], ccr);
-      if (count > 0) {
-        if (carry) newCCR8 = (newCCR8 | 0x11) >>> 0;
-        else newCCR8 = (newCCR8 & 0xee) >>> 0;
-      }
-      return [res8[0], newCCR8];
-    }
-    case CODE_WORD: {
-      const res16 = new Int16Array(1);
-      for (let i = 0; i < count; i++) {
-        carry = (op & MSB_WORD_MASK) >> 15;
-        op = op << 1;
-      }
-      res16[0] = op & WORD_MASK;
-      let newCCR16 = moveCCR(res16[0], ccr);
-      if (count > 0) {
-        if (carry) newCCR16 = (newCCR16 | 0x11) >>> 0;
-        else newCCR16 = (newCCR16 & 0xee) >>> 0;
-      }
-      return [res16[0], newCCR16];
-    }
-    case CODE_LONG: {
-      for (let i = 0; i < count; i++) {
-        carry = (op & MSB_LONG_MASK) >>> 31;
-        op = (op << 1) >>> 0;
-      }
-      let newCCR32 = moveCCR(op | 0, ccr);
-      if (count > 0) {
-        if (carry) newCCR32 = (newCCR32 | 0x11) >>> 0;
-        else newCCR32 = (newCCR32 & 0xee) >>> 0;
-      }
-      return [op, newCCR32];
-    }
-    default:
-      throw new Error('Invalid size');
-  }
-}
-
-export function aslOP(
-  count: number,
-  op: number,
-  ccr: number,
-  size: number
-): [number, number] {
-  // ASL sets V if MSB changes at any time during the shift
-  let carry = 0;
-  let overflow = 0;
-
-  switch (size) {
-    case CODE_BYTE: {
-      const origMSB = (op & MSB_BYTE_MASK) >>> 7;
-      for (let i = 0; i < count; i++) {
-        carry = (op & MSB_BYTE_MASK) >>> 7;
-        op = op << 1;
-        if (((op & MSB_BYTE_MASK) >>> 7) !== origMSB) overflow = 1;
-      }
-      const res8 = new Int8Array(1);
-      res8[0] = op & BYTE_MASK;
-      let newCCR8 = moveCCR(res8[0], ccr);
-      if (count > 0) {
-        if (carry) newCCR8 = (newCCR8 | 0x11) >>> 0;
-        else newCCR8 = (newCCR8 & 0xee) >>> 0;
-      }
-      if (overflow) newCCR8 = (newCCR8 | 0x02) >>> 0;
-      return [res8[0], newCCR8];
-    }
-    case CODE_WORD: {
-      const origMSB16 = (op & MSB_WORD_MASK) >>> 15;
-      for (let i = 0; i < count; i++) {
-        carry = (op & MSB_WORD_MASK) >>> 15;
-        op = op << 1;
-        if (((op & MSB_WORD_MASK) >>> 15) !== origMSB16) overflow = 1;
-      }
-      const res16 = new Int16Array(1);
-      res16[0] = op & WORD_MASK;
-      let newCCR16 = moveCCR(res16[0], ccr);
-      if (count > 0) {
-        if (carry) newCCR16 = (newCCR16 | 0x11) >>> 0;
-        else newCCR16 = (newCCR16 & 0xee) >>> 0;
-      }
-      if (overflow) newCCR16 = (newCCR16 | 0x02) >>> 0;
-      return [res16[0], newCCR16];
-    }
-    case CODE_LONG: {
-      const origMSB32 = (op & MSB_LONG_MASK) >>> 31;
-      for (let i = 0; i < count; i++) {
-        carry = (op & MSB_LONG_MASK) >>> 31;
-        op = (op << 1) >>> 0;
-        if (((op & MSB_LONG_MASK) >>> 31) !== origMSB32) overflow = 1;
-      }
-      let newCCR32 = moveCCR(op | 0, ccr);
-      if (count > 0) {
-        if (carry) newCCR32 = (newCCR32 | 0x11) >>> 0;
-        else newCCR32 = (newCCR32 & 0xee) >>> 0;
-      }
-      if (overflow) newCCR32 = (newCCR32 | 0x02) >>> 0;
-      return [op, newCCR32];
-    }
-    default:
-      throw new Error('Invalid size');
-  }
-}
-
-export function lsrOP(
-  count: number,
-  op: number,
-  ccr: number,
-  size: number
-): [number, number] {
-  let carry = 0;
-
-  switch (size) {
-    case CODE_BYTE: {
-      const res8 = new Int8Array(1);
-      for (let i = 0; i < count; i++) {
-        carry = op & 0x01;
-        op = (op >>> 1) & ~MSB_BYTE_MASK;
-      }
-      res8[0] = op & BYTE_MASK;
-      let newCCR8 = moveCCR(res8[0], ccr);
-      if (count > 0) {
-        if (carry) newCCR8 = (newCCR8 | 0x11) >>> 0;
-        else newCCR8 = (newCCR8 & 0xee) >>> 0;
-      }
-      return [res8[0], newCCR8];
-    }
-    case CODE_WORD: {
-      const res16 = new Int16Array(1);
-      for (let i = 0; i < count; i++) {
-        carry = op & 0x01;
-        op = (op >>> 1) & ~MSB_WORD_MASK;
-      }
-      res16[0] = op & WORD_MASK;
-      let newCCR16 = moveCCR(res16[0], ccr);
-      if (count > 0) {
-        if (carry) newCCR16 = (newCCR16 | 0x11) >>> 0;
-        else newCCR16 = (newCCR16 & 0xee) >>> 0;
-      }
-      return [res16[0], newCCR16];
-    }
-    case CODE_LONG: {
-      for (let i = 0; i < count; i++) {
-        carry = op & 0x01;
-        op = op >>> 1;
-      }
-      let newCCR32 = moveCCR(op | 0, ccr);
-      if (count > 0) {
-        if (carry) newCCR32 = (newCCR32 | 0x11) >>> 0;
-        else newCCR32 = (newCCR32 & 0xee) >>> 0;
-      }
-      return [op, newCCR32];
-    }
-    default:
-      throw new Error('Invalid size');
-  }
-}
-
-export function asrOP(
-  count: number,
-  op: number,
-  ccr: number,
-  size: number
-): [number, number] {
-  // ASR (Arithmetic Shift Right) - preserves sign bit
-  let carry = 0;
-
-  switch (size) {
-    case CODE_BYTE: {
-      const res8 = new Int8Array(1);
-      const signBit8 = (op & MSB_BYTE_MASK) >>> 0;
-      for (let i = 0; i < count; i++) {
-        carry = op & 0x01;
-        op = ((op >>> 1) | signBit8) >>> 0;
-      }
-      res8[0] = op & BYTE_MASK;
-      let newCCR8 = moveCCR(res8[0], ccr);
-      if (count > 0) {
-        if (carry) newCCR8 = (newCCR8 | 0x11) >>> 0;
-        else newCCR8 = (newCCR8 & 0xee) >>> 0;
-      }
-      return [res8[0], newCCR8];
-    }
-    case CODE_WORD: {
-      const res16 = new Int16Array(1);
-      const signBit16 = (op & MSB_WORD_MASK) >>> 0;
-      for (let i = 0; i < count; i++) {
-        carry = op & 0x01;
-        op = ((op >>> 1) | signBit16) >>> 0;
-      }
-      res16[0] = op & WORD_MASK;
-      let newCCR16 = moveCCR(res16[0], ccr);
-      if (count > 0) {
-        if (carry) newCCR16 = (newCCR16 | 0x11) >>> 0;
-        else newCCR16 = (newCCR16 & 0xee) >>> 0;
-      }
-      return [res16[0], newCCR16];
-    }
-    case CODE_LONG: {
-      const signBit32 = (op & MSB_LONG_MASK) >>> 0;
-      for (let i = 0; i < count; i++) {
-        carry = op & 0x01;
-        op = ((op >>> 1) | signBit32) >>> 0;
-      }
-      let newCCR32 = moveCCR(op | 0, ccr);
-      if (count > 0) {
-        if (carry) newCCR32 = (newCCR32 | 0x11) >>> 0;
-        else newCCR32 = (newCCR32 & 0xee) >>> 0;
-      }
-      return [op, newCCR32];
-    }
-    default:
-      throw new Error('Invalid size');
-  }
-}
-
-export function rolOP(
-  count: number,
-  op: number,
-  ccr: number,
-  size: number
-): [number, number] {
-  let lastBit = 0;
-  switch (size) {
-    case CODE_BYTE: {
-      for (let i = 0; i < count; i++) {
-        lastBit = (op & MSB_BYTE_MASK) >>> 7;
-        op = ((op << 1) | lastBit) & BYTE_MASK;
-      }
-      const res8 = new Int8Array(1);
-      res8[0] = op & BYTE_MASK;
-      let newCCR8 = moveCCR(res8[0], ccr);
-      if (count > 0 && lastBit) newCCR8 = (newCCR8 | 0x01) >>> 0;
-      return [op, newCCR8];
-    }
-    case CODE_WORD: {
-      for (let i = 0; i < count; i++) {
-        lastBit = (op & MSB_WORD_MASK) >> 15;
-        op = ((op << 1) | lastBit) & WORD_MASK;
-      }
-      const res16 = new Int16Array(1);
-      res16[0] = op & WORD_MASK;
-      let newCCR16 = moveCCR(res16[0], ccr);
-      if (count > 0 && lastBit) newCCR16 = (newCCR16 | 0x01) >>> 0;
-      return [op, newCCR16];
-    }
-    case CODE_LONG: {
-      for (let i = 0; i < count; i++) {
-        lastBit = (op & MSB_LONG_MASK) >>> 31;
-        op = ((op << 1) | lastBit) >>> 0;
-      }
-      let newCCR32 = moveCCR(op | 0, ccr);
-      if (count > 0 && lastBit) newCCR32 = (newCCR32 | 0x01) >>> 0;
-      return [op, newCCR32];
-    }
-    default:
-      throw new Error('Invalid size');
-  }
-}
-
-export function rorOP(
-  count: number,
-  op: number,
-  ccr: number,
-  size: number
-): [number, number] {
-  let lastBit = 0;
-  switch (size) {
-    case CODE_BYTE: {
-      for (let i = 0; i < count; i++) {
-        lastBit = op & 0x01;
-        op = ((op >>> 1) | (lastBit << 7)) & BYTE_MASK;
-      }
-      const res8 = new Int8Array(1);
-      res8[0] = op & BYTE_MASK;
-      let newCCR8 = moveCCR(res8[0], ccr);
-      if (count > 0 && lastBit) newCCR8 = (newCCR8 | 0x01) >>> 0;
-      return [op, newCCR8];
-    }
-    case CODE_WORD: {
-      for (let i = 0; i < count; i++) {
-        lastBit = op & 0x01;
-        op = ((op >>> 1) | (lastBit << 15)) & WORD_MASK;
-      }
-      const res16 = new Int16Array(1);
-      res16[0] = op & WORD_MASK;
-      let newCCR16 = moveCCR(res16[0], ccr);
-      if (count > 0 && lastBit) newCCR16 = (newCCR16 | 0x01) >>> 0;
-      return [op, newCCR16];
-    }
-    case CODE_LONG: {
-      for (let i = 0; i < count; i++) {
-        lastBit = op & 0x01;
-        op = ((op >>> 1) | (lastBit << 31)) >>> 0;
-      }
-      let newCCR32 = moveCCR(op | 0, ccr);
-      if (count > 0 && lastBit) newCCR32 = (newCCR32 | 0x01) >>> 0;
-      return [op, newCCR32];
-    }
-    default:
-      throw new Error('Invalid size');
-  }
-}
-
-export function roxlOP(
-  count: number,
-  op: number,
-  ccr: number,
-  size: number
-): [number, number] {
-  // ROXL: Rotate Left including X flag
-  // The X flag is treated as part of the rotation path
-  let xBit = (ccr & 0x10) >> 4;
-
-  switch (size) {
-    case CODE_BYTE: {
-      // 9-bit rotation (8-bit value + X flag)
-      for (let i = 0; i < count; i++) {
-        const msb = (op & MSB_BYTE_MASK) >>> 7;
-        op = ((op << 1) | xBit) & BYTE_MASK;
-        xBit = msb;
-      }
-      const res8 = new Int8Array(1);
-      res8[0] = op & BYTE_MASK;
-      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
-      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
-      let newCCR8 = moveCCR(res8[0], ccr);
-      if (xBit) newCCR8 = (newCCR8 | 0x01) >>> 0; // C = X
-      return [op, newCCR8];
-    }
-    case CODE_WORD: {
-      // 17-bit rotation (16-bit value + X flag)
-      for (let i = 0; i < count; i++) {
-        const msb = (op & MSB_WORD_MASK) >>> 15;
-        op = ((op << 1) | xBit) & WORD_MASK;
-        xBit = msb;
-      }
-      const res16 = new Int16Array(1);
-      res16[0] = op & WORD_MASK;
-      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
-      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
-      let newCCR16 = moveCCR(res16[0], ccr);
-      if (xBit) newCCR16 = (newCCR16 | 0x01) >>> 0; // C = X
-      return [op, newCCR16];
-    }
-    case CODE_LONG: {
-      // 33-bit rotation (32-bit value + X flag)
-      for (let i = 0; i < count; i++) {
-        const msb = (op & MSB_LONG_MASK) >>> 31;
-        op = ((op << 1) | xBit) >>> 0;
-        xBit = msb;
-      }
-      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
-      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
-      let newCCR32 = moveCCR(op | 0, ccr);
-      if (xBit) newCCR32 = (newCCR32 | 0x01) >>> 0; // C = X
-      return [op, newCCR32];
-    }
-    default:
-      throw new Error('Invalid size');
-  }
-}
-
-export function roxrOP(
-  count: number,
-  op: number,
-  ccr: number,
-  size: number
-): [number, number] {
-  // ROXR: Rotate Right including X flag
-  // The X flag is treated as part of the rotation path
-  let xBit = (ccr & 0x10) >> 4;
-
-  switch (size) {
-    case CODE_BYTE: {
-      // 9-bit rotation (8-bit value + X flag)
-      for (let i = 0; i < count; i++) {
-        const lsb = op & 0x01;
-        op = ((op >>> 1) | (xBit << 7)) & BYTE_MASK;
-        xBit = lsb;
-      }
-      const res8 = new Int8Array(1);
-      res8[0] = op & BYTE_MASK;
-      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
-      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
-      let newCCR8 = moveCCR(res8[0], ccr);
-      if (xBit) newCCR8 = (newCCR8 | 0x01) >>> 0; // C = X
-      return [op, newCCR8];
-    }
-    case CODE_WORD: {
-      // 17-bit rotation (16-bit value + X flag)
-      for (let i = 0; i < count; i++) {
-        const lsb = op & 0x01;
-        op = ((op >>> 1) | (xBit << 15)) & WORD_MASK;
-        xBit = lsb;
-      }
-      const res16 = new Int16Array(1);
-      res16[0] = op & WORD_MASK;
-      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
-      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
-      let newCCR16 = moveCCR(res16[0], ccr);
-      if (xBit) newCCR16 = (newCCR16 | 0x01) >>> 0; // C = X
-      return [op, newCCR16];
-    }
-    case CODE_LONG: {
-      // 33-bit rotation (32-bit value + X flag)
-      for (let i = 0; i < count; i++) {
-        const lsb = op & 0x01;
-        op = ((op >>> 1) | (xBit << 31)) >>> 0;
-        xBit = lsb;
-      }
-      if (xBit) ccr = (ccr | 0x10) >>> 0; // Set X flag
-      else ccr = (ccr & 0xef) >>> 0; // Clear X flag
-      let newCCR32 = moveCCR(op | 0, ccr);
-      if (xBit) newCCR32 = (newCCR32 | 0x01) >>> 0; // C = X
-      return [op, newCCR32];
-    }
-    default:
-      throw new Error('Invalid size');
-  }
-}
-export function mulsOP(size: number, src: number, dest: number, ccr: number): [number, number] {
-  // MULS: Signed multiply
-  // For 16-bit operands, result is 32-bit (destination register holds result)
-  // For 32-bit operands, results in 64-bit (we store low 32 bits in dest)
-  let srcSigned: number;
-  let destSigned: number;
-  
-  if (size === CODE_WORD) {
-    // Treat as 16-bit signed values - extract 16 bits and sign-extend
-    const srcTemp = new Int16Array(1);
-    srcTemp[0] = src & WORD_MASK;
-    srcSigned = srcTemp[0];
-    
-    const destTemp = new Int16Array(1);
-    destTemp[0] = dest & WORD_MASK;
-    destSigned = destTemp[0];
-  } else {
-    srcSigned = src | 0;
-    destSigned = dest | 0;
-  }
-  
-  const result = (srcSigned * destSigned) >>> 0;
-  
-  // Update CCR based on result
-  if (result === 0) ccr = (ccr | 0x04) >>> 0; // Z flag
-  else ccr = (ccr & 0xfb) >>> 0;
-  
-  if ((result | 0) < 0) ccr = (ccr | 0x08) >>> 0; // N flag
-  else ccr = (ccr & 0xf7) >>> 0;
-  
-  ccr = (ccr & 0xfd) >>> 0; // Clear V flag
-  ccr = (ccr & 0xfe) >>> 0; // Clear C flag
-  
-  return [result, ccr];
-}
-
-export function muluOP(size: number, src: number, dest: number, ccr: number): [number, number] {
-  // MULU: Unsigned multiply
-  // For 16-bit operands, result is 32-bit (destination register holds result)
-  // For 32-bit operands, results in 64-bit (we store low 32 bits in dest)
-  let srcUnsigned: number;
-  let destUnsigned: number;
-  
-  if (size === CODE_WORD) {
-    // Treat as 16-bit unsigned values - extract 16 bits
-    srcUnsigned = src & WORD_MASK;
-    destUnsigned = dest & WORD_MASK;
-  } else {
-    srcUnsigned = src >>> 0;
-    destUnsigned = dest >>> 0;
-  }
-  
-  const result = (srcUnsigned * destUnsigned) >>> 0;
-  
-  // Update CCR based on result
-  if (result === 0) ccr = (ccr | 0x04) >>> 0; // Z flag
-  else ccr = (ccr & 0xfb) >>> 0;
-  
-  if ((result | 0) < 0) ccr = (ccr | 0x08) >>> 0; // N flag
-  else ccr = (ccr & 0xf7) >>> 0;
-  
-  ccr = (ccr & 0xfd) >>> 0; // Clear V flag
-  ccr = (ccr & 0xfe) >>> 0; // Clear C flag
-  
-  return [result, ccr];
-}
-
-export function divsOP(size: number, src: number, dest: number, ccr: number): [number, number] {
-  // DIVS: Signed division
-  // Quotient in low word, remainder in high word (for 32-bit result)
-  // Returns remainder:quotient in a single 32-bit value
-  
-  if (src === 0) {
-    // Division by zero - would cause trap in real M68K
-    return [dest, ccr];
-  }
-  
-  let srcSigned: number;
-  let destSigned: number;
-  
-  if (size === CODE_WORD) {
-    // Convert to signed 16-bit divisor
-    const srcTemp = new Int16Array(1);
-    srcTemp[0] = src & WORD_MASK;
-    srcSigned = srcTemp[0];
-    
-    // Dividend is 32-bit signed
-    destSigned = dest | 0;
-  } else {
-    srcSigned = src | 0;
-    destSigned = dest | 0;
-  }
-  
-  // Perform signed division
-  const quotient = Math.trunc(destSigned / srcSigned);
-  const remainder = destSigned % srcSigned;
-  
-  // Pack result: remainder in high word, quotient in low word
-  let result = ((remainder & WORD_MASK) << 16) | (quotient & WORD_MASK);
-  result = result >>> 0;
-  
-  // Update CCR
-  if (quotient === 0) ccr = (ccr | 0x04) >>> 0; // Z flag
-  else ccr = (ccr & 0xfb) >>> 0;
-  
-  if (quotient < 0) ccr = (ccr | 0x08) >>> 0; // N flag
-  else ccr = (ccr & 0xf7) >>> 0;
-  
-  ccr = (ccr & 0xfd) >>> 0; // Clear V flag
-  ccr = (ccr & 0xfe) >>> 0; // Clear C flag
-  
-  return [result, ccr];
-}
-
-export function divuOP(size: number, src: number, dest: number, ccr: number): [number, number] {
-  // DIVU: Unsigned division
-  // Quotient in low word, remainder in high word (for 32-bit result)
-  // Returns remainder:quotient in a single 32-bit value
-  
-  if (src === 0) {
-    // Division by zero - would cause trap in real M68K
-    return [dest, ccr];
-  }
-  
-  let srcUnsigned: number;
-  let destUnsigned: number;
-  
-  if (size === CODE_WORD) {
-    // Convert to unsigned 16-bit divisor
-    srcUnsigned = src & WORD_MASK;
-    
-    // Dividend is 32-bit unsigned
-    destUnsigned = dest >>> 0;
-  } else {
-    srcUnsigned = src >>> 0;
-    destUnsigned = dest >>> 0;
-  }
-  
-  // Perform unsigned division
-  const quotient = Math.trunc(destUnsigned / srcUnsigned);
-  const remainder = destUnsigned % srcUnsigned;
-  
-  // Pack result: remainder in high word, quotient in low word
-  let result = ((remainder & WORD_MASK) << 16) | (quotient & WORD_MASK);
-  result = result >>> 0;
-  
-  // Update CCR
-  if (quotient === 0) ccr = (ccr | 0x04) >>> 0; // Z flag
-  else ccr = (ccr & 0xfb) >>> 0;
-  
-  if (quotient < 0) ccr = (ccr | 0x08) >>> 0; // N flag
-  else ccr = (ccr & 0xf7) >>> 0;
-  
-  ccr = (ccr & 0xfd) >>> 0; // Clear V flag
-  ccr = (ccr & 0xfe) >>> 0; // Clear C flag
-  
-  return [result, ccr];
-}
-
 export function addxOP(src: number, dest: number, ccr: number, size: number): [number, number] {
   return arithmeticOP(src, dest, ccr, size, false, true);
 }
-
 export function subxOP(src: number, dest: number, ccr: number, size: number): [number, number] {
   return arithmeticOP(src, dest, ccr, size, true, true);
 }
-
+export function negOP(size: number, op: number, ccr: number): [number, number] {
+  const [value, flags] = arithmeticOP(op, 0, ccr, size, true);
+  return [merge(value, op, size), flags];
+}
 export function negxOP(size: number, op: number, ccr: number): [number, number] {
-  return arithmeticOP(op, 0, ccr, size, true, true);
+  const [value, flags] = arithmeticOP(op, 0, ccr, size, true, true);
+  return [merge(value, op, size), flags];
+}
+export function cmpOP(src: number, dest: number, ccr: number, size: number): number {
+  return (arithmeticOP(src, dest, ccr, size, true)[1] & ~0x10) | (ccr & 0x10);
+}
+export const cmpmOP = cmpOP;
+export function moveOP(src: number, dest: number, ccr: number, size: number): [number, number] {
+  return [merge(src, dest, size), logicCCR(src, ccr, size)];
+}
+export function tstOP(op: number, ccr: number, size: number): number {
+  return logicCCR(op, ccr, size);
+}
+export function clrOP(size: number, op: number, ccr: number): [number, number] {
+  return moveOP(0, op, ccr, size);
+}
+export function notOP(size: number, op: number, ccr: number): [number, number] {
+  return moveOP(~op, op, ccr, size);
+}
+export function andOP(size: number, src: number, dest: number, ccr: number): [number, number] {
+  return moveOP(src & dest, dest, ccr, size);
+}
+export function orOP(size: number, src: number, dest: number, ccr: number): [number, number] {
+  return moveOP(src | dest, dest, ccr, size);
+}
+export function eorOP(size: number, src: number, dest: number, ccr: number): [number, number] {
+  return moveOP(src ^ dest, dest, ccr, size);
+}
+export function swapOP(op: number, ccr: number): [number, number] {
+  const value = (op << 16) | (op >>> 16);
+  return [value, logicCCR(value, ccr, CODE_LONG)];
+}
+export function exgOP(a: number, b: number): [number, number] {
+  return [b, a];
+}
+export function extOP(size: number, op: number, ccr: number): [number, number] {
+  if (size !== CODE_WORD && size !== CODE_LONG) throw new Error('Invalid size for EXT');
+  return moveOP(signed(op, size - 1), op, ccr, size);
 }
 
-export function cmpmOP(src: number, dest: number, ccr: number, size: number): number {
-  // CMPM: Compare Memory with Memory
-  // This is essentially CMP but can be used with post-increment addressing
-  return cmpOP(src, dest, ccr, size);
+type Shift = 'asl' | 'asr' | 'lsl' | 'lsr' | 'rol' | 'ror' | 'roxl' | 'roxr';
+export function shiftOP(
+  kind: Shift,
+  count: number,
+  op: number,
+  ccr: number,
+  size: number
+): [number, number] {
+  count &= 63;
+  const sign = 2 ** (width(size) - 1);
+  let value = unsigned(op, size),
+    x = (ccr >>> 4) & 1;
+  let carry = kind.startsWith('rox') ? x : 0;
+  let overflow = false;
+  for (let i = 0; i < count; i++) {
+    const oldSign = (value & sign) !== 0;
+    if (kind.endsWith('l')) {
+      carry = oldSign ? 1 : 0;
+      value = unsigned(value * 2, size);
+      if (kind === 'rol') value |= carry;
+      if (kind === 'roxl') value |= x;
+      if (kind === 'asl' && oldSign !== ((value & sign) !== 0)) overflow = true;
+    } else {
+      carry = value & 1;
+      value >>>= 1;
+      if (kind === 'asr' && oldSign) value |= sign;
+      if (kind === 'ror' && carry) value |= sign;
+      if (kind === 'roxr' && x) value |= sign;
+    }
+    if (kind !== 'rol' && kind !== 'ror') x = carry;
+  }
+  const flags = (logicCCR(value, ccr, size) & ~0x10) | (x << 4) | carry | (overflow ? 2 : 0);
+  return [merge(value, op, size), flags >>> 0];
+}
+export const aslOP = (count: number, op: number, ccr: number, size: number): [number, number] =>
+  shiftOP('asl', count, op, ccr, size);
+export const asrOP = (count: number, op: number, ccr: number, size: number): [number, number] =>
+  shiftOP('asr', count, op, ccr, size);
+export const lslOP = (count: number, op: number, ccr: number, size: number): [number, number] =>
+  shiftOP('lsl', count, op, ccr, size);
+export const lsrOP = (count: number, op: number, ccr: number, size: number): [number, number] =>
+  shiftOP('lsr', count, op, ccr, size);
+export const rolOP = (count: number, op: number, ccr: number, size: number): [number, number] =>
+  shiftOP('rol', count, op, ccr, size);
+export const rorOP = (count: number, op: number, ccr: number, size: number): [number, number] =>
+  shiftOP('ror', count, op, ccr, size);
+export const roxlOP = (count: number, op: number, ccr: number, size: number): [number, number] =>
+  shiftOP('roxl', count, op, ccr, size);
+export const roxrOP = (count: number, op: number, ccr: number, size: number): [number, number] =>
+  shiftOP('roxr', count, op, ccr, size);
+
+function multiply(
+  size: number,
+  src: number,
+  dest: number,
+  ccr: number,
+  isSigned: boolean
+): [number, number] {
+  if (size !== CODE_WORD) throw new Error('68000 multiply requires word operands');
+  const value = isSigned
+    ? signed(src, CODE_WORD) * signed(dest, CODE_WORD)
+    : (src & 0xffff) * (dest & 0xffff);
+  return [value >>> 0, logicCCR(value, ccr, CODE_LONG)];
+}
+export function mulsOP(size: number, src: number, dest: number, ccr: number): [number, number] {
+  return multiply(size, src, dest, ccr, true);
+}
+export function muluOP(size: number, src: number, dest: number, ccr: number): [number, number] {
+  return multiply(size, src, dest, ccr, false);
+}
+function divide(
+  size: number,
+  src: number,
+  dest: number,
+  ccr: number,
+  isSigned: boolean
+): [number, number] {
+  if (size !== CODE_WORD) throw new Error('68000 divide requires a word divisor');
+  const divisor = isSigned ? signed(src, CODE_WORD) : src & 0xffff;
+  if (divisor === 0) throw new Error('Division by zero');
+  const dividend = isSigned ? dest | 0 : dest >>> 0;
+  const quotient = Math.trunc(dividend / divisor);
+  if (quotient < (isSigned ? -32768 : 0) || quotient > (isSigned ? 32767 : 65535)) {
+    // N/Z are undefined on overflow; keep their previous values deterministically.
+    return [dest, (ccr & ~1) | 2];
+  }
+  const value = (((dividend % divisor) & 0xffff) << 16) | (quotient & 0xffff);
+  return [value >>> 0, logicCCR(quotient, ccr, CODE_WORD)];
+}
+export function divsOP(size: number, src: number, dest: number, ccr: number): [number, number] {
+  return divide(size, src, dest, ccr, true);
+}
+export function divuOP(size: number, src: number, dest: number, ccr: number): [number, number] {
+  return divide(size, src, dest, ccr, false);
 }

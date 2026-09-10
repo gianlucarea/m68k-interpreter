@@ -5,7 +5,7 @@
 
 import { CODE_LONG, CODE_WORD, CODE_BYTE } from './operations';
 
-const MAX_ADDRESS = 0x7fffffff;
+const MAX_ADDRESS = 0xffffffff;
 
 export class Memory {
   private memory: Record<number, number> = {};
@@ -59,7 +59,7 @@ export class Memory {
     if (!this.isValidAddress(address + 3)) return 0;
 
     const byte3 = this.getByte(address + 3);
-    return (((byte0 << 24) | (byte1 << 16) | (byte2 << 8) | byte3) >>> 0);
+    return ((byte0 << 24) | (byte1 << 16) | (byte2 << 8) | byte3) >>> 0;
   }
 
   /**
