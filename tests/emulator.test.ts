@@ -2,6 +2,31 @@ import { describe, it, expect } from 'vitest';
 import { Emulator } from '../src/core/emulator';
 import { Strings } from '../src/core/strings';
 
+describe('Emulator - instruction whitespace', () => {
+  it.each([
+    ['single tab', 'ADD\t#1,D1'],
+    ['multiple tabs', 'ADD\t\t#1,D1'],
+    ['mixed whitespace', 'ADD\t \t#1,D1'],
+    ['space separator', 'ADD #1,D1'],
+    ['space after comma', 'ADD\t#1, D1'],
+    ['byte suffix', 'ADD.B\t#1,D1'],
+    ['word suffix', 'ADD.W\t#1,D1'],
+    ['long suffix', 'ADD.L\t#1,D1'],
+    ['operand-free instruction', '\tNOP\t\nADD\t#1,D1'],
+  ])('executes an instruction with %s', (_, instruction) => {
+    const emulator = new Emulator(`ORG\t$1000\n${instruction}\nEND`);
+    let stopped = false;
+    for (let i = 0; i < 10 && !stopped; i++) {
+      stopped = emulator.emulationStep();
+    }
+
+    expect(emulator.getException()).toBeUndefined();
+    expect(emulator.getErrors()).toEqual([]);
+    expect(stopped).toBe(true);
+    expect(emulator.getRegisters()[9]).toBe(1);
+  });
+});
+
 describe('Emulator - END directive handling', () => {
   it('should set exception when END directive is missing', () => {
     const code = `
@@ -249,4 +274,3 @@ describe('Emulator - Bug Fixes', () => {
     expect(emulator.getZFlag()).toBe(1);
   });
 });
-
