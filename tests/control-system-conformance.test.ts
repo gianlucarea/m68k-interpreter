@@ -17,7 +17,7 @@ function next(e: Emulator, count = 1): void {
 describe('Calls and returns share virtual addresses', () => {
   for (const call of ['BSR FUN', 'JSR FUN', 'JSR (A1)']) {
     for (const ret of ['RTS', 'MOVEA.L (SP)+,A0\nJMP (A0)']) {
-      it(`${call} with ${ret.replace('\n', '; ')} terminates and restores SP`, () => {
+      it(`${call} with ${ret.replace(/\n/g, '; ')} terminates and restores SP`, () => {
         const e = new Emulator(
           `ORG $1000\nMOVEA.L #$1100,SP\n${call}\nBRA DONE\nFUN:\n${ret}\nDONE:\nEND`
         );
