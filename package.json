@@ -58,8 +58,8 @@
     "prettier": "^3.1.1",
     "terser": "^5.46.0",
     "typescript": "^5.3.3",
-    "vite": "^7.3.5",
     "vitest": "^4.1.12"
+    "vite": "^7.3.7",
   },
   "overrides": {
     "@rollup/plugin-terser": "^1.0.0",
